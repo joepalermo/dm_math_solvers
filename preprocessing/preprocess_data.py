@@ -1,5 +1,4 @@
 import glob
-import numpy as np
 from preprocessing import load_tokenizers, preprocess_data
 from utils import recreate_dirpath
 

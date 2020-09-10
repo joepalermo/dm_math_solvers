@@ -1,5 +1,5 @@
 import numpy as np
-from utils import write_pickle, read_pickle, write_json
+from utils import write_pickle, read_pickle, write_json, recreate_dirpath
 
 def build_tokenizer(input_filepaths, tokenizers_dirpath):
     print(f"building vocab from {len(input_filepaths)} files")

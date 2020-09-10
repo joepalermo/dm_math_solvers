@@ -1,5 +1,4 @@
 import glob
-import pickle
 from utils import recreate_dirpath
 from preprocessing import build_tokenizer
 
