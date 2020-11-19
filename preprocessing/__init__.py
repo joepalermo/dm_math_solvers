@@ -31,6 +31,7 @@ def build_tokenizer(input_filepaths, tokenizers_dirpath):
 
     # save pprint
     write_json(f'{tokenizers_dirpath}/char2idx.json', char2idx)
+    write_json(f'{tokenizers_dirpath}/idx2char.json', idx2char)
 
     # save tokenizer
     write_pickle(f'{tokenizers_dirpath}/char2idx.pkl', char2idx)

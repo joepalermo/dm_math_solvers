@@ -10,6 +10,16 @@ def recreate_dirpath(dirpath):
     os.mkdir(dirpath)
 
 
+def read_text_file(filepath):
+    with open(filepath) as f:
+        return f.read()
+
+
+def write_text_file(filepath, text):
+    with open(filepath, 'w') as f:
+        f.write(text)
+
+
 def read_json(filepath):
     if not os.path.isfile(filepath):
         return {}
