@@ -231,24 +231,19 @@ class Transformer(tf.keras.Model):
     @tf.function(input_signature=[tf.TensorSpec(shape=(None, None), dtype=tf.int64),
                                   tf.TensorSpec(shape=(None, None), dtype=tf.int64), ])
     def train_step(self, inputs, targets):
-        targets_with_start_token = targets[:, :-1]
-        targets_no_start_token = targets[:, 1:]
-
-        enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inputs, targets_with_start_token)
-
+        teacher_forcing_targets = targets[:, :-1]
+        actual_targets = targets[:, 1:]
+        enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inputs, teacher_forcing_targets)
         with tf.GradientTape() as tape:
-            predictions, _ = self.call(inputs, targets_with_start_token,
+            predictions, _ = self.call(inputs, teacher_forcing_targets,
                                    True,
                                    enc_padding_mask,
                                    combined_mask,
                                    dec_padding_mask)
-            loss = self.loss_function(targets_no_start_token, predictions)
-
+            loss = self.loss_function(actual_targets, predictions)
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
-
         self.train_loss(loss)
-        # train_accuracy(tar_real, predictions)
         return predictions
 
     def train(self, params, train_data, valid_data, logger):
@@ -318,15 +313,12 @@ class Transformer(tf.keras.Model):
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
         super(CustomSchedule, self).__init__()
-
         self.d_model = d_model
         self.d_model = tf.cast(self.d_model, tf.float32)
-
         self.warmup_steps = warmup_steps
 
     def __call__(self, step):
         arg1 = tf.math.rsqrt(step)
         arg2 = step * (self.warmup_steps ** -1.5)
-
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
