@@ -1,4 +1,5 @@
 import os
+from preprocessing import load_tokenizers
 from training.transformer_utils import positional_encoding, create_masks, scaled_dot_product_attention, \
     point_wise_feed_forward_network
 import tensorflow as tf
@@ -188,6 +189,7 @@ class Decoder(tf.keras.layers.Layer):
 class Transformer(tf.keras.Model):
     def __init__(self, params):
         super(Transformer, self).__init__()
+        self.char2idx, self.idx2char = load_tokenizers('output/tokenizers')
 
         # Model config
         self.params = params
@@ -287,11 +289,7 @@ class Transformer(tf.keras.Model):
                 if batch % 50 == 0:
                     print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
                         epoch + 1, batch, self.train_loss.result(), np.mean(accuracy_list[-50:])))
-
-                    # view attempt at inference
-                    output, _ = self.inference(inp[:1])
-                    print("predicted: ", output)
-                    print("target: ", tar[:1])
+                    self.inspect_inference(inp, tar)
 
             # # todo
             # if (epoch + 1) % 5 == 0:
@@ -343,6 +341,15 @@ class Transformer(tf.keras.Model):
             output = tf.concat([output, predicted_id], axis=-1)
 
         return tf.squeeze(output, axis=0), attention_weights
+
+
+    def inspect_inference(self, inp, tar):
+        first_inp = inp[:1]
+        first_tar = tar[0]
+        output, _ = self.inference(first_inp)
+
+        print("pred: ", "".join([self.idx2char[idx] for idx in output.numpy() if idx not in [0,1,2]]))
+        print("targ: ", "".join([self.idx2char[idx] for idx in first_tar.numpy() if idx not in [0,1,2]]))
 
 
 def get_validation_metrics(val_ds):
