@@ -1,5 +1,9 @@
 import numpy as np
-from utils import write_pickle, read_pickle, write_json, recreate_dirpath
+from utils import write_pickle, read_pickle, write_json
+from tqdm import tqdm
+import glob
+import tensorflow as tf
+
 
 def build_tokenizer(input_filepaths, tokenizers_dirpath):
     print(f"building vocab from {len(input_filepaths)} files")
@@ -90,3 +94,48 @@ def get_max_question_and_answer_length(input_filepaths):
                 max_answer_length = answer_length
         print(max_question_length, max_answer_length)
     return max_question_length, max_answer_length
+
+
+def get_paired_filepaths(filepaths):
+    '''return list of tuples that are (question,answer) pairs'''
+    identifier_dict = dict()
+    for fp in filepaths:
+        identifier = "_".join(fp.split('/')[-1].split('_')[:-1])
+        if identifier not in identifier_dict:
+            identifier_dict[identifier] = [fp]
+        else:
+            identifier_dict[identifier].append(fp)
+            identifier_dict[identifier] = tuple(sorted(identifier_dict[identifier], reverse=True))
+    return list(identifier_dict.values())
+
+
+def load_train(mode, num_files_to_include=None):
+    if mode == 'easy':
+        train_file_pattern = 'output/train_easy_preprocessed/*.npy'
+    elif mode == 'all':
+        train_file_pattern = 'output/train*/*.npy'
+    train_filepaths = glob.glob(train_file_pattern)
+    paired_filepaths = get_paired_filepaths(train_filepaths)
+    if num_files_to_include is not None:
+        paired_filepaths = paired_filepaths[:num_files_to_include]
+    all_q = list()
+    all_a = list()
+    for q_filepath, a_filepath in tqdm(paired_filepaths):
+        q = np.load(q_filepath)
+        a = np.load(a_filepath)
+        all_q.append(q)
+        all_a.append(a)
+    q = np.concatenate(all_q, axis=0)
+    a = np.concatenate(all_a, axis=0)
+    return q, a
+
+
+def build_train_and_val_datasets(q_train, a_train, params, val_split=0.1, buffer_size=20000, batch_size=64):
+    np.random.shuffle(q_train)
+    np.random.shuffle(a_train)
+    dataset = tf.data.Dataset.from_tensor_slices((q_train, a_train))
+    input_data = dataset.take(params.num_examples).shuffle(q_train.shape[0]).batch(params.batch_size) \
+        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    train_ds = input_data.take(params.num_training_batches).repeat(params.num_epochs)
+    val_ds = input_data.skip(params.num_training_batches)
+    return train_ds, val_ds

@@ -2,7 +2,10 @@ import os
 import shutil
 import json
 import pickle
+import logging
+from datetime import datetime as dt
 
+flatten = lambda l: [item for sublist in l for item in sublist]
 
 def recreate_dirpath(dirpath):
     if os.path.isdir(dirpath):
@@ -40,3 +43,35 @@ def read_pickle(filepath):
 
 def write_pickle(filepath, obj):
     pickle.dump(obj, open(filepath, "wb"))
+
+
+def get_logger(name, experiment_dir):
+
+    logger_path = experiment_dir
+    if not os.path.exists(logger_path):
+        os.makedirs(logger_path)
+
+    # add logging
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+
+    # https://stackoverflow.com/questions/6729268/log-messages-appearing-twice-with-python-logging
+    if not logger.handlers:
+        # create a file handler
+        current_time = dt.now().strftime('%Y%m%d')
+        file_handler = logging.FileHandler(os.path.join(logger_path, '{}_{}.log'.format(current_time, name)))
+        file_handler.setLevel(logging.INFO)
+        # create a logging format
+        formats = '[%(asctime)s - %(name)s-%(lineno)d - %(funcName)s - %(levelname)s] %(message)s'
+        file_formatter = logging.Formatter(formats, '%m-%d %H:%M:%S')
+        file_handler.setFormatter(file_formatter)
+        # add the handlers to the logger
+        logger.addHandler(file_handler)
+
+        # console handler
+        c_handler = logging.StreamHandler()
+        c_handler.setLevel(logging.INFO)
+        c_formatter = logging.Formatter(formats, '%m-%d %H:%M:%S')
+        c_handler.setFormatter(c_formatter)
+        logger.addHandler(c_handler)
+    return logger
