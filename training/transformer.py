@@ -190,6 +190,7 @@ class Transformer(tf.keras.Model):
         super(Transformer, self).__init__()
 
         # Model config
+        self.params = params
         num_layers = params.num_layers
         d_model = params.d_model
         num_heads = params.num_heads
@@ -287,7 +288,12 @@ class Transformer(tf.keras.Model):
                     print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
                         epoch + 1, batch, self.train_loss.result(), np.mean(accuracy_list[-50:])))
 
-            # todo
+                    # view attempt at inference
+                    output, _ = self.inference(inp[:1])
+                    print("predicted: ", output)
+                    print("target: ", tar[:1])
+
+            # # todo
             # if (epoch + 1) % 5 == 0:
             #     valid_loss, valid_acc = get_validation_metrics(valid_data, self)
             #     valid_loss_list.append(valid_loss)
@@ -308,6 +314,39 @@ class Transformer(tf.keras.Model):
             #
             # if all([valid_loss < best_loss for valid_loss in valid_loss_list[-5:]]):
             #     break
+
+
+    def inference(self, encoder_input):
+
+        decoder_input = [self.params.start_token]
+        output = tf.expand_dims(decoder_input, 0)
+
+        for i in range(self.params.answer_max_length-1):
+            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
+                encoder_input, output)
+
+            # predictions.shape == (batch_size, seq_len, vocab_size)
+            predictions, attention_weights = self.call(encoder_input, output, False,
+                                                       enc_padding_mask, combined_mask, dec_padding_mask)
+
+            # select the last word from the seq_len dimension
+            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
+
+            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+
+            # return the result if the predicted_id is equal to the end token
+            if predicted_id == self.params.end_token:
+                return tf.squeeze(output, axis=0), attention_weights
+
+            # concatentate the predicted_id to the output which is given to the decoder
+            # as its input.
+            output = tf.concat([output, predicted_id], axis=-1)
+
+        return tf.squeeze(output, axis=0), attention_weights
+
+
+def get_validation_metrics(val_ds):
+    pass
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
