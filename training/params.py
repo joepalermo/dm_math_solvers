@@ -13,12 +13,10 @@ class TransformerParams:
         self.questions_max_length = 160
         self.answer_max_length = 32
 
-        self.batch_size = 32
+        self.batch_size = 64
         self.vocab_size = 72
         self.num_epochs = 1
-        self.num_examples = 10000
-        self.p_test = 0.2
-        self.num_training_batches = int(self.num_examples/self.batch_size*(1-self.p_test))
+        self.p_val = 0.1
         self.learning_rate = 1e-4
 
         self.max_context = 160

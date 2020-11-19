@@ -109,7 +109,7 @@ def get_paired_filepaths(filepaths):
     return list(identifier_dict.values())
 
 
-def load_train(mode, num_files_to_include=None):
+def load_train(mode, num_files_to_include=None, verbose=True):
     if mode == 'easy':
         train_file_pattern = 'output/train_easy_preprocessed/*.npy'
     elif mode == 'all':
@@ -127,15 +127,22 @@ def load_train(mode, num_files_to_include=None):
         all_a.append(a)
     q = np.concatenate(all_q, axis=0)
     a = np.concatenate(all_a, axis=0)
+    if verbose:
+        print("questions: ", q.shape)
+        print("answers: ", a.shape)
     return q, a
 
 
-def build_train_and_val_datasets(q_train, a_train, params, val_split=0.1, buffer_size=20000, batch_size=64):
+def build_train_and_val_datasets(q_train, a_train, params):
     np.random.shuffle(q_train)
     np.random.shuffle(a_train)
+    num_examples = len(q_train)
+    num_train = int((1-params.p_val) * num_examples)
+    num_val = num_examples - num_train
+    assert num_examples == num_train + num_val
     dataset = tf.data.Dataset.from_tensor_slices((q_train, a_train))
-    input_data = dataset.take(params.num_examples).shuffle(q_train.shape[0]).batch(params.batch_size) \
+    train_ds = dataset.take(num_train).shuffle(num_train).batch(params.batch_size) \
+        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE).repeat(params.num_epochs)
+    val_ds = dataset.skip(num_train).shuffle(num_val).batch(params.batch_size) \
         .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    train_ds = input_data.take(params.num_training_batches).repeat(params.num_epochs)
-    val_ds = input_data.skip(params.num_training_batches)
     return train_ds, val_ds
