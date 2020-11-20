@@ -238,20 +238,33 @@ class Transformer(tf.keras.Model):
         actual_targets = targets[:, 1:]
         enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inputs, teacher_forcing_targets)
         with tf.GradientTape() as tape:
-            predictions, _ = self.call(inputs, teacher_forcing_targets,
+            probs, _ = self.call(inputs, teacher_forcing_targets,
                                    True,
                                    enc_padding_mask,
                                    combined_mask,
                                    dec_padding_mask)
-            loss = self.loss_function(actual_targets, predictions)
+            loss = self.loss_function(actual_targets, probs)
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
         self.train_loss(loss)
-        return predictions
+        return probs
 
-    def train(self, params, train_data, valid_data, logger):
+    def accuracy(self, preds, target_batch):
+        first_padding_positions = tf.argmax(
+            tf.cast(tf.equal(tf.cast(tf.zeros(target_batch.shape), dtype=tf.float32),
+                             tf.cast(target_batch, dtype=tf.float32)),
+                    tf.float32), axis=1)
+        padding_mask = tf.sequence_mask(lengths=first_padding_positions, maxlen=self.params.answer_max_length - 1,
+                                        dtype=tf.int64)
+        preds_to_compare = preds * padding_mask
+        targets_to_compare = target_batch[:, 1:] * padding_mask
+        # Compare row-by-row for exact match between preds / true target sequences
+        correct_pred_mask = tf.reduce_all(tf.equal(preds_to_compare, targets_to_compare), axis=1)
+        accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]
+        return accuracy
+
+    def train(self, params, train_ds, val_ds, logger):
         self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
-
         checkpoint_path = params.checkpoint_dir
         ckpt = tf.train.Checkpoint(transformer=self, optimizer=self.optimizer)
         ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
@@ -262,38 +275,23 @@ class Transformer(tf.keras.Model):
 
         valid_loss_list = []
         best_loss = 0
-
         for epoch in range(params.num_epochs):
             start = time.time()
             self.train_loss.reset_states()
-
             accuracy_list = []
-            for batch, (inp, tar) in enumerate(train_data):
-                predictions = self.train_step(inp, tar)
-
-                first_padding_positions = tf.argmax(
-                    tf.cast(tf.equal(tf.cast(tf.zeros(tar.shape), dtype=tf.float32), tf.cast(tar, dtype=tf.float32)),
-                            tf.float32), axis=1)
-                preds = tf.argmax(predictions, axis=-1)
-
-                padding_mask = tf.sequence_mask(lengths=first_padding_positions, maxlen=params.answer_max_length-1,
-                                                dtype=tf.int64)
-                preds_to_compare = preds * padding_mask
-                targets_to_compare = tar[:, 1:] * padding_mask
-
-                # Compare row-by-row for exact match between preds / true target sequences
-                correct_pred_mask = tf.reduce_all(tf.equal(preds_to_compare, targets_to_compare), axis=1)
-                accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]
+            for batch, (input_batch, target_batch) in enumerate(train_ds):
+                probs = self.train_step(input_batch, target_batch)
+                preds = tf.argmax(probs, axis=-1)
+                accuracy = self.accuracy(preds, target_batch)
                 accuracy_list.append(accuracy)
-
                 if batch % 50 == 0:
                     print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
                         epoch + 1, batch, self.train_loss.result(), np.mean(accuracy_list[-50:])))
-                    self.inspect_inference(inp, tar)
+                    self.inspect_inference(input_batch, target_batch)
 
             # # todo
             # if (epoch + 1) % 5 == 0:
-            #     valid_loss, valid_acc = get_validation_metrics(valid_data, self)
+            #     valid_loss, valid_acc = get_validation_metrics(val_ds, self)
             #     valid_loss_list.append(valid_loss)
             #     if valid_loss < best_loss:
             #         best_loss = valid_loss
@@ -342,18 +340,18 @@ class Transformer(tf.keras.Model):
 
         return tf.squeeze(output, axis=0), attention_weights
 
-
-    def inspect_inference(self, inp, tar):
-        first_inp = inp[:1]
-        first_tar = tar[0]
+    def inspect_inference(self, input_batch, target_batch):
+        first_inp = input_batch[:1]
+        first_tar = target_batch[0]
         output, _ = self.inference(first_inp)
-
         print("pred: ", "".join([self.idx2char[idx] for idx in output.numpy() if idx not in [0,1,2]]))
         print("targ: ", "".join([self.idx2char[idx] for idx in first_tar.numpy() if idx not in [0,1,2]]))
 
-
-def get_validation_metrics(val_ds):
-    pass
+    def get_validation_metrics(self, val_ds):
+        for batch, (input_batch, target_batch) in enumerate(val_ds):
+            for inp, tar in zip(input_batch, target_batch):
+                preds = self.inference(inp)
+                accuracy = self.accuracy(preds, tar)
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
