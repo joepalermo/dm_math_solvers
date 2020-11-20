@@ -19,18 +19,18 @@ class TransformerParams:
         self.end_token = 2
 
         self.num_examples = None
-        self.batch_size = 16
-        self.batches_per_inspection = 10
+        self.batch_size = 512
+        self.batches_per_inspection = 100
         self.min_epochs_until_checkpoint = 1
         self.num_epochs = 3
-        self.p_val = 0.05
+        self.p_val = 0.005
 
-        self.learning_rate = 1e-3
+        self.learning_rate = 6e-4
         self.max_context = 160
         self.is_training = True
         self.embedding_dim = 512
-        self.num_heads = 4
-        self.d_model = 256
+        self.d_model = 512
+        self.num_heads = 8
         self.dff = 512
         self.ffn_expansion = 4
         self.dropout = 0
