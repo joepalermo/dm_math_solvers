@@ -121,8 +121,8 @@ def load_train(mode, num_files_to_include=None, verbose=True):
     all_q = list()
     all_a = list()
     for q_filepath, a_filepath in tqdm(paired_filepaths):
-        q = np.load(q_filepath)
-        a = np.load(a_filepath)
+        q = np.load(q_filepath).astype(np.int32)
+        a = np.load(a_filepath).astype(np.int32)
         all_q.append(q)
         all_a.append(a)
     q = np.concatenate(all_q, axis=0)
@@ -136,11 +136,14 @@ def load_train(mode, num_files_to_include=None, verbose=True):
 def build_train_and_val_datasets(q_train, a_train, params):
     np.random.shuffle(q_train)
     np.random.shuffle(a_train)
-    num_examples = len(q_train)
+    if params.num_examples is not None:
+        num_examples = params.num_examples
+    else:
+        num_examples = len(q_train)
     num_train = int((1-params.p_val) * num_examples)
     num_val = num_examples - num_train
     assert num_examples == num_train + num_val
-    dataset = tf.data.Dataset.from_tensor_slices((q_train, a_train))
+    dataset = tf.data.Dataset.from_tensor_slices((q_train, a_train)).take(num_examples)
     train_ds = dataset.take(num_train).shuffle(num_train).batch(params.batch_size) \
         .prefetch(buffer_size=tf.data.experimental.AUTOTUNE).repeat(params.num_epochs)
     val_ds = dataset.skip(num_train).shuffle(num_val).batch(params.batch_size) \
