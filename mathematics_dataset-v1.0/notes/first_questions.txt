@@ -1,0 +1,272 @@
+algebra__linear_1d: 
+Solve 0 = 4*b + b + 15 for b.
+Solve -3*d = -0*d + 3 for d.
+Solve -4*h + 9 = 41 for h.
+Solve 2514*m = 2508*m - 24 for m.
+Solve -7*a + 6*a = 4 for a.
+
+algebra__linear_2d: 
+Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f.
+Solve 5*a = -2*h + 15, 0 = -2*h + 6*a - 2*a - 12 for h.
+Solve 2*k + 14 = 2*j, -7*k - 4*j + 24 = -9*k for k.
+Solve -2*o - 3*w = 13, 0*o - 4*o - 5*w = 21 for o.
+Solve -16 = 4*d - 4, 3*o = 4*d + 3 for o.
+
+algebra__polynomial_roots: 
+Solve -3*h**2/2 - 24*h - 45/2 = 0 for h.
+Factor -n**2/3 - 25*n - 536/3.
+Let c**3/9 - 11*c**2/3 + 35*c - 75 = 0. What is c?
+What is f in -87616*f**2 - 1776*f - 9 = 0?
+Find s such that 9*s**4 - 8958*s**3 - 14952*s**2 - 2994*s + 2991 = 0.
+
+algebra__sequence_next_term: 
+What is next in 85, 84, 83, 82?
+What comes next: 50, 19, -24, -85, -170, -285, -436, -629?
+What is the next term in -363, -368, -383, -414, -467, -548, -663?
+What is next in 3257, 6514, 9771?
+What comes next: 13, 14, 11, 4, -7?
+
+algebra__sequence_nth_term: 
+What is the k'th term of 485, 472, 459, 446?
+What is the c'th term of 362, 746, 1144, 1562, 2006, 2482, 2996?
+What is the b'th term of 178, 367, 566, 775, 994?
+What is the p'th term of -57, -53, -49?
+What is the g'th term of 314, 312, 310, 308, 306?
+
+arithmetic__add_or_sub: 
+What is -5 - 110911?
+What is -0.188 + -0.814?
+Sum 259 and -46.
+Sum -10 and -52539.
+What is the difference between -2 and 251860?
+
+arithmetic__add_or_sub_in_base: 
+In base 2, what is -100 + -1001100?
+In base 13, what is 7a79 - -5?
+In base 12, what is -5aa - 8?
+In base 13, what is -8b - -3?
+In base 14, what is 4 + 473?
+
+arithmetic__add_sub_multiple: 
+What is 1 + -9 - -5 - -1?
+-2 + 0 + (3 - 1)
+Calculate 8 - (0 + 7 + -4).
+What is the value of (-19 - -12) + (-6 - -5) - -15?
+Evaluate (2 + -8 - -2) + -120 + 129.
+
+arithmetic__div: 
+What is -280 divided by -10?
+-107 divided by -1
+Calculate -4 divided by 3.
+Calculate -378 divided by 4.
+What is 56508 divided by 4?
+
+arithmetic__mixed: 
+15 + (7 + -17)/1
+10/(-60) + 14/(-24)
+Calculate 12/198 - 600/99.
+Evaluate (-16)/(-5) - 4/1.
+174/203*14/(-3)
+
+arithmetic__mul: 
+Work out 4 * 4.45.
+What is the product of -0.4301 and -0.4?
+Calculate -0.2*0.57.
+Work out -1.7 * 8.
+100.7*0.5
+
+arithmetic__mul_div_multiple: 
+(-29)/(-87)*(-18)/(-10)
+What is (-5)/20*-16*2/(-4)?
+What is the value of (-2*4/(-72))/(1/(-2))?
+What is 51/85*((-5)/(-18))/1?
+Evaluate (-28)/21*(-9)/2.
+
+arithmetic__nearest_integer_root: 
+What is the square root of 664 to the nearest integer?
+What is the third root of 144446 to the nearest integer?
+What is 1699 to the power of 1/6, to the nearest integer?
+What is the cube root of 2748 to the nearest integer?
+What is 57335 to the power of 1/2, to the nearest integer?
+
+arithmetic__simplify_surd: 
+Simplify (0 + (sqrt(1008) + sqrt(1008) + 1)*-4)**2.
+Simplify ((1 + sqrt(45) - sqrt(5)) + (sqrt(405)*-2 - sqrt(5)))**2 + -4.
+Simplify (sqrt(288)/sqrt(8))/sqrt(12) - (-4 + 2*sqrt(3)).
+Simplify ((0 + sqrt(3) + 1 + 6*(sqrt(3) - (sqrt(3)*-2 - sqrt(3))))*4)**2.
+Simplify 6*-4*-2*(sqrt(539) + -1 - sqrt(539)).
+
+calculus__differentiate: 
+Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d.
+Find the third derivative of -a**3*g**3*t**3 + 642*a**3*g*t**3 + 16*a**3*g*t**2 - 5*a**2*t**2 + a*g**3 wrt t.
+What is the second derivative of 12518*f**3 + 3760*f?
+What is the third derivative of -t**4 - 880*t**3 + 152*t**2 wrt t?
+What is the second derivative of 2*c*n**2*z**3 + 30*c*n**2 + 2*c*n*z**2 - 2*c + n**2*z**2 - 3*n*z**3 - 2*n*z wrt n?
+
+comparison__closest: 
+Which is the closest to -1/3?  (a) -8/7  (b) 5  (c) -1.3
+Which is the nearest to 27/5?  (a) 0.4  (b) 0.2  (c) -0.5  (d) -0.1
+Which is the closest to -4/17?  (a) 4/7  (b) -42/11  (c) 2
+What is the closest to 19 in -1/6, -1, 2/3?
+Which is the nearest to -15?  (a) 15/7  (b) -5  (c) 0.5
+
+comparison__kth_biggest: 
+Which is the smallest value?  (a) 2/13  (b) 5  (c) 0.7
+Which is the third smallest value?  (a) 6  (b) 0.2  (c) -2  (d) 5  (e) -0.054
+Which is the biggest value?  (a) -0.05  (b) -2685  (c) 1
+What is the fourth smallest value in -78, -3/2, 2/9, 5?
+Which is the fifth smallest value?  (a) -2/13  (b) 1/8  (c) -0.1  (d) -1/5  (e) -2/87
+
+comparison__pair: 
+Is -939/2 equal to -470?
+Is 0.1 < 374?
+Is 123 at most 1590/13?
+Is -1 greater than or equal to -199/7?
+Is -11/49 < 0.2?
+
+comparison__sort: 
+Put -534, 4, 3 in descending order.
+Put 3, -5, -3, 13 in increasing order.
+Put 21, 2/15, 26 in descending order.
+Put 3, 11, 4, -4 in decreasing order.
+Put 2, -298, 4 in decreasing order.
+
+measurement__conversion: 
+How many micrometers are there in twenty-one quarters of a millimeter?
+What is fourty-three halves of a meter in millimeters?
+Convert 7.49573mg to grams.
+What is 0.2266777 grams in tonnes?
+What is 0.9633691 nanograms in micrograms?
+
+measurement__time: 
+What is 481 minutes after 7:26 PM?
+What is 552 minutes before 2:16 AM?
+What is 715 minutes before 3:55 PM?
+What is 274 minutes after 4:32 PM?
+How many minutes are there between 3:51 PM and 8:43 PM?
+
+numbers__base_conversion: 
+What is 3 (base 11) in base 5?
+Convert -23 (base 7) to base 13.
+1 (base 15) to base 14
+What is 1 (base 2) in base 4?
+40 (base 9) to base 16
+
+numbers__div_remainder: 
+Calculate the remainder when 93 is divided by 59.
+What is the remainder when 779 is divided by 223?
+What is the remainder when 1862 is divided by 16?
+What is the remainder when 813 is divided by 24?
+What is the remainder when 164 is divided by 85?
+
+numbers__gcd: 
+Calculate the highest common divisor of 1300 and 300.
+Calculate the greatest common factor of 11130 and 6.
+What is the greatest common divisor of 352 and 3454?
+Calculate the greatest common divisor of 17 and 272.
+Calculate the highest common divisor of 11711 and 49.
+
+numbers__is_factor: 
+Is 15 a factor of 720?
+Does 11 divide 1973?
+Is 347 a multiple of 3?
+Does 28 divide 1204?
+Is 17 a factor of 3594?
+
+numbers__is_prime: 
+Is 93163 a prime number?
+Is 29179 prime?
+Is 323431 a prime number?
+Is 5939 prime?
+Is 1454 prime?
+
+numbers__lcm: 
+Calculate the smallest common multiple of 351 and 141.
+Calculate the common denominator of -29/936 and -115/48.
+Calculate the common denominator of 79/195 and 113/60.
+What is the lowest common multiple of 12 and 20?
+Calculate the common denominator of -3/40 and 57/1652.
+
+numbers__list_prime_factors: 
+What are the prime factors of 329?
+What are the prime factors of 2250?
+What are the prime factors of 7380?
+What are the prime factors of 6792?
+List the prime factors of 32253.
+
+numbers__place_value: 
+What is the hundreds digit of 31253?
+What is the units digit of 8196?
+What is the ten thousands digit of 37118?
+What is the hundreds digit of 1229?
+What is the units digit of 834?
+
+numbers__round_number: 
+What is -0.0006832 rounded to 5 decimal places?
+What is -1875400 rounded to the nearest 100000?
+What is 0.000293695 rounded to 5 dps?
+Round -460 to the nearest 100.
+What is -0.0000055553 rounded to six decimal places?
+
+polynomials__add: 
+Let i(u) be the first derivative of u - 7. Let t(c) = c**2 + c - 6. Let w be 0 + -14*2/2. Give w*i(x) - 2*t(x).
+Let q(m) = m**3 + 2. Let r(c) = -4*c**3 - 9. What is 18*q(f) + 4*r(f)?
+Let m(u) = 63*u**2 + 6. Let a(g) = -42*g**2 - 4. Calculate 8*a(x) + 5*m(x).
+Let f(a) be the second derivative of 13*a**3/6 - 3*a**2/2 + 10*a. Let n(p) = 7*p - 2. Determine -4*f(m) + 7*n(m).
+Let t(v) = 285*v**2 + 75*v + 75. Let x(l) = 15*l**2 + 4*l + 4. Determine 4*t(k) - 75*x(k).
+
+polynomials__coefficient_named: 
+Express -41*c - 16*c**2 + 18*c + 25*c in the form q*c**2 + p*c + u and give p.
+Express -37 - f**3 + 70 + 26 as b + w*f**2 + x*f + y*f**3 and give b.
+Express (0*a + 0*a - 2*a)*(a - 2*a + 3*a) + 2*a**2 - 11*a**2 - a**2 + 5*a**2 + 2 + 0 - 3*a**2 in the form j + t*a**2 + m*a and give j.
+Express -4*v + v + 0 + 2 + (3 + 3 - 5)*(4*v + 2*v - 4*v) in the form c*v + m and give m.
+Express -1 + 20 - 1 - 2*r**3 - 3*r + 4*r in the form q*r + f*r**2 + v*r**3 + g and give g.
+
+polynomials__collect: 
+Collect the terms in -8 + w**3 - 31 - 27 + 66.
+Collect the terms in -84 + y**3 + 127 - 43.
+Collect the terms in 0*w - 7*w + 3*w.
+Collect the terms in -20*h**3 - 18*h**3 + 148 + 40*h**3 - 148.
+Collect the terms in -4*f**2 + 3*f**2 - 8*f**2 - f**2.
+
+polynomials__compose: 
+Let p = -3 - -6. Let w(d) = 0*d**2 + p*d**2 - 2*d**2 - 3*d**2. Let t(b) = -3*b. Give t(w(k)).
+Let m(s) = 7*s - 12. Let z(g) = -5*g**2. What is z(m(k))?
+Let w(q) = 2*q**2. Let v(x) be the first derivative of 0*x + 0*x**2 + 4/3*x**3 - 2. Determine v(w(p)).
+Let f(v) = 2*v**2. Let m(s) = 11*s + 2. Suppose 5*r - 36 = 3*r. Let w(b) = 45*b + 9. Let g(i) = r*m(i) - 4*w(i). Calculate g(f(j)).
+Let y(t) = -4126*t**2. Let d(x) = 2*x. What is d(y(n))?
+
+polynomials__evaluate: 
+Let i(h) = -7*h - 15. Determine i(-2).
+Let k(u) = u**2 + u - 4. What is k(0)?
+Let x(f) = -f - 19. Calculate x(9).
+Let t(x) = -x**2 + 3*x - 3. Calculate t(3).
+Let s(c) = -7*c**2 - 2. Determine s(-2).
+
+polynomials__expand: 
+Expand (-s + s + 2*s**5)*(4 - 1 - 2) - 3*s**5 + 4*s**5 + 0*s**5 - 2*s**5 - s**5 + 5*s**5 + (3*s**2 - 4 + 4)*(5*s**3 - 5*s**3 - s**3).
+Expand (d**4 + 2*d**4 + 2*d - 2*d**4)*(0*d + d - 4*d).
+Expand -2*y**4 + 2*y**4 - 2*y**5 + 5*y**5 - 3*y**5 - y**5 + (1 - 2*y**4 - 1)*(-2*y + 2*y - 2*y) - 13*y - 8*y**5 + 13*y.
+Expand ((4 + 1 - 6)*(-7 + 1 + 4) - 3 + 3 + 2 - 5 + 2 + 1 + 2 - 3 - 4)*(-r**3 + 4*r**3 - r**3) + r**2 - r**2 - r**3.
+Expand (5 - 5 - 11)*(-4 + 4 + 2*y**2).
+
+polynomials__simplify_power: 
+Simplify r**(1/9)/r**(-16) assuming r is positive.
+Simplify t**4/t**(-1/5) assuming t is positive.
+Simplify ((h/(h/(h*h**(-3/7)/h)))/h)/(h*(h**14*h)/h) assuming h is positive.
+Simplify (j**(-2/7))**(-3)*(j/(j*j**(-1/4)))**41 assuming j is positive.
+Simplify (w/(w**(-2/13)/w)*w*w)/(w/(w*w/(w**(-4/5)*w)*w)) assuming w is positive.
+
+probability__swr_p_level_set: 
+What is prob of picking 1 b and 1 p when two letters picked without replacement from tpppbbpbbb?
+What is prob of picking 1 p and 1 y when two letters picked without replacement from {y: 1, p: 2, z: 1, n: 2}?
+Four letters picked without replacement from {y: 6, b: 1, u: 4}. What is prob of picking 2 y and 2 u?
+What is prob of picking 1 u and 1 a when two letters picked without replacement from {a: 1, u: 8, w: 4, j: 2}?
+Calculate prob of picking 2 i, 1 e, and 1 s when four letters picked without replacement from siiiisesszzsisisi.
+
+probability__swr_p_sequence: 
+What is prob of sequence ccbc when four letters picked without replacement from nnscspb?
+Three letters picked without replacement from {g: 3, w: 1, t: 7, u: 3}. Give prob of sequence tuw.
+Three letters picked without replacement from dxaxxaaxxxaax. What is prob of sequence aad?
+Calculate prob of sequence rsp when three letters picked without replacement from pogpphggsrpogs.
+Calculate prob of sequence bc when two letters picked without replacement from {b: 4, c: 3}.

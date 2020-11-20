@@ -1,0 +1,275 @@
+Calculate the highest common divisor of 1300 and 300.
+hcd(arg1, arg2)
+arg1 <- 1300
+arg2 <- 300
+
+Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f.
+lin_sys(arg1, arg2)
+arg1 <- append(arg3, 0 = 4*f - 0*t - 4*t - 4)
+arg2 <- f
+arg3 <- append(arg4, -4*f + t = -13)
+arg4 <- nil
+
+Suppose -3*z + 133 = 4*n - 10, 5*n = 25. Let l = -21 + z. Let r = l + -11. Calculate the least common multiple of 7 and r.
+lcm(arg1, arg2)
+arg1 <- 7
+arg2 <- lin_sys(arg3, arg4)
+arg3 <- append(arg5, arg6)
+arg4 <- r
+arg5 <-
+
+What is the hundreds digit of 31253?
+select_digit(arg1, arg2)
+arg1 <- 31253
+arg2 <- "hundreds"
+NOTE: May be best to map hundreds to 100
+
+What is prob of picking 1 b and 1 p when two letters picked without replacement from tpppbbpbbb?
+mult(arg1, arg2)
+arg1 <- frequency_count(arg3, arg4)
+arg2 <- frequency_count(arg5, arg6)
+arg3 <- b
+arg4 <- tpppbbpbbb
+arg5 <- p
+arg6 <- tpppbbpbbb
+
+Simplify (0 + (sqrt(1008) + sqrt(1008) + 1)*-4)**2.
+calc(arg1)
+arg1 <- (0 + (sqrt(1008) + sqrt(1008) + 1)*-4)**2
+
+Let q = -54.3 + 54. Suppose 0 = -5*z - 8 - 7. Which is the nearest to -1/5?  (a) 5  (b) z  (c) q
+closest_to(arg1, arg2)
+arg1 <- -1/5
+arg2 <- append(arg3, arg4)
+arg3 <- append(arg5, arg6)
+arg4 <- 5
+arg5 <- append(arg7, arg8)
+arg6 <- lin_sys(arg9, arg10) # z
+arg7 <- nil
+arg8 <- lin_sys(arg11, arg12) # q
+arg9 <- 0 = -5*z - 8 - 7
+arg10 <- z
+arg11 <- q = -54.3 + 54
+arg12 <- q
+
+Let i(u) be the first derivative of u - 7. Let t(c) = c**2 + c - 6. Let w be 0 + -14*2/2. Give w*i(x) - 2*t(x).
+function_calc(arg1, arg_map1)
+arg1 <- w*i(x) - 2*t(x)
+arg_map1 <- add_keypair(arg_map2, arg2, arg3)
+arg2 <- w
+arg3 <- calc(arg4)
+arg4 <- 0 + -14*2/2
+arg_map2 <- add_keypair(arg_map3, arg5, arg6)
+arg5 <- i(u)
+arg6 <- differentiate(arg7)
+arg7 <- u - 7
+arg_map3 <- add_keypair(nil, arg8, arg9)
+arg8 <- t(c)
+arg9 <- c**2 + c - 6
+
+Let o(v) = 77*v + 1. Let b(l) = 155*l + 2. Suppose 4*c - 25 = -c. Let a(u) = c*o(u) - 3*b(u). Is a(-4) composite?
+is_composite(arg1)
+arg1 <- evaluate_function(arg2, arg3)
+arg2 <- a(u)
+arg3 <- -4
+
+What is next in 85, 84, 83, 82?
+LM(whole_input)
+NOTE: LM(whole_input) is a terminal action
+
+How many micrometers are there in twenty-one quarters of a millimeter?
+???
+
+Solve -3*h**2/2 - 24*h - 45/2 = 0 for h.
+solve_quadratic(arg1)
+
+What is -280 divided by -10?
+division(arg1, arg2)
+arg1 <- -280
+arg1 <- -10
+
+What is the square root of 664 to the nearest integer?
+round(arg1, arg2)
+arg1 <- sqrt(arg3)
+arg2 <- "nearest integer"
+arg3 <- 664
+
+Let l(b) = -142004*b - 62917*b - 377393*b. Let d be l(-1). Let v = d - 262314. Round v to the nearest 100000.
+round(arg1, arg2)
+arg1 <- add(arg3, arg4)
+arg2 <- "nearest 100000"
+arg3 <- evaluate_function(arg5, arg6)
+arg4 <- -262314
+arg5 <- l(b) = -142004*b - 62917*b - 377393*b
+arg6 <- -1
+
+Calculate the smallest common multiple of 351 and 141.
+
+What is prob of sequence ccbc when four letters picked without replacement from nnscspb?
+
+What is 3 (base 11) in base 5?
+base(arg1, arg2)
+arg1 <- base(arg3, arg4)
+arg2 <- 5
+arg3 <- 3
+arg4 <- 11
+
+Let w(b) = -2*b - 3. Suppose 0*j + 16 = -3*j - o, j + 3*o = 8. Let u = j - -5. What is w(u)?
+function_application(arg1, arg2)
+arg1 <- w(b) = -2*b - 3
+arg2 <- sub(arg3, arg4)
+arg3 <- lin_sys(arg5, arg6)
+arg4 <- -5
+arg5 <- append(arg7, arg8)
+arg6 <- j
+arg7 <- append(arg9, arg10)
+arg8 <- 0*j + 16 = -3*j - o
+arg9 <- nil
+arg10 <- j + 3*o = 8
+
+Let o = -788/3 - -260. Which is bigger: -0.1 or o?
+argmax(arg1, arg2)
+arg1 <- -0.1
+arg2 <- lin_sys(arg3, arg4)
+arg3 <- o = -788/3 - -260
+arg4 <- o
+
+Is -939/2 equal to -470?
+is_equal(arg1, arg2)
+arg1 <- calc(arg3)
+arg2 <- -470
+arg3 <- -939/2
+
+What is 481 minutes after 7:26 PM?
+???
+
+Suppose 3*x + 197 = 4*x. Calculate the remainder when x is divided by 33.
+easy
+
+What is -0.0006832 rounded to 5 decimal places?
+easy
+
+15 + (7 + -17)/1
+easy
+
+Expand (-s + s + 2*s**5)*(4 - 1 - 2) - 3*s**5 + 4*s**5 + 0*s**5 - 2*s**5 - s**5 + 5*s**5 + (3*s**2 - 4 + 4)*(5*s**3 - 5*s**3 - s**3).
+easy
+
+Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d.
+easy
+
+Let i(h) = -7*h - 15. Determine i(-2).
+easy
+
+What is -5 - 110911?
+easy
+
+Work out 4 * 4.45.
+easy
+
+Express -41*c - 16*c**2 + 18*c + 25*c in the form q*c**2 + p*c + u and give p.
+extract_polynomial_coefficient(arg1, arg2)
+arg1 <- polynomial_simplify(arg3)
+arg2 <- 1
+arg3 <- -41*c - 16*c**2 + 18*c + 25*c
+
+Let d = -25019/90 - -278. Let v(j) be the third derivative of 0 + 1/27*j**3 - d*j**5 + 1/54*j**4 + 3*j**2 + 0*j. Suppose v(o) = 0. What is o?
+easy (if can invert function)
+
+Suppose -55 = -8*l + 3*l. Let k = l + -7. What is the units digit of k?
+easy
+
+(-29)/(-87)*(-18)/(-10)
+easy
+
+What is 1 + -9 - -5 - -1?
+easy
+
+Suppose 0 = -4*x + 8*x - 40. Let h(i) = i**2 - 9*i - 14. Let n be h(x). Sort -1, 4, n.
+easy
+
+Which is the closest to -1/3?  (a) -8/7  (b) 5  (c) -1.3
+easy
+
+Which is the smallest value?  (a) 2/13  (b) 5  (c) 0.7
+easy
+
+Put -534, 4, 3 in descending order.
+easy
+
+What is the k'th term of 485, 472, 459, 446?
+LM
+
+In base 2, what is -100 + -1001100?
+easy
+
+Let w be (-1 + 13)*3/(-6). Let b = w - -6. Let i = 2 - b. Solve -15 = 3*c + i*c for c.
+easy
+
+Collect the terms in -8 + w**3 - 31 - 27 + 66.
+easy
+
+Let h(t) = t**3 + t**2 + 1. Let v(d) = 6*d**3 + 24*d**2 + 4. Let w(j) = 4*h(j) - v(j). What is the third derivative of w(x) wrt x?
+repeated_function_application(arg1, arg2)
+arg1 <- differentiate(arg3)
+arg2 <- 3
+arg3 <- function_simplify(arg4, arg5)
+arg4 <- 4*h(j) - v(j)
+arg5 <- add_keypair(arg6, arg7, arg8)
+arg6 <- add_keypair(arg9, arg10, arg11)
+arg7 <- h(t)
+arg8 <- t**3 + t**2 + 1
+arg9 <- nil
+arg10 <- v(d)
+arg11 <- 6*d**3 + 24*d**2 + 4
+
+Let p = -3 - -6. Let w(d) = 0*d**2 + p*d**2 - 2*d**2 - 3*d**2. Let t(b) = -3*b. Give t(w(k)).
+easy
+
+Let f be 4/22 - 20/(-11). Suppose s = -0*s + 4*n + 12, 0 = -n - f. Which is the second smallest value?  (a) -0.2  (b) s  (c) 2/7
+easy
+
+Is 93163 a prime number?
+is_prime(arg1)
+...
+
+Suppose 3*n = -0*x - 3*x + 93, -2*n - 2 = 0. Does 12 divide x?
+divides(arg1, arg2)
+arg1 <- 12
+arg2 <- lin_sys(arglist1, arg3)
+arglist1 <- append...(arglist1, 3*n = -0*x - 3*x + 93)
+arglist1 <- append...(arglist1, -2*n - 2 = 0)
+arglist1 <- end
+arg3 <- x
+
+Calculate the remainder when 93 is divided by 59.
+mod(arg1, arg2)
+arg1 <- 93
+arg2 <- 59
+
+Solve 0 = 4*b + b + 15 for b.
+lin_sys(arglist1, arg1)
+arglist1 <- append...(arglist1, 0 = 4*b + b + 15)
+arg1 <- b
+
+Suppose 2*y + 12 = 6*y. Suppose y = f - 15. Solve -8 = -4*w, -3*d - 4*w + f = -8*d for d.
+lin_sys(arglist1, arg1)
+...
+
+Let q be (25 + 1)/2 - (5 + -3). What is the highest common divisor of q and 99?
+easy
+
+Simplify r**(1/9)/r**(-16) assuming r is positive.
+easy
+
+What are the prime factors of 329?
+easy
+
+Is 15 a factor of 720?
+easy
+
+Let k(w) = -w**2 + 13*w - 4. What are the prime factors of k(6)?
+prime_factors(arg1)
+arg1 <- function_application(arg2, arg3)
+arg2 <- k(w) = -w**2 + 13*w - 4
+arg3 <- 6

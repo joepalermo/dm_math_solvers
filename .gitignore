@@ -1,4 +1,6 @@
 *.ipynb
 __pycache__
-mathematics_dataset-v1.0/*
+mathematics_dataset-v1.0/train*
+mathematics_dataset-v1.0/interpolate
+mathematics_dataset-v1.0/extrapolate
 output/*

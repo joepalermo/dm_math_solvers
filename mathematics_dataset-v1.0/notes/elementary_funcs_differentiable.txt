@@ -1,0 +1,58 @@
+differentiable:
+
+  regression:
+    add
+    sub
+    mult
+    div
+    remainder (i.e. mod on reals)
+    power
+    root
+    calc
+    solve_quadratic
+    function_evaluation
+
+  requires smoothing:
+    abs
+
+  requires linear interpolation:
+    round
+    is_prime
+    is_composite
+    repeated_function_application
+
+  selection via convex combination:
+    argmax
+    argmin
+    select_digit
+    extract_polynomial_coefficient
+
+  binary:
+    is_equal
+    divides
+
+  composed:
+    closest_to (convex_combination, abs, sub)
+
+  deep:
+    lin_sys
+
+
+non-differentiable:
+
+base
+hcd
+lcm
+prime_factors
+differentiate
+
+polynomial_simplify
+function_simplify
+
+function_inverse
+
+append
+add_keypair
+
+frequency_count
+sort

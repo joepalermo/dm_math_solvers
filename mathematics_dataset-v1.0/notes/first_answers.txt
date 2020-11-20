@@ -1,0 +1,272 @@
+algebra__linear_1d: 
+-3
+-1
+-8
+-4
+-4
+
+algebra__linear_2d: 
+4
+0
+-2
+1
+-3
+
+algebra__polynomial_roots: 
+-15, -1
+-(n + 8)*(n + 67)/3
+3, 15
+-3/296
+-1, 1/3, 997
+
+algebra__sequence_next_term: 
+81
+-870
+-818
+13028
+-22
+
+algebra__sequence_nth_term: 
+-13*k + 498
+c**3 + c**2 + 374*c - 14
+5*b**2 + 174*b - 1
+4*p - 61
+-2*g + 316
+
+arithmetic__add_or_sub: 
+-110916
+-1.002
+213
+-52549
+251862
+
+arithmetic__add_or_sub_in_base: 
+-1010000
+7a81
+-5b6
+-88
+477
+
+arithmetic__add_sub_multiple: 
+-2
+0
+5
+7
+5
+
+arithmetic__div: 
+28
+107
+-4/3
+-189/2
+14127
+
+arithmetic__mixed: 
+5
+-3/4
+-6
+-4/5
+-4
+
+arithmetic__mul: 
+17.8
+0.17204
+-0.114
+-13.6
+50.35
+
+arithmetic__mul_div_multiple: 
+3/5
+-2
+-2/9
+1/6
+6
+
+arithmetic__nearest_integer_root: 
+26
+52
+3
+14
+239
+
+arithmetic__simplify_surd: 
+768*sqrt(7) + 64528
+-34*sqrt(5) + 1442
+-sqrt(3) + 4
+800*sqrt(3) + 30016
+-48
+
+calculus__differentiate: 
+8*d**3 - 70*d
+-6*a**3*g**3 + 3852*a**3*g
+75108*f
+-24*t - 5280
+4*c*z**3 + 60*c + 2*z**2
+
+comparison__closest: 
+a
+a
+a
+2/3
+b
+
+comparison__kth_biggest: 
+a
+b
+c
+5
+b
+
+comparison__pair: 
+False
+True
+False
+True
+True
+
+comparison__sort: 
+4, 3, -534
+-5, -3, 3, 13
+26, 21, 2/15
+11, 4, 3, -4
+4, 2, -298
+
+measurement__conversion: 
+5250
+21500
+0.00749573
+0.0000002266777
+0.0009633691
+
+measurement__time: 
+3:27 AM
+5:04 PM
+4:00 AM
+9:06 PM
+292
+
+numbers__base_conversion: 
+3
+-14
+1
+1
+24
+
+numbers__div_remainder: 
+34
+110
+6
+21
+79
+
+numbers__gcd: 
+100
+6
+22
+17
+49
+
+numbers__is_factor: 
+True
+False
+False
+True
+False
+
+numbers__is_prime: 
+False
+True
+False
+True
+False
+
+numbers__lcm: 
+16497
+1872
+780
+60
+16520
+
+numbers__list_prime_factors: 
+7, 47
+2, 3, 5
+2, 3, 5, 41
+2, 3, 283
+3, 13, 827
+
+numbers__place_value: 
+2
+6
+3
+2
+4
+
+numbers__round_number: 
+-0.00068
+-1900000
+0.00029
+-500
+-0.000006
+
+polynomials__add: 
+-2*x**2 - 2*x - 2
+2*f**3
+-21*x**2 - 2
+-3*m - 2
+15*k**2
+
+polynomials__coefficient_named: 
+2
+59
+2
+2
+18
+
+polynomials__collect: 
+w**3
+y**3
+-4*w
+2*h**3
+-10*f**2
+
+polynomials__compose: 
+6*k**2
+-245*k**2 + 840*k - 720
+16*p**4
+36*j**2
+-8252*n**2
+
+polynomials__evaluate: 
+-1
+-4
+-28
+-3
+-30
+
+polynomials__expand: 
+2*s**5
+-3*d**5 - 6*d**2
+-5*y**5
+-7*r**3
+-22*y**2
+
+polynomials__simplify_power: 
+r**(145/9)
+t**(21/5)
+h**(-115/7)
+j**(311/28)
+w**(387/65)
+
+probability__swr_p_level_set: 
+4/9
+2/15
+3/11
+8/105
+21/340
+
+probability__swr_p_sequence: 
+0
+1/104
+5/429
+1/273
+2/7

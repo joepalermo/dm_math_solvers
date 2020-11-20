@@ -18,12 +18,12 @@ class TransformerParams:
         self.start_token = 1
         self.end_token = 2
 
-        self.num_examples = 200
+        self.num_examples = None
         self.batch_size = 16
         self.batches_per_inspection = 10
         self.min_epochs_until_checkpoint = 1
         self.num_epochs = 3
-        self.p_val = 0.5
+        self.p_val = 0.05
 
         self.learning_rate = 1e-3
         self.max_context = 160
