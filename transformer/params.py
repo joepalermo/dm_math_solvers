@@ -22,8 +22,8 @@ class TransformerParams:
         self.batch_size = 512
         self.batches_per_inspection = 100
         self.min_epochs_until_checkpoint = 1
-        self.num_epochs = 3
-        self.p_val = 0.005
+        self.num_epochs = 15
+        self.p_val = 0.01
 
         self.learning_rate = 6e-4
         self.max_context = 160
