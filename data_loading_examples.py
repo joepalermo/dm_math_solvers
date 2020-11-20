@@ -1,4 +1,4 @@
-from training.params import TransformerParams
+from transformer.params import TransformerParams
 from preprocessing import load_train, build_train_and_val_datasets
 
 q_train, a_train = load_train('easy', num_files_to_include=2)

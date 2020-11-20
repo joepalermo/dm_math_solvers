@@ -1,11 +1,10 @@
 import os
 from preprocessing import load_tokenizers
-from training.transformer_utils import positional_encoding, create_masks, scaled_dot_product_attention, \
+from transformer.transformer_utils import positional_encoding, create_masks, scaled_dot_product_attention, \
     point_wise_feed_forward_network
 import tensorflow as tf
 import numpy as np
 import time
-# os.environ['CUDA_VISIBLE_DEVICES'] = "3"
 
 
 class MultiHeadAttention(tf.keras.layers.Layer):

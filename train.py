@@ -4,21 +4,17 @@ import os
 import argparse
 from utils import get_logger
 from preprocessing import load_train, build_train_and_val_datasets
-from training.params import TransformerParams
-from training.transformer import Transformer
+from transformer.params import TransformerParams
+from transformer.transformer import Transformer
 
 np.random.seed(1234)
 tf.random.set_seed(1234)
-# os.environ['CUDA_VISIBLE_DEVICES'] = "3"
-
+os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,3"
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--eager', metavar='eager_mode', type=bool, default=True, help='Eager mode on, else Autograph')
 parser.add_argument('--gpu_id', metavar='gpu_id', type=str, default="1", help='The selected GPU to use, default 1')
 args = parser.parse_args()
-
 tf.config.experimental_run_functions_eagerly(args.eager)
-os.environ['CUDA_VISIBLE_DEVICES'] = "3"
-
 
 if __name__ == '__main__':
     params = TransformerParams()
