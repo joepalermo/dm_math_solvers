@@ -13,7 +13,7 @@ class TransformerParams:
 
         self.questions_max_length = 160
         self.answer_max_length = 32
-        self.vocab_size = 72
+        self.vocab_size = 64  # 72
         self.padding_token = 0
         self.start_token = 1
         self.end_token = 2
