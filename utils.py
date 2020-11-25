@@ -75,3 +75,4 @@ def get_logger(name, experiment_dir):
         c_handler.setFormatter(c_formatter)
         logger.addHandler(c_handler)
     return logger
+

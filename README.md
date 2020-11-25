@@ -4,5 +4,6 @@ Download data
 wget https://storage.cloud.google.com/mathematics-dataset/mathematics_dataset-v1.0.tar.gz
 
 Docker commands
-nvidia-docker run -it -v /raid/jpalermo:/home/ tensorflow/tensorflow:latest-gpu /bin/bash
-nvidia-docker run -it -v /raid/jpalermo:/home/ math /bin/bash
+nvidia-docker run -it -v /home/jpalermo:/home/ tensorflow/tensorflow:latest-gpu /bin/bash
+nvidia-docker run -it -v /home/jpalermo:/home/ math /bin/bash
+docker run -gpus all -it -v /home/jpalermo:/home/ math /bin/bash

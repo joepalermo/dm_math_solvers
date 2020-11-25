@@ -19,7 +19,7 @@ class TransformerParams:
         self.end_token = 2
 
         self.num_examples = None
-        self.batch_size = 512
+        self.batch_size = 128
         self.batches_per_inspection = 100
         self.min_epochs_until_checkpoint = 1
         self.num_epochs = 15
