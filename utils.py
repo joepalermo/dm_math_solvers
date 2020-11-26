@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import json
 import pickle
@@ -53,7 +54,13 @@ def get_logger(name, experiment_dir):
 
     # add logging
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
+
+    # log all uncaught exceptions
+    def exception_handler(type, value, tb):
+        logger.exception("Uncaught exception: {0}".format(str(value)))
+    # Install exception handler
+    sys.excepthook = exception_handler
 
     # https://stackoverflow.com/questions/6729268/log-messages-appearing-twice-with-python-logging
     if not logger.handlers:
