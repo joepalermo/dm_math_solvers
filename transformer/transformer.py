@@ -4,6 +4,7 @@ from transformer.transformer_utils import positional_encoding, create_masks, sca
     point_wise_feed_forward_network
 import tensorflow as tf
 import numpy as np
+import datetime
 import time
 
 
@@ -206,11 +207,21 @@ class Transformer(tf.keras.Model):
         self.learning_rate = CustomSchedule(params.d_model)
         self.optimizer = tf.keras.optimizers.Adam(self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
         self.train_loss = tf.keras.metrics.Mean(name='train_loss')
+        self.train_accuracy = tf.keras.metrics.Mean('train_accuracy')
+        self.val_loss = tf.keras.metrics.Mean('val_loss')
+        self.val_accuracy = tf.keras.metrics.Mean('val_accuracy')
 
         # Instantiate the model
         self.encoder = Encoder(num_layers, d_model, num_heads, dff, input_vocab_size, pe_input, attention_dropout)
         self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, pe_target, attention_dropout)
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
+
+        # tensorboard writers
+        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
+        val_log_dir = 'logs/gradient_tape/' + current_time + '/val'
+        self.train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+        self.val_summary_writer = tf.summary.create_file_writer(val_log_dir)
 
     def call(self, inp, tar, training, enc_padding_mask, look_ahead_mask, dec_padding_mask):
 
@@ -230,6 +241,69 @@ class Transformer(tf.keras.Model):
 
         return tf.reduce_mean(loss_)
 
+    def train(self, params, train_ds, val_ds, logger):
+        self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
+        checkpoint_path = params.checkpoint_dir
+        ckpt = tf.train.Checkpoint(transformer=self, optimizer=self.optimizer)
+        ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
+        # if a checkpoint exists, restore the latest checkpoint.
+        if ckpt_manager.latest_checkpoint:
+            ckpt.restore(ckpt_manager.latest_checkpoint)
+            print('Latest checkpoint restored!!')
+
+        val_acc_list = []
+        best_val_accuracy = 0
+        for epoch_i in range(params.num_epochs):
+            start = time.time()
+            self.train_loss.reset_states()
+            self.train_accuracy.reset_states()
+            self.val_loss.reset_states()
+            self.val_accuracy.reset_states()
+            accuracy_list = []
+            for batch, (input_batch, target_batch) in enumerate(train_ds):
+                probs_batch = self.train_step(input_batch, target_batch)
+                preds_batch = tf.argmax(probs_batch, axis=-1, output_type=tf.int32)
+                accuracy = self.accuracy(target_batch, preds_batch)
+                self.train_accuracy(accuracy)
+                accuracy_list.append(accuracy)
+                if batch % self.params.batches_per_inspection == 0:
+                    print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
+                        epoch_i + 1, batch, self.train_loss.result(), np.mean(accuracy_list[-50:])))
+                    self.inspect_inference(input_batch, target_batch)
+
+            # at end of epoch write for tensorboard
+            with self.train_summary_writer.as_default():
+                tf.summary.scalar('train_loss', self.train_loss.result(), step=epoch_i)
+                tf.summary.scalar('train_accuracy', self.train_accuracy.result(), step=epoch_i)
+
+            # at end of some epochs run validation metrics
+            if epoch_i % self.params.min_epochs_until_checkpoint == 0:
+                val_accuracy, val_loss = self.get_validation_metrics(val_ds)
+                self.val_loss(val_loss)
+                self.val_accuracy(val_accuracy)
+                print(f'Validation Accuracy: {val_accuracy}', f'Validation Loss: {val_loss}')
+                val_acc_list.append(val_accuracy)
+                if val_accuracy > best_val_accuracy:
+                    best_val_accuracy = val_accuracy
+                    logger.info(f'Saving on batch {batch}')
+                    logger.info(f'New best validation accuracy: {best_val_accuracy}')
+                    ckpt_save_path = ckpt_manager.save()
+                    print('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
+                                                                        ckpt_save_path))
+                with self.val_summary_writer.as_default():
+                    tf.summary.scalar('val_loss', self.val_loss.result(), step=epoch_i)
+                    tf.summary.scalar('val_accuracy', self.val_accuracy.result(), step=epoch_i)
+
+            # print('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch_i + 1,
+            #                                                     self.train_loss.result(),
+            #                                                     np.mean(accuracy_list[-50:])))
+
+            # print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
+
+            # early stopping
+            if all([val_accuracy > best_val_accuracy for val_accuracy in val_acc_list[-5:]]):
+                break
+
     @tf.function(input_signature=[tf.TensorSpec(shape=(None, None), dtype=tf.int32),
                                   tf.TensorSpec(shape=(None, None), dtype=tf.int32), ])
     def train_step(self, inputs, targets):
@@ -247,60 +321,6 @@ class Transformer(tf.keras.Model):
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
         self.train_loss(loss)
         return probs
-
-    # # Define our metrics
-    # train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
-    # train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('train_accuracy')
-    # test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
-    # test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('test_accuracy')
-
-    def train(self, params, train_ds, val_ds, logger):
-        self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
-        checkpoint_path = params.checkpoint_dir
-        ckpt = tf.train.Checkpoint(transformer=self, optimizer=self.optimizer)
-        ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
-        # if a checkpoint exists, restore the latest checkpoint.
-        if ckpt_manager.latest_checkpoint:
-            ckpt.restore(ckpt_manager.latest_checkpoint)
-            print('Latest checkpoint restored!!')
-
-        val_acc_list = []
-        best_val_accuracy = 0
-        for epoch in range(params.num_epochs):
-            start = time.time()
-            self.train_loss.reset_states()
-            accuracy_list = []
-            for batch, (input_batch, target_batch) in enumerate(train_ds):
-                probs_batch = self.train_step(input_batch, target_batch)
-                preds_batch = tf.argmax(probs_batch, axis=-1, output_type=tf.int32)
-                accuracy = self.accuracy(target_batch, preds_batch)
-                accuracy_list.append(accuracy)
-                if batch % self.params.batches_per_inspection == 0:
-                    print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
-                        epoch + 1, batch, self.train_loss.result(), np.mean(accuracy_list[-50:])))
-                    self.inspect_inference(input_batch, target_batch)
-
-            if epoch % self.params.min_epochs_until_checkpoint == 0:
-                val_acc, val_loss = self.get_validation_metrics(val_ds)
-                print(f'Validation Accuracy: {val_acc}', f'Validation Loss: {val_loss}')
-                val_acc_list.append(val_acc)
-                if val_acc > best_val_accuracy:
-                    best_val_accuracy = val_acc
-                    logger.info(f'Saving on batch {batch}')
-                    logger.info(f'New best validation accuracy: {best_val_accuracy}')
-                    ckpt_save_path = ckpt_manager.save()
-                    print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
-                                                                        ckpt_save_path))
-
-            # print('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1,
-            #                                                     self.train_loss.result(),
-            #                                                     np.mean(accuracy_list[-50:])))
-
-            print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
-
-            # early stopping
-            if all([val_acc > best_val_accuracy for val_acc in val_acc_list[-5:]]):
-                break
 
     def inference(self, encoder_input):
         decoder_input = [self.params.start_token]
@@ -348,20 +368,6 @@ class Transformer(tf.keras.Model):
         print("pred: ", decode(first_output, self.idx2char))
         print("targ: ", decode(first_target, self.idx2char))
 
-    def accuracy(self, target_batch, preds):
-        first_padding_positions = tf.argmax(
-            tf.cast(tf.equal(tf.cast(tf.zeros(target_batch.shape), dtype=tf.float32),
-                             tf.cast(target_batch, dtype=tf.float32)),
-                    tf.float32), axis=1)
-        padding_mask = tf.sequence_mask(lengths=first_padding_positions, maxlen=self.params.answer_max_length - 1,
-                                        dtype=tf.int32)
-        preds_to_compare = preds * padding_mask
-        targets_to_compare = target_batch[:, 1:] * padding_mask
-        # Compare row-by-row for exact match between preds / true target sequences
-        correct_pred_mask = tf.reduce_all(tf.equal(preds_to_compare, targets_to_compare), axis=1)
-        accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]
-        return accuracy
-
     def get_validation_metrics(self, val_ds):
         metrics_dict = {'accuracy': [], 'loss': []}
         for batch, (input_batch, target_batch) in enumerate(val_ds):
@@ -376,6 +382,19 @@ class Transformer(tf.keras.Model):
         loss = sum(metrics_dict['loss'])/len(metrics_dict['loss'])
         return accuracy, loss
 
+    def accuracy(self, target_batch, preds):
+        first_padding_positions = tf.argmax(
+            tf.cast(tf.equal(tf.cast(tf.zeros(target_batch.shape), dtype=tf.float32),
+                             tf.cast(target_batch, dtype=tf.float32)),
+                    tf.float32), axis=1)
+        padding_mask = tf.sequence_mask(lengths=first_padding_positions, maxlen=self.params.answer_max_length - 1,
+                                        dtype=tf.int32)
+        preds_to_compare = preds * padding_mask
+        targets_to_compare = target_batch[:, 1:] * padding_mask
+        # Compare row-by-row for exact match between preds / true target sequences
+        correct_pred_mask = tf.reduce_all(tf.equal(preds_to_compare, targets_to_compare), axis=1)
+        accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]
+        return accuracy
 
 def decode(encoding, idx2char):
     return "".join([idx2char[idx] for idx in encoding.numpy() if idx not in [0,1,2]])
