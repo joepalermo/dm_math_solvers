@@ -362,23 +362,6 @@ class Transformer(tf.keras.Model):
         accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]
         return accuracy
 
-    def masked_loss(self, target_batch, probs_batch):
-        first_padding_positions = tf.argmax(
-            tf.cast(tf.equal(tf.cast(tf.zeros(target_batch.shape), dtype=tf.float32),
-                             tf.cast(target_batch, dtype=tf.float32)),
-                    tf.float32), axis=1)
-        probs_to_compare = tf.zeros((0, self.params.predicted_output_length, self.params.vocab_size), dtype=tf.float32)
-        # for each element in batch (replace prob vectors after padding begins with 1-hot at padding index)
-        for i, first_pad_pos in enumerate(first_padding_positions):
-            unmasked_output = probs_batch[i, :first_pad_pos, :]
-            masked_output = tf.one_hot([0 for _ in range(self.params.predicted_output_length - first_pad_pos)],
-                                       self.params.vocab_size)
-            masked_output = tf.concat([tf.expand_dims(unmasked_output, 0), tf.expand_dims(masked_output, 0)], axis=1)
-            probs_to_compare = tf.concat([probs_to_compare, masked_output], axis=0)
-        loss = self.loss_function(target_batch[:, 1:], probs_to_compare)
-        # loss = self.loss_function(target_batch[:, 1:], probs_batch)
-        return loss
-
     def get_validation_metrics(self, val_ds):
         metrics_dict = {'accuracy': [], 'loss': []}
         for batch, (input_batch, target_batch) in enumerate(val_ds):
@@ -386,7 +369,7 @@ class Transformer(tf.keras.Model):
                 continue
             preds_batch, probs_batch, _ = self.batch_inference(input_batch)
             accuracy = self.accuracy(target_batch, preds_batch)
-            loss = self.masked_loss(target_batch, probs_batch)
+            loss = self.loss_function(target_batch[:,1:], probs_batch)
             metrics_dict['accuracy'].append(accuracy)
             metrics_dict['loss'].append(loss)
         accuracy = sum(metrics_dict['accuracy'])/len(metrics_dict['accuracy'])
