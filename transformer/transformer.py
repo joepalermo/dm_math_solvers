@@ -269,7 +269,7 @@ class Transformer(tf.keras.Model):
                 if batch % self.params.batches_per_inspection == 0:
                     print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
                         epoch_i + 1, batch, self.train_loss.result(), np.mean(accuracy_list[-50:])))
-                    self.inspect_inference(input_batch, target_batch)
+                    self.inspect_inference(input_batch, target_batch, logger)
 
             # at end of epoch write for tensorboard
             with self.train_summary_writer.as_default():
@@ -281,14 +281,14 @@ class Transformer(tf.keras.Model):
                 val_accuracy, val_loss = self.get_validation_metrics(val_ds)
                 self.val_loss(val_loss)
                 self.val_accuracy(val_accuracy)
-                print(f'Validation Accuracy: {val_accuracy}', f'Validation Loss: {val_loss}')
+                logger.info(f'Validation Accuracy: {val_accuracy}, Validation Loss: {val_loss}')
                 val_acc_list.append(val_accuracy)
                 if val_accuracy > best_val_accuracy:
                     best_val_accuracy = val_accuracy
                     logger.info(f'Saving on batch {batch}')
                     logger.info(f'New best validation accuracy: {best_val_accuracy}')
                     ckpt_save_path = ckpt_manager.save()
-                    print('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
+                    logger.info('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
                                                                         ckpt_save_path))
                 with self.val_summary_writer.as_default():
                     tf.summary.scalar('val_loss', self.val_loss.result(), step=epoch_i)
@@ -361,12 +361,12 @@ class Transformer(tf.keras.Model):
             all_preds = tf.concat([all_preds, preds], axis=-1)
         return all_preds[:, 1:], all_probs[:, 1:, :], attention_weights
 
-    def inspect_inference(self, input_batch, target_batch):
+    def inspect_inference(self, input_batch, target_batch, logger):
         first_inp = input_batch[:1]
         first_target = target_batch[0]
         first_output, _ = self.inference(first_inp)
-        print("pred: ", decode(first_output, self.idx2char))
-        print("targ: ", decode(first_target, self.idx2char))
+        logger.info("pred: " + decode(first_output, self.idx2char))
+        logger.info("targ: " + decode(first_target, self.idx2char))
 
     def get_validation_metrics(self, val_ds):
         metrics_dict = {'accuracy': [], 'loss': []}
