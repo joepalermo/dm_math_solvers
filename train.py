@@ -9,15 +9,15 @@ from transformer.transformer import Transformer
 
 np.random.seed(1234)
 tf.random.set_seed(1234)
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--eager', metavar='eager_mode', type=bool, default=True, help='Eager mode on, else Autograph')
 parser.add_argument('--gpu_id', metavar='gpu_id', type=str, default="1", help='The selected GPU to use, default 1')
 args = parser.parse_args()
 tf.config.experimental_run_functions_eagerly(args.eager)
+params = TransformerParams()
+os.environ['CUDA_VISIBLE_DEVICES'] = params.gpu_id
 
 if __name__ == '__main__':
-    params = TransformerParams()
     logger = get_logger('validation', params.experiment_dir)
     logger.info("Logging to {}".format(params.experiment_dir))
     q_train, a_train = load_train('easy')

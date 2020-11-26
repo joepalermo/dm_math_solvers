@@ -10,6 +10,7 @@ class TransformerParams:
         self.experiment_dir = os.path.join('experiment_results', current_time + 'transformer_testing')
         self.checkpoint_dir = os.path.join(self.experiment_dir, 'checkpoints')
         self.tb_logdir = os.path.join(self.experiment_dir, 'tensorboard')
+        self.gpu_id = "0"
 
         self.questions_max_length = 160
         self.answer_max_length = 32
@@ -31,8 +32,8 @@ class TransformerParams:
         self.embedding_dim = 512
         self.d_model = 512
         self.num_heads = 8
-        self.dff = 512
+        self.dff = 1024
         self.ffn_expansion = 4
-        self.dropout = 0
+        self.dropout = 0.1
         self.attention_dropout = 0
-        self.num_layers = 2  # Todo: split this into encoder and decoder layers
+        self.num_layers = 1  # Todo: split this into encoder and decoder layers
