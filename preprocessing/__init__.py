@@ -114,6 +114,8 @@ def load_train(mode, num_files_to_include=None, verbose=True):
         train_file_pattern = 'output/train_easy_preprocessed/*.npy'
     elif mode == 'all':
         train_file_pattern = 'output/train*/*.npy'
+    elif mode == 'single':
+        train_file_pattern = 'output/train_easy_preprocessed/arithmetic__add_or_sub*'
     train_filepaths = glob.glob(train_file_pattern)
     paired_filepaths = get_paired_filepaths(train_filepaths)
     if num_files_to_include is not None:
@@ -145,7 +147,7 @@ def build_train_and_val_datasets(q_train, a_train, params):
     assert num_examples == num_train + num_val
     dataset = tf.data.Dataset.from_tensor_slices((q_train, a_train)).take(num_examples)
     train_ds = dataset.take(num_train).shuffle(num_train).batch(params.batch_size) \
-        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE).repeat(params.num_epochs)
+        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     val_ds = dataset.skip(num_train).shuffle(num_val).batch(params.batch_size) \
         .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return train_ds, val_ds

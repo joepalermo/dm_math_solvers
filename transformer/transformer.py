@@ -248,6 +248,12 @@ class Transformer(tf.keras.Model):
         self.train_loss(loss)
         return probs
 
+    # # Define our metrics
+    # train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
+    # train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('train_accuracy')
+    # test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
+    # test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('test_accuracy')
+
     def train(self, params, train_ds, val_ds, logger):
         self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
         checkpoint_path = params.checkpoint_dir
@@ -265,9 +271,9 @@ class Transformer(tf.keras.Model):
             self.train_loss.reset_states()
             accuracy_list = []
             for batch, (input_batch, target_batch) in enumerate(train_ds):
-                probs = self.train_step(input_batch, target_batch)
-                preds = tf.argmax(probs, axis=-1, output_type=tf.int32)
-                accuracy = self.accuracy(preds, target_batch)
+                probs_batch = self.train_step(input_batch, target_batch)
+                preds_batch = tf.argmax(probs_batch, axis=-1, output_type=tf.int32)
+                accuracy = self.accuracy(target_batch, preds_batch)
                 accuracy_list.append(accuracy)
                 if batch % self.params.batches_per_inspection == 0:
                     print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
@@ -275,7 +281,8 @@ class Transformer(tf.keras.Model):
                     self.inspect_inference(input_batch, target_batch)
 
             if epoch % self.params.min_epochs_until_checkpoint == 0:
-                val_acc = self.get_validation_accuracy(val_ds)
+                val_acc, val_loss = self.get_validation_metrics(val_ds)
+                print(f'Validation Accuracy: {val_acc}', f'Validation Loss: {val_loss}')
                 val_acc_list.append(val_acc)
                 if val_acc > best_val_accuracy:
                     best_val_accuracy = val_acc
@@ -285,9 +292,9 @@ class Transformer(tf.keras.Model):
                     print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
                                                                         ckpt_save_path))
 
-            print('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1,
-                                                                self.train_loss.result(),
-                                                                np.mean(accuracy_list[-50:])))
+            # print('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1,
+            #                                                     self.train_loss.result(),
+            #                                                     np.mean(accuracy_list[-50:])))
 
             print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
 
@@ -317,20 +324,22 @@ class Transformer(tf.keras.Model):
         return tf.squeeze(output, axis=0), attention_weights
 
     def batch_inference(self, encoder_input):
-        output = tf.ones((self.params.batch_size, 1), dtype=tf.int32)
+        all_preds = tf.ones((self.params.batch_size, 1), dtype=tf.int32)
+        all_probs = tf.ones((self.params.batch_size, 1, self.params.vocab_size), dtype=tf.float32)
         for i in range(self.params.answer_max_length-1):
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
-                encoder_input, output)
+                encoder_input, all_preds)
             # predictions.shape == (batch_size, seq_len, vocab_size)
-            predictions, attention_weights = self.call(encoder_input, output, False,
+            probs, attention_weights = self.call(encoder_input, all_preds, False,
                                                        enc_padding_mask, combined_mask, dec_padding_mask)
             # select the last word from the seq_len dimension
-            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
-            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-            # concatentate the predicted_id to the output which is given to the decoder
+            probs = probs[:, -1:, :]  # (batch_size, 1, vocab_size)
+            preds = tf.cast(tf.argmax(probs, axis=-1), tf.int32)
+            # concatentate the predicted_id to the all_preds which is given to the decoder
             # as its input.
-            output = tf.concat([output, predicted_id], axis=-1)
-        return output[:, 1:], attention_weights
+            all_probs = tf.concat([all_probs, probs], axis=1)
+            all_preds = tf.concat([all_preds, preds], axis=-1)
+        return all_preds[:, 1:], all_probs[:, 1:, :], attention_weights
 
     def inspect_inference(self, input_batch, target_batch):
         first_inp = input_batch[:1]
@@ -339,7 +348,7 @@ class Transformer(tf.keras.Model):
         print("pred: ", decode(first_output, self.idx2char))
         print("targ: ", decode(first_target, self.idx2char))
 
-    def accuracy(self, preds, target_batch):
+    def accuracy(self, target_batch, preds):
         first_padding_positions = tf.argmax(
             tf.cast(tf.equal(tf.cast(tf.zeros(target_batch.shape), dtype=tf.float32),
                              tf.cast(target_batch, dtype=tf.float32)),
@@ -353,16 +362,36 @@ class Transformer(tf.keras.Model):
         accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]
         return accuracy
 
-    def get_validation_accuracy(self, val_ds):
-        accuracy_list = list()
+    def masked_loss(self, target_batch, probs_batch):
+        first_padding_positions = tf.argmax(
+            tf.cast(tf.equal(tf.cast(tf.zeros(target_batch.shape), dtype=tf.float32),
+                             tf.cast(target_batch, dtype=tf.float32)),
+                    tf.float32), axis=1)
+        probs_to_compare = tf.zeros((0, self.params.predicted_output_length, self.params.vocab_size), dtype=tf.float32)
+        # for each element in batch (replace prob vectors after padding begins with 1-hot at padding index)
+        for i, first_pad_pos in enumerate(first_padding_positions):
+            unmasked_output = probs_batch[i, :first_pad_pos, :]
+            masked_output = tf.one_hot([0 for _ in range(self.params.predicted_output_length - first_pad_pos)],
+                                       self.params.vocab_size)
+            masked_output = tf.concat([tf.expand_dims(unmasked_output, 0), tf.expand_dims(masked_output, 0)], axis=1)
+            probs_to_compare = tf.concat([probs_to_compare, masked_output], axis=0)
+        loss = self.loss_function(target_batch[:, 1:], probs_to_compare)
+        # loss = self.loss_function(target_batch[:, 1:], probs_batch)
+        return loss
+
+    def get_validation_metrics(self, val_ds):
+        metrics_dict = {'accuracy': [], 'loss': []}
         for batch, (input_batch, target_batch) in enumerate(val_ds):
             if input_batch.shape[0] < self.params.batch_size:
                 continue
-            print(input_batch.shape, target_batch.shape)
-            preds_batch, _ = self.batch_inference(input_batch)
-            accuracy = self.accuracy(preds_batch, target_batch)
-            accuracy_list.append(accuracy)
-        return sum(accuracy_list)/len(accuracy_list)
+            preds_batch, probs_batch, _ = self.batch_inference(input_batch)
+            accuracy = self.accuracy(target_batch, preds_batch)
+            loss = self.masked_loss(target_batch, probs_batch)
+            metrics_dict['accuracy'].append(accuracy)
+            metrics_dict['loss'].append(loss)
+        accuracy = sum(metrics_dict['accuracy'])/len(metrics_dict['accuracy'])
+        loss = sum(metrics_dict['loss'])/len(metrics_dict['loss'])
+        return accuracy, loss
 
 
 def decode(encoding, idx2char):
