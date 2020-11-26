@@ -253,6 +253,7 @@ class Transformer(tf.keras.Model):
 
         val_acc_list = []
         best_val_accuracy = 0
+        best_val_loss = np.inf
         for epoch_i in range(params.num_epochs):
             start = time.time()
             self.train_loss.reset_states()
@@ -283,10 +284,10 @@ class Transformer(tf.keras.Model):
                 self.val_accuracy(val_accuracy)
                 logger.info(f'Validation Accuracy: {val_accuracy}, Validation Loss: {val_loss}')
                 val_acc_list.append(val_accuracy)
-                if val_accuracy > best_val_accuracy:
-                    best_val_accuracy = val_accuracy
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
                     logger.info(f'Saving on batch {batch}')
-                    logger.info(f'New best validation accuracy: {best_val_accuracy}')
+                    logger.info(f'New best validation loss: {best_val_loss}')
                     ckpt_save_path = ckpt_manager.save()
                     logger.info('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
                                                                         ckpt_save_path))
@@ -300,9 +301,9 @@ class Transformer(tf.keras.Model):
 
             # print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
 
-            # early stopping
-            if all([val_accuracy > best_val_accuracy for val_accuracy in val_acc_list[-5:]]):
-                break
+            # # early stopping
+            # if all([val_accuracy > best_val_accuracy for val_accuracy in val_acc_list[-5:]]):
+            #     break
 
     @tf.function(input_signature=[tf.TensorSpec(shape=(None, None), dtype=tf.int32),
                                   tf.TensorSpec(shape=(None, None), dtype=tf.int32), ])
