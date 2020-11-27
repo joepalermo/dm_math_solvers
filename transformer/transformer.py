@@ -364,11 +364,13 @@ class Transformer(tf.keras.Model):
 
     def inspect_inference(self, input_batch, target_batch, logger, num_to_inspect=1):
         for i in range(num_to_inspect):
-            first_inp = input_batch[i-1: i]
+            first_inp = input_batch[i: i+1]
             first_target = target_batch[i]
             first_output, _ = self.inference(first_inp)
-            logger.info("pred: " + decode(first_output, self.idx2char))
-            logger.info("targ: " + decode(first_target, self.idx2char))
+            logger.info("question: " + decode(first_inp[0], self.idx2char))
+            logger.info("answer  : " + decode(first_target, self.idx2char))
+            logger.info("output  : " + decode(first_output, self.idx2char))
+            print()
 
     def get_validation_metrics(self, val_ds):
         metrics_dict = {'accuracy': [], 'loss': []}

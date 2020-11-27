@@ -1,7 +1,8 @@
 import glob
 import numpy as np
 from utils import recreate_dirpath, read_text_file
-from preprocessing import load_tokenizers
+from preprocessing import load_tokenizers, load_train, build_train_and_val_datasets
+from transformer.params import TransformerParams
 
 
 def decode(tokens, idx2char):
@@ -41,6 +42,14 @@ def decode_and_match_first(paired_filepaths, idx2char):
         assert decoded_line == line, f"decoded line: {decoded_line} != line: {line}, from {preprocessed_fp} and {raw_fp}"
 
 
+def inspect_batch(input_batch, target_batch, idx2char, num_to_inspect=1):
+    for i in range(num_to_inspect):
+        first_inp = input_batch[i: i + 1]
+        first_target = target_batch[i]
+        print("question: ", "".join(decode(first_inp[0], idx2char)))
+        print("answer  : ", "".join(decode(first_target, idx2char)))
+
+
 # get preprocessed filepaths
 preprocessed_file_pattern = 'output/train_easy_preprocessed/*'
 preprocessed_filepaths = glob.glob(preprocessed_file_pattern)
@@ -54,5 +63,14 @@ paired_filepaths = [(preprocessed_fp, matching_filepath(preprocessed_fp, raw_fil
 tokenizer_dirpath = 'output/tokenizers'
 char2idx, idx2char = load_tokenizers(tokenizer_dirpath)
 
-# test
-decode_and_match_first(paired_filepaths, idx2char)
+# # test
+# decode_and_match_first(paired_filepaths, idx2char)
+
+# test tf dataset
+q_train, a_train = load_train('easy', num_files_to_include=10)
+train_ds, val_ds = build_train_and_val_datasets(q_train, a_train, TransformerParams())
+for batch, (input_batch, target_batch) in enumerate(train_ds):
+    input_batch = input_batch.numpy()
+    target_batch = target_batch.numpy()
+    inspect_batch(input_batch, target_batch, idx2char, num_to_inspect=15)
+    break

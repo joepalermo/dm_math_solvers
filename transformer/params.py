@@ -21,11 +21,11 @@ class TransformerParams:
         self.end_token = 2
 
         self.num_examples = None
-        self.batch_size = 128
-        self.batches_per_inspection = 100
+        self.batch_size = 16
+        self.batches_per_inspection = 1
         self.min_epochs_until_checkpoint = 1
         self.num_epochs = 15
-        self.p_val = 0.01
+        self.p_val = 0.5
 
         self.learning_rate = 6e-4
         self.max_context = 160
