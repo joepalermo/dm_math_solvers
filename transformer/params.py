@@ -15,14 +15,14 @@ class TransformerParams:
         self.questions_max_length = 160
         self.answer_max_length = 32
         self.predicted_output_length = self.answer_max_length - 1
-        self.vocab_size = 64
+        self.vocab_size = 72
         self.padding_token = 0
         self.start_token = 1
         self.end_token = 2
 
-        self.num_examples = 1200000
+        self.num_examples = None
         self.batch_size = 128
-        self.batches_per_inspection = 1000
+        self.batches_per_inspection = 100
         self.min_epochs_until_checkpoint = 1
         self.num_epochs = 15
         self.p_val = 0.01

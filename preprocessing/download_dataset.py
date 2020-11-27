@@ -15,4 +15,14 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
 
 
 if __name__ == '__main__':
-    download_blob('jpalermo', 'mathematics_dataset-v1.0.tar.gz', 'mathematics_dataset-v1.0.tar.gz')
+    # download_blob('jpalermo', 'mathematics_dataset-v1.0.tar.gz', 'mathematics_dataset-v1.0.tar.gz')
+    download_blob('jpalermo', 'tokenizers/char2idx.json',
+                  'output/tokenizers/char2idx.json')
+    download_blob('jpalermo', 'tokenizers/char2idx.pkl',
+                  'output/tokenizers/char2idx.pkl')
+    download_blob('jpalermo', 'tokenizers/idx2char.pkl',
+                  'output/tokenizers/idx2char.pkl')
+    download_blob('jpalermo', 'train_easy_preprocessed/arithmetic__add_or_sub_questions.npy',
+                  'output/train_easy_preprocessed/arithmetic__add_or_sub_questions.npy')
+    download_blob('jpalermo', 'train_easy_preprocessed/arithmetic__add_or_sub_answers.npy',
+                  'output/train_easy_preprocessed/arithmetic__add_or_sub_answers.npy')
