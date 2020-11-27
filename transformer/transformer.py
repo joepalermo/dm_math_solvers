@@ -263,7 +263,7 @@ class Transformer(tf.keras.Model):
             for batch, (input_batch, target_batch) in enumerate(train_ds):
                 probs_batch = self.train_step(input_batch, target_batch)
                 preds_batch = tf.argmax(probs_batch, axis=-1, output_type=tf.int32)
-                accuracy = self.accuracy(target_batch, preds_batch)
+                accuracy = self.accuracy(target_batch[:,1:], preds_batch)
                 self.train_accuracy(accuracy)
                 accuracy_list.append(accuracy)
                 if batch % self.params.batches_per_inspection == 0:
@@ -283,13 +283,13 @@ class Transformer(tf.keras.Model):
                 self.val_accuracy(val_accuracy)
                 logger.info(f'Validation Accuracy: {val_accuracy}, Validation Loss: {val_loss}')
                 val_acc_list.append(val_accuracy)
-                if val_loss < best_val_loss:
-                    best_val_loss = val_loss
-                    logger.info(f'Saving on batch {batch}')
-                    logger.info(f'New best validation loss: {best_val_loss}')
-                    ckpt_save_path = ckpt_manager.save()
-                    logger.info('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
-                                                                        ckpt_save_path))
+                # if val_loss < best_val_loss:
+                #     best_val_loss = val_loss
+                #     logger.info(f'Saving on batch {batch}')
+                #     logger.info(f'New best validation loss: {best_val_loss}')
+                #     ckpt_save_path = ckpt_manager.save()
+                #     logger.info('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
+                #                                                         ckpt_save_path))
                 with self.val_summary_writer.as_default():
                     tf.summary.scalar('val_loss', self.val_loss.result(), step=epoch_i)
                     tf.summary.scalar('val_accuracy', self.val_accuracy.result(), step=epoch_i)
@@ -377,7 +377,7 @@ class Transformer(tf.keras.Model):
             if input_batch.shape[0] < self.params.batch_size:
                 continue
             preds_batch, probs_batch, _ = self.batch_inference(input_batch)
-            accuracy = self.accuracy(target_batch, preds_batch)
+            accuracy = self.accuracy(target_batch[:,1:], preds_batch)
             loss = self.loss_function(target_batch[:,1:], probs_batch)
             metrics_dict['accuracy'].append(accuracy)
             metrics_dict['loss'].append(loss)
@@ -395,7 +395,7 @@ class Transformer(tf.keras.Model):
         padding_mask = tf.sequence_mask(lengths=first_padding_positions, maxlen=self.params.answer_max_length - 1,
                                         dtype=tf.int32)
         preds_to_compare = preds * padding_mask
-        targets_to_compare = target_batch[:, 1:] * padding_mask
+        targets_to_compare = target_batch * padding_mask
         # Compare row-by-row for exact match between preds / true target sequences
         correct_pred_mask = tf.reduce_all(tf.equal(preds_to_compare, targets_to_compare), axis=1)
         accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]

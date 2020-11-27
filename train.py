@@ -20,7 +20,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = params.gpu_id
 if __name__ == '__main__':
     logger = get_logger('validation', params.experiment_dir)
     logger.info("Logging to {}".format(params.experiment_dir))
-    q_train, a_train = load_train('easy')
+    q_train, a_train = load_train('single')
     train_ds, val_ds = build_train_and_val_datasets(q_train, a_train, TransformerParams())
     model = Transformer(params)
     model.train(params, train_ds, val_ds, logger)
