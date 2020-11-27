@@ -6,8 +6,9 @@ current_time = dt.now().strftime('%Y%m%d_%H_%M-')
 
 class TransformerParams:
     def __init__(self):
-        # self.experiment_dir = os.path.join('experiment_results', '20201120_11_38-transformer_testing')
         self.experiment_dir = os.path.join('experiment_results', current_time + 'transformer_testing')
+        # self.experiment_dir = os.path.join('experiment_results', '20201120_11_38-transformer_testing')
+        # self.experiment_dir = os.path.join('./experiment_results/reference')
         self.checkpoint_dir = os.path.join(self.experiment_dir, 'checkpoints')
         self.tb_logdir = os.path.join(self.experiment_dir, 'tensorboard')
         self.gpu_id = "0"
@@ -20,12 +21,12 @@ class TransformerParams:
         self.start_token = 1
         self.end_token = 2
 
-        self.num_examples = None
-        self.batch_size = 512
+        self.num_examples = 100000
+        self.batch_size = 128
         self.batches_per_inspection = 100
         self.min_epochs_until_checkpoint = 1
         self.num_epochs = 15
-        self.p_val = 0.01
+        self.p_val = 0.1
 
         self.learning_rate = 6e-4
         self.max_context = 160

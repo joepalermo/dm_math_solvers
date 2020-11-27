@@ -250,7 +250,6 @@ class Transformer(tf.keras.Model):
         if ckpt_manager.latest_checkpoint:
             ckpt.restore(ckpt_manager.latest_checkpoint)
             print('Latest checkpoint restored!!')
-
         val_acc_list = []
         best_val_accuracy = 0
         best_val_loss = np.inf
@@ -279,7 +278,7 @@ class Transformer(tf.keras.Model):
 
             # at end of some epochs run validation metrics
             if epoch_i % self.params.min_epochs_until_checkpoint == 0:
-                val_accuracy, val_loss = self.get_validation_metrics(val_ds)
+                val_accuracy, val_loss = self.get_validation_metrics(val_ds, logger)
                 self.val_loss(val_loss)
                 self.val_accuracy(val_accuracy)
                 logger.info(f'Validation Accuracy: {val_accuracy}, Validation Loss: {val_loss}')
@@ -372,7 +371,7 @@ class Transformer(tf.keras.Model):
             logger.info("output  : " + decode(first_output, self.idx2char))
             print()
 
-    def get_validation_metrics(self, val_ds):
+    def get_validation_metrics(self, val_ds, logger):
         metrics_dict = {'accuracy': [], 'loss': []}
         for batch, (input_batch, target_batch) in enumerate(val_ds):
             if input_batch.shape[0] < self.params.batch_size:
@@ -382,6 +381,8 @@ class Transformer(tf.keras.Model):
             loss = self.loss_function(target_batch[:,1:], probs_batch)
             metrics_dict['accuracy'].append(accuracy)
             metrics_dict['loss'].append(loss)
+        logger.info("inspecting validation inference: ")
+        self.inspect_inference(input_batch, target_batch, logger, num_to_inspect=3)
         accuracy = sum(metrics_dict['accuracy'])/len(metrics_dict['accuracy'])
         loss = sum(metrics_dict['loss'])/len(metrics_dict['loss'])
         return accuracy, loss
