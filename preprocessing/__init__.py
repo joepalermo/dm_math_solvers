@@ -116,10 +116,12 @@ def load_train(mode, num_files_to_include=None, verbose=True):
         train_file_pattern = 'output/train*'
     elif mode == 'single':
         train_file_pattern = 'output/train_easy_preprocessed/arithmetic__add_or_sub*'
+    # extract filepaths
     train_filepaths = glob.glob(train_file_pattern)
     paired_filepaths = get_paired_filepaths(train_filepaths)
     if num_files_to_include is not None:
         paired_filepaths = paired_filepaths[:num_files_to_include]
+    # load each set of paired files
     all_q = list()
     all_a = list()
     for q_filepath, a_filepath in tqdm(paired_filepaths):
@@ -127,8 +129,14 @@ def load_train(mode, num_files_to_include=None, verbose=True):
         a = np.load(a_filepath).astype(np.int32)
         all_q.append(q)
         all_a.append(a)
+    # concatenate all
     q = np.concatenate(all_q, axis=0)
     a = np.concatenate(all_a, axis=0)
+    # shuffle
+    idxs = np.arange(len(q))
+    np.random.shuffle(idxs)
+    q = q[idxs]
+    a = a[idxs]
     if verbose:
         print("questions: ", q.shape)
         print("answers: ", a.shape)

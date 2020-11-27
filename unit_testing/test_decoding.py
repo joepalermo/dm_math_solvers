@@ -67,7 +67,7 @@ char2idx, idx2char = load_tokenizers(tokenizer_dirpath)
 # decode_and_match_first(paired_filepaths, idx2char)
 
 # test tf dataset
-q_train, a_train = load_train('easy', num_files_to_include=10)
+q_train, a_train = load_train('easy', num_files_to_include=2)
 train_ds, val_ds = build_train_and_val_datasets(q_train, a_train, TransformerParams())
 for batch, (input_batch, target_batch) in enumerate(train_ds):
     input_batch = input_batch.numpy()
