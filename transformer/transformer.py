@@ -206,6 +206,7 @@ class Transformer(tf.keras.Model):
         # Training loop config
         self.learning_rate = CustomSchedule(params.d_model)
         self.optimizer = tf.keras.optimizers.Adam(self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+        self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
         self.train_loss = tf.keras.metrics.Mean(name='train_loss')
         self.train_accuracy = tf.keras.metrics.Mean('train_accuracy')
         self.val_loss = tf.keras.metrics.Mean('val_loss')
@@ -222,6 +223,10 @@ class Transformer(tf.keras.Model):
         val_log_dir = 'logs/gradient_tape/' + current_time + '/val'
         self.train_summary_writer = tf.summary.create_file_writer(train_log_dir)
         self.val_summary_writer = tf.summary.create_file_writer(val_log_dir)
+
+        # setup checkpointing
+        ckpt = tf.train.Checkpoint(transformer=self, optimizer=self.optimizer)
+        self.ckpt_manager = tf.train.CheckpointManager(ckpt, params.checkpoint_dir, max_to_keep=5)
 
     def call(self, inp, tar, training, enc_padding_mask, look_ahead_mask, dec_padding_mask):
 
@@ -241,15 +246,14 @@ class Transformer(tf.keras.Model):
 
         return tf.reduce_mean(loss_)
 
-    def train(self, params, train_ds, val_ds, logger):
-        self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
-        checkpoint_path = params.checkpoint_dir
+    def load_latest_checkpoint(self):
+        '''if a checkpoint exists, restore the latest checkpoint'''
         ckpt = tf.train.Checkpoint(transformer=self, optimizer=self.optimizer)
-        ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
-        # if a checkpoint exists, restore the latest checkpoint.
-        if ckpt_manager.latest_checkpoint:
-            ckpt.restore(ckpt_manager.latest_checkpoint)
-            print('Latest checkpoint restored!!')
+        if self.ckpt_manager.latest_checkpoint:
+            ckpt.restore(self.ckpt_manager.latest_checkpoint)
+            print('Latest checkpoint restored')
+
+    def train(self, params, train_ds, val_ds, logger):
         val_acc_list = []
         best_val_accuracy = 0
         best_val_loss = np.inf
@@ -283,13 +287,13 @@ class Transformer(tf.keras.Model):
                 self.val_accuracy(val_accuracy)
                 logger.info(f'Validation Accuracy: {val_accuracy}, Validation Loss: {val_loss}')
                 val_acc_list.append(val_accuracy)
-                # if val_loss < best_val_loss:
-                #     best_val_loss = val_loss
-                #     logger.info(f'Saving on batch {batch}')
-                #     logger.info(f'New best validation loss: {best_val_loss}')
-                #     ckpt_save_path = ckpt_manager.save()
-                #     logger.info('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
-                #                                                         ckpt_save_path))
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    logger.info(f'Saving on batch {batch}')
+                    logger.info(f'New best validation loss: {best_val_loss}')
+                    ckpt_save_path = self.ckpt_manager.save()
+                    logger.info('Saving checkpoint for epoch {} at {}'.format(epoch_i + 1,
+                                                                        ckpt_save_path))
                 with self.val_summary_writer.as_default():
                     tf.summary.scalar('val_loss', self.val_loss.result(), step=epoch_i)
                     tf.summary.scalar('val_accuracy', self.val_accuracy.result(), step=epoch_i)
@@ -400,6 +404,18 @@ class Transformer(tf.keras.Model):
         correct_pred_mask = tf.reduce_all(tf.equal(preds_to_compare, targets_to_compare), axis=1)
         accuracy = tf.reduce_sum(tf.cast(correct_pred_mask, dtype=tf.int32)) / tf.shape(correct_pred_mask)[0]
         return accuracy
+
+    def raw_inference(self, input_string):
+        encoding = encode(input_string, self.char2idx)
+        output, _ = self.inference(np.expand_dims(encoding, 0))
+        return decode(output, self.idx2char)
+
+
+def encode(input_string, char2idx):
+    encoded_input = [char2idx[char] for char in input_string]
+    padded_input = encoded_input + [0 for _ in range(160-len(encoded_input))]
+    return np.array(padded_input)
+
 
 def decode(encoding, idx2char):
     return "".join([idx2char[idx] for idx in encoding.numpy() if idx not in [0,1,2]])

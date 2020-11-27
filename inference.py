@@ -2,8 +2,6 @@ import tensorflow as tf
 import numpy as np
 import os
 import argparse
-from utils import get_logger
-from preprocessing import load_train, build_train_and_val_datasets
 from transformer.params import TransformerParams
 from transformer.transformer import Transformer
 
@@ -18,10 +16,7 @@ params = TransformerParams()
 os.environ['CUDA_VISIBLE_DEVICES'] = params.gpu_id
 
 if __name__ == '__main__':
-    logger = get_logger('validation', params.experiment_dir)
-    logger.info("Logging to {}".format(params.experiment_dir))
-    q_train, a_train = load_train('single')
-    train_ds, val_ds = build_train_and_val_datasets(q_train, a_train, TransformerParams())
     model = Transformer(params)
     model.load_latest_checkpoint()
-    model.train(params, train_ds, val_ds, logger)
+    output = model.raw_inference("what is 2 + 2?")
+    print(output)
