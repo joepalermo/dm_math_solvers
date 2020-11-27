@@ -14,11 +14,11 @@ def decode(tokens, idx2char):
 
 def matching_filepath(preprocessed_fp, raw_filepaths):
     preprocessed_identifier = '_'.join(preprocessed_fp.split('/')[-1].split('_')[:-1])
-    print(preprocessed_identifier)
     for raw_fp in raw_filepaths:
-        if preprocessed_identifier in raw_fp:
+        raw_fn = raw_fp.split('/')[-1]
+        if preprocessed_identifier + '.txt' == raw_fn:
             return raw_fp
-    raise Exception("missing raw filepath")
+    raise Exception(f"missing filepath: {preprocessed_fp}")
 
 
 # TODO: use pytest
@@ -37,15 +37,16 @@ def decode_and_match_first(paired_filepaths, idx2char):
         else:
             raise Exception("must be Q or A")
         line = "".join(tokens)
-        assert decoded_line == line, f"decoded line: {decoded_line} != line: {line}"
+        print(decoded_line, '==?', line)
+        assert decoded_line == line, f"decoded line: {decoded_line} != line: {line}, from {preprocessed_fp} and {raw_fp}"
 
 
 # get preprocessed filepaths
-preprocessed_file_pattern = 'output/preprocessed/*'
+preprocessed_file_pattern = 'output/train_easy_preprocessed/*'
 preprocessed_filepaths = glob.glob(preprocessed_file_pattern)
 
 # get corresponding raw filepaths
-raw_filepaths = glob.glob('mathematics_dataset-v1.0/train*/*.txt')
+raw_filepaths = glob.glob('mathematics_dataset-v1.0/train-easy/*.txt')
 paired_filepaths = [(preprocessed_fp, matching_filepath(preprocessed_fp, raw_filepaths))
                     for preprocessed_fp in preprocessed_filepaths]
 
