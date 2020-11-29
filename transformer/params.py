@@ -32,8 +32,8 @@ class TransformerParams:
         self.is_training = True
         self.embedding_dim = 512
         self.d_model = 512
-        self.num_heads = 4
-        self.dff = 512
+        self.num_heads = 8
+        self.dff = 2048
         self.ffn_expansion = 4
         self.dropout = 0.1
         self.attention_dropout = 0.05
