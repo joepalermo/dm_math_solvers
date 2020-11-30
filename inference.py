@@ -19,4 +19,3 @@ if __name__ == '__main__':
     model = Transformer(params)
     model.load_latest_checkpoint()
     output = model.raw_inference("what is 11 + 99?")
-    print(output)

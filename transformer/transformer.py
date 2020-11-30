@@ -219,14 +219,14 @@ class Transformer(tf.keras.Model):
 
         # tensorboard writers
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
-        val_log_dir = 'logs/gradient_tape/' + current_time + '/val'
+        train_log_dir = f'{self.experiment_dirpath}/gradient_tape/{current_time}/train'
+        val_log_dir = f'{self.experiment_dirpath}/gradient_tape/{current_time}/val'
         self.train_summary_writer = tf.summary.create_file_writer(train_log_dir)
         self.val_summary_writer = tf.summary.create_file_writer(val_log_dir)
 
         # setup checkpointing
         ckpt = tf.train.Checkpoint(transformer=self, optimizer=self.optimizer)
-        self.ckpt_manager = tf.train.CheckpointManager(ckpt, params.checkpoint_dir, max_to_keep=5)
+        self.ckpt_manager = tf.train.CheckpointManager(ckpt, params.checkpoints_dirpath, max_to_keep=5)
 
     def call(self, inp, tar, training, enc_padding_mask, look_ahead_mask, dec_padding_mask):
 

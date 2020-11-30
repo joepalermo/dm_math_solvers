@@ -6,13 +6,13 @@ current_time = dt.now().strftime('%Y%m%d_%H_%M-')
 
 class TransformerParams:
     def __init__(self):
-        self.experiment_dir = os.path.join('experiment_results', current_time + 'transformer_testing')
-        # self.experiment_dir = os.path.join('./experiment_results/reference')
-        self.checkpoint_dir = os.path.join(self.experiment_dir, 'checkpoints')
-        # self.checkpoint_dir = 'models'
+        self.experiment_dirpath = os.path.join('experiment_results', current_time + 'transformer_testing')
+        # self.experiment_dirpath = os.path.join('./experiment_results/reference')
+        self.checkpoints_dirpath = os.path.join(self.experiment_dirpath, 'checkpoints')
+        # self.checkpoints_dirpath = 'models'
 
         self.gpu_id = "0"
-        self.tb_logdir = os.path.join(self.experiment_dir, 'tensorboard')
+        self.tb_logdir = os.path.join(self.experiment_dirpath, 'tensorboard')
 
         self.questions_max_length = 160
         self.answer_max_length = 32

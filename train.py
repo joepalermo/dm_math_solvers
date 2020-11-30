@@ -18,8 +18,8 @@ params = TransformerParams()
 os.environ['CUDA_VISIBLE_DEVICES'] = params.gpu_id
 
 if __name__ == '__main__':
-    logger = get_logger('validation', params.experiment_dir)
-    logger.info("Logging to {}".format(params.experiment_dir))
+    logger = get_logger('validation', params.experiment_dirpath)
+    logger.info("Logging to {}".format(params.experiment_dirpath))
     module_name_to_arrays = load_train('easy', num_files_to_include=10)
     train_ds, module_name_to_val_ds = build_train_and_val_datasets(module_name_to_arrays, TransformerParams())
     model = Transformer(params)
