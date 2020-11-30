@@ -9,8 +9,10 @@ class TransformerParams:
         self.experiment_dir = os.path.join('experiment_results', current_time + 'transformer_testing')
         # self.experiment_dir = os.path.join('./experiment_results/reference')
         self.checkpoint_dir = os.path.join(self.experiment_dir, 'checkpoints')
-        self.tb_logdir = os.path.join(self.experiment_dir, 'tensorboard')
+        # self.checkpoint_dir = 'models'
+
         self.gpu_id = "0"
+        self.tb_logdir = os.path.join(self.experiment_dir, 'tensorboard')
 
         self.questions_max_length = 160
         self.answer_max_length = 32
@@ -20,7 +22,7 @@ class TransformerParams:
         self.start_token = 1
         self.end_token = 2
 
-        self.num_examples = 2000000
+        self.downsample = 0.1
         self.batch_size = 256
         self.batches_per_inspection = 100
         self.min_epochs_until_checkpoint = 1
@@ -37,4 +39,4 @@ class TransformerParams:
         self.ffn_expansion = 4
         self.dropout = 0.1
         self.attention_dropout = 0.05
-        self.num_layers = 1  # Todo: split this into encoder and decoder layers
+        self.num_layers = 2  # Todo: split this into encoder and decoder layers

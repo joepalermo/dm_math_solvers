@@ -97,7 +97,7 @@ def get_max_question_and_answer_length(input_filepaths):
 
 
 def get_paired_filepaths(filepaths):
-    '''return list of tuples that are (question,answer) pairs'''
+    '''return list of tuples that are (question, answer) pairs'''
     identifier_dict = dict()
     for fp in filepaths:
         identifier = "_".join(fp.split('/')[-1].split('_')[:-1])
@@ -107,6 +107,40 @@ def get_paired_filepaths(filepaths):
             identifier_dict[identifier].append(fp)
             identifier_dict[identifier] = tuple(sorted(identifier_dict[identifier], reverse=True))
     return list(identifier_dict.values())
+
+
+# def load_train(mode, num_files_to_include=None, verbose=True):
+#     if mode == 'easy':
+#         train_file_pattern = 'output/train_easy_preprocessed/*.npy'
+#     elif mode == 'all':
+#         train_file_pattern = 'output/train*'
+#     elif mode == 'single':
+#         train_file_pattern = 'output/train_easy_preprocessed/arithmetic__add_or_sub*'
+#     # extract filepaths
+#     train_filepaths = glob.glob(train_file_pattern)
+#     paired_filepaths = get_paired_filepaths(train_filepaths)
+#     if num_files_to_include is not None:
+#         paired_filepaths = paired_filepaths[:num_files_to_include]
+#     # load each set of paired files
+#     all_q = list()
+#     all_a = list()
+#     for q_filepath, a_filepath in tqdm(paired_filepaths):
+#         q = np.load(q_filepath).astype(np.int32)
+#         a = np.load(a_filepath).astype(np.int32)
+#         all_q.append(q)
+#         all_a.append(a)
+#     # concatenate all
+#     q = np.concatenate(all_q, axis=0)
+#     a = np.concatenate(all_a, axis=0)
+#     # shuffle
+#     idxs = np.arange(len(q))
+#     np.random.shuffle(idxs)
+#     q = q[idxs]
+#     a = a[idxs]
+#     if verbose:
+#         print("questions: ", q.shape)
+#         print("answers: ", a.shape)
+#     return q, a
 
 
 def load_train(mode, num_files_to_include=None, verbose=True):
@@ -122,38 +156,39 @@ def load_train(mode, num_files_to_include=None, verbose=True):
     if num_files_to_include is not None:
         paired_filepaths = paired_filepaths[:num_files_to_include]
     # load each set of paired files
-    all_q = list()
-    all_a = list()
-    for q_filepath, a_filepath in tqdm(paired_filepaths):
-        q = np.load(q_filepath).astype(np.int32)
-        a = np.load(a_filepath).astype(np.int32)
-        all_q.append(q)
-        all_a.append(a)
-    # concatenate all
-    q = np.concatenate(all_q, axis=0)
-    a = np.concatenate(all_a, axis=0)
-    # shuffle
-    idxs = np.arange(len(q))
-    np.random.shuffle(idxs)
-    q = q[idxs]
-    a = a[idxs]
-    if verbose:
-        print("questions: ", q.shape)
-        print("answers: ", a.shape)
-    return q, a
+    module_name_to_arrays = dict()
+    for questions_filepath, answers_filepath in tqdm(paired_filepaths):
+        questions = np.load(questions_filepath).astype(np.int32)
+        answers = np.load(answers_filepath).astype(np.int32)
+        module_name = questions_filepath.split('/')[-1].split('_questions')[0]
+        module_name_to_arrays[module_name] = {'questions': questions, 'answers': answers}
+    return module_name_to_arrays
 
 
-def build_train_and_val_datasets(q_train, a_train, params):
-    if params.num_examples is not None:
-        num_examples = params.num_examples
-    else:
-        num_examples = len(q_train)
-    num_train = int((1-params.p_val) * num_examples)
-    num_val = num_examples - num_train
-    assert num_examples == num_train + num_val
-    dataset = tf.data.Dataset.from_tensor_slices((q_train, a_train)).take(num_examples)
-    train_ds = dataset.take(num_train).shuffle(num_train).batch(params.batch_size) \
-        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    val_ds = dataset.skip(num_train).batch(params.batch_size) \
-        .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    return train_ds, val_ds
+def build_train_and_val_datasets(module_name_to_arrays, params):
+    '''train_ds contains examples from all modules and val_ds_dict is a mapping from module_name to the val
+    examples for that module'''
+    module_name_to_val_ds = dict()
+    all_train_questions = list()
+    all_train_answers = list()
+    for module_name in module_name_to_arrays:
+        questions = module_name_to_arrays[module_name]['questions']
+        answers = module_name_to_arrays[module_name]['answers']
+        if params.downsample < 1:
+            num_to_select = int(len(questions)*params.downsample)
+            questions = questions[:num_to_select]
+            answers = answers[:num_to_select]
+        num_examples = len(questions)
+        num_train = int((1 - params.p_val) * num_examples)
+        train_questions, val_questions = questions[:num_train], questions[num_train:]
+        train_answers, val_answers = answers[:num_train], answers[num_train:]
+        all_train_questions.append(train_questions)
+        all_train_answers.append(train_answers)
+        val_ds = tf.data.Dataset.from_tensor_slices((val_questions, val_answers)) \
+                                .batch(params.batch_size).prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        module_name_to_val_ds[module_name] = val_ds
+    train_questions = np.concatenate(all_train_questions)
+    train_answers = np.concatenate(all_train_answers)
+    train_ds = tf.data.Dataset.from_tensor_slices((train_questions, train_answers)).shuffle(num_train) \
+                              .batch(params.batch_size).prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    return train_ds, module_name_to_val_ds
