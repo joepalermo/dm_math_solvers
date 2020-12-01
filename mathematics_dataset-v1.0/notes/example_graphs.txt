@@ -1,4 +1,4 @@
-Calculate the highest common divisor of 1300 and 300.
+Calculate the highest common divisor of f[1300] and f[300].
 hcd(arg1, arg2)
 arg1 <- 1300
 arg2 <- 300
@@ -70,7 +70,7 @@ arg9 <- c**2 + c - 6
 Let o(v) = 77*v + 1. Let b(l) = 155*l + 2. Suppose 4*c - 25 = -c. Let a(u) = c*o(u) - 3*b(u). Is a(-4) composite?
 is_composite(arg1)
 arg1 <- evaluate_function(arg2, arg3)
-arg2 <- a(u)
+arg2 <- ...
 arg3 <- -4
 
 What is next in 85, 84, 83, 82?
