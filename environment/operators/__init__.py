@@ -1,5 +1,6 @@
 import re
 
+
 def append(ls, value):
     if not ls:
         return [value]
@@ -8,7 +9,10 @@ def append(ls, value):
         return ls
 
 
-def add_keypair(mapping, key, value):
+def add_keypair(mapping, key, value=None):
+    if value is None:
+        key, value = key.split('=')
+        key, value = key.strip(), value.strip()
     if not mapping:
         return {key: value}
     else:
@@ -48,7 +52,9 @@ def apply_mapping(expression, mapping):
     return expression
 
 
-print(function_application('f(x) = x + x**3', 'f(2)'))
+def make_equality(expression1, expression2):
+    return f"{expression1} = {expression2}"
+
 
 # arithmetic -------------------------------------
 

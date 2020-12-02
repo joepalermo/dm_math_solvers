@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from environment.operators.solve_linsys import extract_coefficients, solve_linsys
-from environment.operators import add_key_pair
+from environment.operators import add_keypair
 
 
 class Test(unittest.TestCase):
@@ -34,6 +34,9 @@ class Test(unittest.TestCase):
         # multiple of same coefficients
         assert extract_coefficients('2*x + 1 = - x + y - 4') == {'x': 3, 'y': -1, None: -5}
 
+        # float coefficients
+        assert extract_coefficients('2.0*x = 2') == {'x': 2, None: 2}
+
     def test_solve_linsys(self):
         system = 'x = 1'
         assert solve_linsys(system) == {'x': 1}
@@ -60,12 +63,16 @@ class Test(unittest.TestCase):
         system = ['x + 2*y - 3*z = 1', '3*x - 2*y + z = 2', '-x + 2*y - 2*z = 3']
         self.assertRaises(np.linalg.LinAlgError, solve_linsys, system)
 
-        system = ['0 = 4*b + b + 15']
+        system = '0 = 4*b + b + 15'
         assert solve_linsys(system) == {'b': -3}
 
         system = ['0 = 4*f - 0*t - 4*t - 4', '-4*f + t = -13']
         assert solve_linsys(system) == {'t': 3.0, 'f': 4.0}
 
+        # system with floating point coefficients
+        system = '-15 = 3*c + 2.0*c'
+        assert solve_linsys(system) == {'c': -3}
+
     def test_key_pair(self):
-        assert add_key_pair(None, 'x', 2) == {'x': 2}
-        assert add_key_pair(add_key_pair(None, 'x', 2), 'y', 3) == {'x': 2, 'y': 3}
+        assert add_keypair(None, 'x', 2) == {'x': 2}
+        assert add_keypair(add_keypair(None, 'x', 2), 'y', 3) == {'x': 2, 'y': 3}

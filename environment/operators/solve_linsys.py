@@ -1,5 +1,6 @@
 import re
 import numpy as np
+from environment.utils import is_numeric
 
 
 def extract_coefficients(linear_equation):
@@ -9,7 +10,7 @@ def extract_coefficients(linear_equation):
     '''
     # component pattern matches a single component of a linear equation (e.g. -1 or 3*x or -t*2, etc...)
     equality_index = linear_equation.index('=')
-    component_pattern = '[\+|-]?[a-zA-Z0-9\s]*\*?[a-zA-Z0-9\s]*'
+    component_pattern = '[\+|-]?[.a-zA-Z0-9\s]*\*?[.a-zA-Z0-9\s]*'
     components = list()
     # iterate through all non-empty matches
     for match in [m for m in re.finditer(component_pattern, linear_equation) if len(m.group(0).strip()) > 0]:
@@ -29,14 +30,14 @@ def extract_coefficients(linear_equation):
         # identify the coefficient and the variable (apply sign)
         if '*' in component['term_without_sign']:
             t1,t2 = component['term_without_sign'].split('*')
-            if t1.isnumeric():
+            if is_numeric(t1):
                 component['coefficient'] = component['sign'] * float(t1)
                 component['variable'] = t2
             else:
                 component['coefficient'] = component['sign'] * float(t2)
                 component['variable'] = t1
         else:
-            if component['term_without_sign'].isnumeric():
+            if is_numeric(component['term_without_sign']):
                 component['coefficient'] = component['sign'] * float(component['term_without_sign'])
                 component['variable'] = None
             else:

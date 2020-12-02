@@ -1,16 +1,5 @@
 algebra__linear_1d_composed: 
 Let n(m) = m**3 - 7*m**2 + 13*m - 2. Let j be n(4). Solve 0 = 3*x + j*x + 10 for x.
-lin_sys(arg1, arg2)
-arg1 <- apply_var_assignment(arg3, arg4)
-arg2 <- x
-arg3 <- 0 = 3*x + j*x + 10
-arg4 <- add_keypair(arg5, arg6, arg7)
-arg5 <- nil
-arg6 <- j
-arg7 <- function_application(arg8,arg9)
-arg8 <- n(m) = m**3 - 7*m**2 + 13*m - 2
-arg9 <- n(4)
-
 Let p(k) = 2*k**2 + k - 2. Let t be p(-3). Suppose -f - t = -5*n, n + 0*n + 4*f = 11. Solve n = o - 2 for o.
 Suppose 0 = 5*y + 51 - 6. Let w = 17 + y. Suppose 0 = -3*b + w*b - 20. Solve b = -0*c - 2*c for c.
 Suppose -k - 2*w - 17 = 0, 0 = 4*k + 2*w + 30 + 8. Let f = 11 + k. Suppose f = 10*c - 6*c. Solve -c - 7 = -4*d for d.
