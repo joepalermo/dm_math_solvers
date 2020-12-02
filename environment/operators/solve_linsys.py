@@ -7,57 +7,56 @@ def extract_coefficients(linear_equation):
     :param linear_equation:
     :return: dict mapping symbol to coefficient
     '''
-    def extract_signs(expression):
-        signs = list()
-        for token in expression:
-            if token == '-':
-                signs.append('-')
-            elif token == '+':
-                signs.append('+')
-        return signs
-    linear_equation = linear_equation.strip()
-    # extract signs of each component
-    lhs, rhs = linear_equation.split('=')
-    lhs = lhs.strip()
-    rhs = rhs.strip()
-    lhs_first_sign = '-' if lhs[0] == '-' else '+'
-    rhs_first_sign = '-' if rhs[0] == '-' else '+'
-    rest_of_lhs_signs = extract_signs(lhs[1:])
-    rest_of_rhs_signs = extract_signs(rhs[1:])
-    lhs_signs = [lhs_first_sign] + rest_of_lhs_signs
-    rhs_signs = [rhs_first_sign] + rest_of_rhs_signs
-    signs = lhs_signs + rhs_signs
-    # split out sign information and extract cofficients for variables
-    components = [c for c in re.split('\+|-|=', linear_equation) if not c.isspace() and len(c) > 0]
-    assert len(signs) == len(components)
+    # component pattern matches a single component of a linear equation (e.g. -1 or 3*x or -t*2, etc...)
+    equality_index = linear_equation.index('=')
+    component_pattern = '[\+|-]?[a-zA-Z0-9\s]*\*?[a-zA-Z0-9\s]*'
+    components = list()
+    # iterate through all non-empty matches
+    for match in [m for m in re.finditer(component_pattern, linear_equation) if len(m.group(0).strip()) > 0]:
+        component = dict()
+        component['term'] = match.group(0).strip()
+        component['side'] = 'lhs' if match.start(0) < equality_index else 'rhs'
+        # identify the sign
+        if component['term'][0] == '-':
+            component['sign'] = -1
+            component['term_without_sign'] = component['term'][1:].strip()
+        elif component['term'][0] == '+':
+            component['sign'] = 1
+            component['term_without_sign'] = component['term'][1:].strip()
+        else:
+            component['sign'] = 1
+            component['term_without_sign'] = component['term']
+        # identify the coefficient and the variable (apply sign)
+        if '*' in component['term_without_sign']:
+            t1,t2 = component['term_without_sign'].split('*')
+            if t1.isnumeric():
+                component['coefficient'] = component['sign'] * float(t1)
+                component['variable'] = t2
+            else:
+                component['coefficient'] = component['sign'] * float(t2)
+                component['variable'] = t1
+        else:
+            if component['term_without_sign'].isnumeric():
+                component['coefficient'] = component['sign'] * float(component['term_without_sign'])
+                component['variable'] = None
+            else:
+                component['coefficient'] = component['sign'] * 1
+                component['variable'] = component['term_without_sign']
+        components.append(component)
     coefficients = dict()
-    for i, component in enumerate(components):
-        split_component = component.split('*')
-        split_component = [c.strip() for c in split_component]
-        if len(split_component) == 1:
-            if split_component[0].isnumeric():
-                # component is just a number
-                variable = 'null'
-                coefficient = int(split_component[0])
-            else:
-                # component is just a variable (coefficient is 1)
-                variable = split_component[0]
-                coefficient = 1
+    for component in components:
+        # flip sign if appropriate (based on side)
+        if (component['side'] == 'rhs' and component['variable'] is not None) or \
+           (component['side'] == 'lhs' and component['variable'] is None):
+            component['side_adjusted_coefficient'] = -component['coefficient']
         else:
-            # component is coefficient*variable
-            if split_component[0].isnumeric() and split_component[1].isalpha():
-                variable = split_component[1]
-                coefficient = int(split_component[0])
-            # component is variable*coefficient
-            else:
-                variable = split_component[0]
-                coefficient = int(split_component[1])
-        if signs[i] == '-':
-            coefficient = -coefficient
-        if variable not in coefficients:
-            coefficients[variable] = [coefficient]
+            component['side_adjusted_coefficient'] = component['coefficient']
+        # build a dictionary that maps variables to a list of coefficients to be aggregated
+        if component['variable'] not in coefficients:
+            coefficients[component['variable']] = [component['side_adjusted_coefficient']]
+
         else:
-            coefficients[variable].append(coefficient)
+            coefficients[component['variable']].append(component['side_adjusted_coefficient'])
     # aggregate coefficients
     return {variable: sum(coefficients[variable]) for variable in coefficients}
 
@@ -73,7 +72,7 @@ def solve_linsys(system):
         rows = list()
         for coefficients in all_coefficients:
             rows.append([coefficients.get(var, 0) for var in ordered_variables])
-        target_vector = [coefficients.get('null', 0) for coefficients in all_coefficients]
+        target_vector = [coefficients.get(None, 0) for coefficients in all_coefficients]
         return np.array(rows), np.array(target_vector)
 
     if type(system) == str:
@@ -84,7 +83,7 @@ def solve_linsys(system):
         coefficients = extract_coefficients(linear_equation)
         all_coefficients.append(coefficients)
         variables.extend(list(coefficients.keys()))
-    ordered_variables = list(set(variables) - set(['null']))
+    ordered_variables = list(set(variables) - set([None]))
     coefficient_matrix, target_vector = setup_linear_system(all_coefficients, ordered_variables)
     solution = np.linalg.solve(coefficient_matrix, target_vector)
     return {symbol: solution[i] for i, symbol in enumerate(ordered_variables)}
