@@ -1,5 +1,5 @@
 algebra__linear_1d: 
-Solve 0 = 4*b + b + 15 for b.
+Solve  for b.
 Solve -3*d = -0*d + 3 for d.
 Solve -4*h + 9 = 41 for h.
 Solve 2514*m = 2508*m - 24 for m.
