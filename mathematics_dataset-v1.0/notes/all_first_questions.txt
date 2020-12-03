@@ -1,0 +1,2011 @@
+train-easy/algebra__linear_1d.txt: 
+Solve 0 = 4*b + b + 15 for b.
+	-3
+Solve -3*d = -0*d + 3 for d.
+	-1
+Solve -4*h + 9 = 41 for h.
+	-8
+Solve 2514*m = 2508*m - 24 for m.
+	-4
+Solve -7*a + 6*a = 4 for a.
+	-4
+
+train-easy/algebra__linear_1d_composed.txt: 
+Let w be (-1 + 13)*3/(-6). Let b = w - -6. Let i = 2 - b. Solve -15 = 3*c + i*c for c.
+	-3
+Suppose -c + 4*v + 2 = -24, -4*c - 3*v + 9 = 0. Solve 2*b - c = -b for b.
+	2
+Let v(k) = k**3 + k**2 - k - 3. Let d be v(0). Let a be ((-15)/2)/d*4. Let x = a + -8. Solve -3 + 11 = x*p for p.
+	4
+Let i(l) = l**2 - 2*l + 4. Let n be i(4). Let p be ((-2)/(-3))/((-4)/(-18)). Suppose 2*o = -p*y + 24, 4 = y + 5*o - 4. Solve n = 4*d - y for d.
+	5
+Suppose 3*i = -2*i + 10. Let p be (-3)/(-4) - 294/(-56). Solve -i*u - 20 = -p*u for u.
+	5
+
+train-easy/algebra__linear_2d.txt: 
+Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f.
+	4
+Solve 5*a = -2*h + 15, 0 = -2*h + 6*a - 2*a - 12 for h.
+	0
+Solve 2*k + 14 = 2*j, -7*k - 4*j + 24 = -9*k for k.
+	-2
+Solve -2*o - 3*w = 13, 0*o - 4*o - 5*w = 21 for o.
+	1
+Solve -16 = 4*d - 4, 3*o = 4*d + 3 for o.
+	-3
+
+train-easy/algebra__linear_2d_composed.txt: 
+Suppose 2*y + 12 = 6*y. Suppose y = f - 15. Solve -8 = -4*w, -3*d - 4*w + f = -8*d for d.
+	-2
+Let l(v) = -v**3 + 12*v**2 + 13*v + 2. Let r(q) = -2*q + 5. Let c be r(-4). Let y be l(c). Solve -w + 2 = -3*s - 8, s + 1 = -y*w for s.
+	-3
+Suppose 0 = f + 1, 17*f = 5*w + 12*f - 15. Suppose -3*s + 2 = -13. Suppose s*c + 3*j = 36, 3*c + 0*j - 18 = -3*j. Solve 20 = a - 5*z, -2*a + c = -w*z - 7 for a.
+	5
+Let n = 1 - -2. Let x = -5 - -11. Let t be 3/(x*(-1)/(-44)). Solve -5*q - k = -q - t, -5*k + 25 = n*q for q.
+	5
+Let z(n) = -n + 1. Let p be z(0). Let s = p - -5. Suppose 4 = s*u - 4*u. Solve -2 = u*h + 2*a - 3*a, a + 4 = 0 for h.
+	-3
+
+train-easy/algebra__polynomial_roots.txt: 
+Solve -3*h**2/2 - 24*h - 45/2 = 0 for h.
+	-15, -1
+Factor -n**2/3 - 25*n - 536/3.
+	-(n + 8)*(n + 67)/3
+Let c**3/9 - 11*c**2/3 + 35*c - 75 = 0. What is c?
+	3, 15
+What is f in -87616*f**2 - 1776*f - 9 = 0?
+	-3/296
+Find s such that 9*s**4 - 8958*s**3 - 14952*s**2 - 2994*s + 2991 = 0.
+	-1, 1/3, 997
+
+train-easy/algebra__polynomial_roots_composed.txt: 
+Let d = -25019/90 - -278. Let v(j) be the third derivative of 0 + 1/27*j**3 - d*j**5 + 1/54*j**4 + 3*j**2 + 0*j. Suppose v(o) = 0. What is o?
+	-1/3, 1
+Let g be 2 - (0 - (-1 - -1)). Determine q so that -q**4 - 6*q**2 + 0*q**4 - 3 + g - 4*q - 4*q**3 = 0.
+	-1
+Let d(k) be the first derivative of -1 - 4/3*k**3 + 0*k + 1/2*k**2. Find z such that d(z) = 0.
+	0, 1/4
+Let r(l) be the third derivative of l**8/336 - l**7/105 + l**6/120 - 6*l**2. Suppose r(n) = 0. Calculate n.
+	0, 1
+Let s(w) be the second derivative of w**6/15 - 3*w**5/10 + w**4/6 + w**3 - 2*w**2 + 12*w. Factor s(m).
+	2*(m - 2)*(m - 1)**2*(m + 1)
+
+train-easy/algebra__sequence_next_term.txt: 
+What is next in 85, 84, 83, 82?
+	81
+What comes next: 50, 19, -24, -85, -170, -285, -436, -629?
+	-870
+What is the next term in -363, -368, -383, -414, -467, -548, -663?
+	-818
+What is next in 3257, 6514, 9771?
+	13028
+What comes next: 13, 14, 11, 4, -7?
+	-22
+
+train-easy/algebra__sequence_nth_term.txt: 
+What is the k'th term of 485, 472, 459, 446?
+	-13*k + 498
+What is the c'th term of 362, 746, 1144, 1562, 2006, 2482, 2996?
+	c**3 + c**2 + 374*c - 14
+What is the b'th term of 178, 367, 566, 775, 994?
+	5*b**2 + 174*b - 1
+What is the p'th term of -57, -53, -49?
+	4*p - 61
+What is the g'th term of 314, 312, 310, 308, 306?
+	-2*g + 316
+
+train-easy/arithmetic__add_or_sub.txt: 
+What is -5 - 110911?
+	-110916
+What is -0.188 + -0.814?
+	-1.002
+Sum 259 and -46.
+	213
+Sum -10 and -52539.
+	-52549
+What is the difference between -2 and 251860?
+	251862
+
+train-easy/arithmetic__add_or_sub_in_base.txt: 
+In base 2, what is -100 + -1001100?
+	-1010000
+In base 13, what is 7a79 - -5?
+	7a81
+In base 12, what is -5aa - 8?
+	-5b6
+In base 13, what is -8b - -3?
+	-88
+In base 14, what is 4 + 473?
+	477
+
+train-easy/arithmetic__add_sub_multiple.txt: 
+What is 1 + -9 - -5 - -1?
+	-2
+-2 + 0 + (3 - 1)
+	0
+Calculate 8 - (0 + 7 + -4).
+	5
+What is the value of (-19 - -12) + (-6 - -5) - -15?
+	7
+Evaluate (2 + -8 - -2) + -120 + 129.
+	5
+
+train-easy/arithmetic__div.txt: 
+What is -280 divided by -10?
+	28
+-107 divided by -1
+	107
+Calculate -4 divided by 3.
+	-4/3
+Calculate -378 divided by 4.
+	-189/2
+What is 56508 divided by 4?
+	14127
+
+train-easy/arithmetic__mixed.txt: 
+15 + (7 + -17)/1
+	5
+10/(-60) + 14/(-24)
+	-3/4
+Calculate 12/198 - 600/99.
+	-6
+Evaluate (-16)/(-5) - 4/1.
+	-4/5
+174/203*14/(-3)
+	-4
+
+train-easy/arithmetic__mul.txt: 
+Work out 4 * 4.45.
+	17.8
+What is the product of -0.4301 and -0.4?
+	0.17204
+Calculate -0.2*0.57.
+	-0.114
+Work out -1.7 * 8.
+	-13.6
+100.7*0.5
+	50.35
+
+train-easy/arithmetic__mul_div_multiple.txt: 
+(-29)/(-87)*(-18)/(-10)
+	3/5
+What is (-5)/20*-16*2/(-4)?
+	-2
+What is the value of (-2*4/(-72))/(1/(-2))?
+	-2/9
+What is 51/85*((-5)/(-18))/1?
+	1/6
+Evaluate (-28)/21*(-9)/2.
+	6
+
+train-easy/arithmetic__nearest_integer_root.txt: 
+What is the square root of 664 to the nearest integer?
+	26
+What is the third root of 144446 to the nearest integer?
+	52
+What is 1699 to the power of 1/6, to the nearest integer?
+	3
+What is the cube root of 2748 to the nearest integer?
+	14
+What is 57335 to the power of 1/2, to the nearest integer?
+	239
+
+train-easy/arithmetic__simplify_surd.txt: 
+Simplify (0 + (sqrt(1008) + sqrt(1008) + 1)*-4)**2.
+	768*sqrt(7) + 64528
+Simplify ((1 + sqrt(45) - sqrt(5)) + (sqrt(405)*-2 - sqrt(5)))**2 + -4.
+	-34*sqrt(5) + 1442
+Simplify (sqrt(288)/sqrt(8))/sqrt(12) - (-4 + 2*sqrt(3)).
+	-sqrt(3) + 4
+Simplify ((0 + sqrt(3) + 1 + 6*(sqrt(3) - (sqrt(3)*-2 - sqrt(3))))*4)**2.
+	800*sqrt(3) + 30016
+Simplify 6*-4*-2*(sqrt(539) + -1 - sqrt(539)).
+	-48
+
+train-easy/calculus__differentiate.txt: 
+Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d.
+	8*d**3 - 70*d
+Find the third derivative of -a**3*g**3*t**3 + 642*a**3*g*t**3 + 16*a**3*g*t**2 - 5*a**2*t**2 + a*g**3 wrt t.
+	-6*a**3*g**3 + 3852*a**3*g
+What is the second derivative of 12518*f**3 + 3760*f?
+	75108*f
+What is the third derivative of -t**4 - 880*t**3 + 152*t**2 wrt t?
+	-24*t - 5280
+What is the second derivative of 2*c*n**2*z**3 + 30*c*n**2 + 2*c*n*z**2 - 2*c + n**2*z**2 - 3*n*z**3 - 2*n*z wrt n?
+	4*c*z**3 + 60*c + 2*z**2
+
+train-easy/calculus__differentiate_composed.txt: 
+Let h(t) = t**3 + t**2 + 1. Let v(d) = 6*d**3 + 24*d**2 + 4. Let w(j) = 4*h(j) - v(j). What is the third derivative of w(x) wrt x?
+	-12
+Let v = -7 - -12. Suppose 0 = 2*h - 3*x - 16 - 5, 0 = -v*h + 3*x + 30. What is the first derivative of 5*t - h - t + 0 - 2*t wrt t?
+	2
+Let b(y) be the second derivative of -3*y**8/56 - y**4/6 - y. What is the third derivative of b(o) wrt o?
+	-360*o**3
+Let t(y) = -y**3 - y**2 + y - 2. Let l be t(0). Let d be l/(-4) + 14/4. What is the second derivative of 2*p**d + p + 2*p + 0*p wrt p?
+	24*p**2
+Let o(g) be the first derivative of -g**6/5 + 3*g**2 - 8*g + 2. Let u(f) be the first derivative of o(f). Differentiate u(z) wrt z.
+	-24*z**3
+
+train-easy/comparison__closest.txt: 
+Which is the closest to -1/3?  (a) -8/7  (b) 5  (c) -1.3
+	a
+Which is the nearest to 27/5?  (a) 0.4  (b) 0.2  (c) -0.5  (d) -0.1
+	a
+Which is the closest to -4/17?  (a) 4/7  (b) -42/11  (c) 2
+	a
+What is the closest to 19 in -1/6, -1, 2/3?
+	2/3
+Which is the nearest to -15?  (a) 15/7  (b) -5  (c) 0.5
+	b
+
+train-easy/comparison__closest_composed.txt: 
+Let q = -54.3 + 54. Suppose 0 = -5*z - 8 - 7. Which is the nearest to -1/5?  (a) 5  (b) z  (c) q
+	c
+Let d(j) = -j**3 - 5*j**2 - 4*j + 1. Let n be d(-4). Suppose -5*h = 2*i - 2*h + n, 0 = i + 5*h - 10. What is the nearest to 0 in 1/3, i, -2?
+	1/3
+Let f = -2.31 + 0.31. What is the nearest to f in 0.3, -2, 0.2?
+	-2
+Let z = -1.9 - 0.1. Let m = 50.1 - 50. Which is the closest to m?  (a) -0.2  (b) z  (c) -4
+	a
+Let z(r) = r**3 - 13*r**2 + r - 14. Let q be z(13). Let c = -43/39 - -10/13. What is the closest to 0.1 in 1, q, c?
+	c
+
+train-easy/comparison__kth_biggest.txt: 
+Which is the smallest value?  (a) 2/13  (b) 5  (c) 0.7
+	a
+Which is the third smallest value?  (a) 6  (b) 0.2  (c) -2  (d) 5  (e) -0.054
+	b
+Which is the biggest value?  (a) -0.05  (b) -2685  (c) 1
+	c
+What is the fourth smallest value in -78, -3/2, 2/9, 5?
+	5
+Which is the fifth smallest value?  (a) -2/13  (b) 1/8  (c) -0.1  (d) -1/5  (e) -2/87
+	b
+
+train-easy/comparison__kth_biggest_composed.txt: 
+Let f be 4/22 - 20/(-11). Suppose s = -0*s + 4*n + 12, 0 = -n - f. Which is the second smallest value?  (a) -0.2  (b) s  (c) 2/7
+	c
+Let s = 1.5 + -1.5. Suppose 0 = p + p + 8. Which is the third biggest value?  (a) s  (b) -5  (c) p
+	b
+Let r = 1 - -4. Let u be (-3 - -1)*3/(-2). Suppose -r*s - u = -4*s. Which is the third biggest value?  (a) -0.3  (b) 2/11  (c) s
+	c
+Let w = -10 + 6. Let g = -29/49 + 1/49. Which is the third biggest value?  (a) w  (b) 1  (c) g
+	a
+Let q be (-1)/2*(-5 - 3). What is the fourth biggest value in 1, q, -4, -5?
+	-5
+
+train-easy/comparison__pair.txt: 
+Is -939/2 equal to -470?
+	False
+Is 0.1 < 374?
+	True
+Is 123 at most 1590/13?
+	False
+Is -1 greater than or equal to -199/7?
+	True
+Is -11/49 < 0.2?
+	True
+
+train-easy/comparison__pair_composed.txt: 
+Let o = -788/3 - -260. Which is bigger: -0.1 or o?
+	-0.1
+Let r = 4 + -2. Which is greater: r or 0.09?
+	r
+Let q = 17 - 18. Let v be (2 + q)*12/(-16). Is v > -1?
+	True
+Let m(h) = -h**3 + 10*h**2 - 6*h + 13. Let y be m(9). Let j be (-4425)/y - 6/(-8). Let f = -110 - j. Which is bigger: f or -1?
+	f
+Let w = 16 - 7. Do w and 10 have the same value?
+	False
+
+train-easy/comparison__sort.txt: 
+Put -534, 4, 3 in descending order.
+	4, 3, -534
+Put 3, -5, -3, 13 in increasing order.
+	-5, -3, 3, 13
+Put 21, 2/15, 26 in descending order.
+	26, 21, 2/15
+Put 3, 11, 4, -4 in decreasing order.
+	11, 4, 3, -4
+Put 2, -298, 4 in decreasing order.
+	4, 2, -298
+
+train-easy/comparison__sort_composed.txt: 
+Suppose 0 = -4*x + 8*x - 40. Let h(i) = i**2 - 9*i - 14. Let n be h(x). Sort -1, 4, n.
+	n, -1, 4
+Let g = 1 + 2. Let a = 0.95 - -0.05. Put a, g, -1 in descending order.
+	g, a, -1
+Let m be (-7)/56 - (-1)/(-8). Sort m, 0, -4 in descending order.
+	0, m, -4
+Suppose 0 = -a + 3*b - 2*b - 3, 3*a = -5*b + 23. Sort a, 4, 25.
+	a, 4, 25
+Let m = 23.4 - 19. Sort m, 5, -3 in descending order.
+	5, m, -3
+
+train-easy/measurement__conversion.txt: 
+How many micrometers are there in twenty-one quarters of a millimeter?
+	5250
+What is fourty-three halves of a meter in millimeters?
+	21500
+Convert 7.49573mg to grams.
+	0.00749573
+What is 0.2266777 grams in tonnes?
+	0.0000002266777
+What is 0.9633691 nanograms in micrograms?
+	0.0009633691
+
+train-easy/measurement__time.txt: 
+What is 481 minutes after 7:26 PM?
+	3:27 AM
+What is 552 minutes before 2:16 AM?
+	5:04 PM
+What is 715 minutes before 3:55 PM?
+	4:00 AM
+What is 274 minutes after 4:32 PM?
+	9:06 PM
+How many minutes are there between 3:51 PM and 8:43 PM?
+	292
+
+train-easy/numbers__base_conversion.txt: 
+What is 3 (base 11) in base 5?
+	3
+Convert -23 (base 7) to base 13.
+	-14
+1 (base 15) to base 14
+	1
+What is 1 (base 2) in base 4?
+	1
+40 (base 9) to base 16
+	24
+
+train-easy/numbers__div_remainder.txt: 
+Calculate the remainder when 93 is divided by 59.
+	34
+What is the remainder when 779 is divided by 223?
+	110
+What is the remainder when 1862 is divided by 16?
+	6
+What is the remainder when 813 is divided by 24?
+	21
+What is the remainder when 164 is divided by 85?
+	79
+
+train-easy/numbers__div_remainder_composed.txt: 
+Suppose 3*x + 197 = 4*x. Calculate the remainder when x is divided by 33.
+	32
+Suppose -106 = -2*u + s, u - 40 = -5*s + 13. Calculate the remainder when u is divided by 14.
+	11
+Let x = -41 - -20. Let t = x + 27. Calculate the remainder when t is divided by 4.
+	2
+Let w be (-92)/(-22) - 4/22. Suppose -w*j + 116 = -0*j. What is the remainder when j is divided by ((-6)/(-8))/(3/60)?
+	14
+Let a be 72/(-27) + 2/(-6). Let i(p) = 2*p**2 + 2*p - 3. What is the remainder when i(a) is divided by 4?
+	1
+
+train-easy/numbers__gcd.txt: 
+Calculate the highest common divisor of 1300 and 300.
+	100
+Calculate the greatest common factor of 11130 and 6.
+	6
+What is the greatest common divisor of 352 and 3454?
+	22
+Calculate the greatest common divisor of 17 and 272.
+	17
+Calculate the highest common divisor of 11711 and 49.
+	49
+
+train-easy/numbers__gcd_composed.txt: 
+Let q be (25 + 1)/2 - (5 + -3). What is the highest common divisor of q and 99?
+	11
+Let n(j) = 5*j**3 - j**2 + 2*j - 1. Let u be 7/9 - 6/(-27). Let v be n(u). Calculate the greatest common factor of 1 and v.
+	1
+Let f be (-6)/5*(-360)/(-27). Suppose -5*k - 5*a = -335, 0*k = 4*k + 3*a - 271. Let p = k + f. Calculate the greatest common factor of p and 6.
+	6
+Let y = 37 + -31. Calculate the highest common divisor of y and 12.
+	6
+Suppose 39 = -2*d + 5*d. What is the greatest common factor of d and 52?
+	13
+
+train-easy/numbers__is_factor.txt: 
+Is 15 a factor of 720?
+	True
+Does 11 divide 1973?
+	False
+Is 347 a multiple of 3?
+	False
+Does 28 divide 1204?
+	True
+Is 17 a factor of 3594?
+	False
+
+train-easy/numbers__is_factor_composed.txt: 
+Suppose 3*n = -0*x - 3*x + 93, -2*n - 2 = 0. Does 12 divide x?
+	False
+Is 1330/(-28)*4/(-2) a multiple of 19?
+	True
+Is 3 - (1344/(-10) + 2/5) a multiple of 36?
+	False
+Let y = -97 - -163. Is 19 a factor of y?
+	False
+Let z be (-3)/1 - (-6 + -2). Does 7 divide z/(10/6) - -11?
+	True
+
+train-easy/numbers__is_prime.txt: 
+Is 93163 a prime number?
+	False
+Is 29179 prime?
+	True
+Is 323431 a prime number?
+	False
+Is 5939 prime?
+	True
+Is 1454 prime?
+	False
+
+train-easy/numbers__is_prime_composed.txt: 
+Let o(v) = 77*v + 1. Let b(l) = 155*l + 2. Suppose 4*c - 25 = -c. Let a(u) = c*o(u) - 3*b(u). Is a(-4) composite?
+	True
+Let j = -5 - 28. Is j/6*(-1 - 13) a composite number?
+	True
+Suppose 0 = -j - 4*a + 611, 4*j + a - 1468 = 1051. Is j prime?
+	True
+Let a(h) = h**2 - 9*h - 6. Let u be a(10). Suppose -25 = -u*y - 9. Suppose -5*n = -20, -n + 224 = y*j + 4*n. Is j composite?
+	True
+Let u = 319 + 684. Is u composite?
+	True
+
+train-easy/numbers__lcm.txt: 
+Calculate the smallest common multiple of 351 and 141.
+	16497
+Calculate the common denominator of -29/936 and -115/48.
+	1872
+Calculate the common denominator of 79/195 and 113/60.
+	780
+What is the lowest common multiple of 12 and 20?
+	60
+Calculate the common denominator of -3/40 and 57/1652.
+	16520
+
+train-easy/numbers__lcm_composed.txt: 
+Suppose -3*z + 133 = 4*n - 10, 5*n = 25. Let l = -21 + z. Let r = l + -11. Calculate the least common multiple of 7 and r.
+	63
+Calculate the common denominator of 1/(3/(-6)) - 402/(-60) and -71/12.
+	60
+What is the smallest common multiple of (-4)/12*(-20 - -2) and 4?
+	12
+Let k = -22 + 46. Suppose -k + 8 = -4*f. What is the smallest common multiple of f and 3?
+	12
+Find the common denominator of 41/2 and 3 + (180/(-16))/(-3).
+	4
+
+train-easy/numbers__list_prime_factors.txt: 
+What are the prime factors of 329?
+	7, 47
+What are the prime factors of 2250?
+	2, 3, 5
+What are the prime factors of 7380?
+	2, 3, 5, 41
+What are the prime factors of 6792?
+	2, 3, 283
+List the prime factors of 32253.
+	3, 13, 827
+
+train-easy/numbers__list_prime_factors_composed.txt: 
+Let k(w) = -w**2 + 13*w - 4. What are the prime factors of k(6)?
+	2, 19
+Let w(x) = x**2 + 10*x + 24. List the prime factors of w(-11).
+	5, 7
+Let x(m) = m**3 + 6*m**2 - 7*m + 4. Let k be x(-7). Suppose g + 4*u = -12, 3*u = -0*g - k*g + 4. What are the prime factors of g?
+	2
+Let v(d) = d - 4. Let m be v(5). Let q(j) be the third derivative of 2*j**5/15 + j**4/24 - j**3/6 - 3*j**2. What are the prime factors of q(m)?
+	2
+Suppose 3*f = 0, -4*f - 12 = -4*l - 3*f. Let p(k) = -5*k - 2*k - 4 + 2*k + l. What are the prime factors of p(-1)?
+	2
+
+train-easy/numbers__place_value.txt: 
+What is the hundreds digit of 31253?
+	2
+What is the units digit of 8196?
+	6
+What is the ten thousands digit of 37118?
+	3
+What is the hundreds digit of 1229?
+	2
+What is the units digit of 834?
+	4
+
+train-easy/numbers__place_value_composed.txt: 
+Suppose -55 = -8*l + 3*l. Let k = l + -7. What is the units digit of k?
+	4
+Let t(p) = p**3 - 3*p**2 - 4*p + 2. Let a be t(4). Suppose 2*f = a + 2. Let l = f - -12. What is the units digit of l?
+	4
+Suppose 5*j - 1126 + 331 = 0. What is the tens digit of j?
+	5
+What is the tens digit of (-392)/(-32) - (-1)/(-4)?
+	1
+Suppose 26 = -b + 4*j, -2*b + 3*j - 42 = b. Let q(h) = -h**2 - 11*h + 4. What is the units digit of q(b)?
+	4
+
+train-easy/numbers__round_number.txt: 
+What is -0.0006832 rounded to 5 decimal places?
+	-0.00068
+What is -1875400 rounded to the nearest 100000?
+	-1900000
+What is 0.000293695 rounded to 5 dps?
+	0.00029
+Round -460 to the nearest 100.
+	-500
+What is -0.0000055553 rounded to six decimal places?
+	-0.000006
+
+train-easy/numbers__round_number_composed.txt: 
+Let l(b) = -142004*b - 62917*b - 377393*b. Let d be l(-1). Let v = d - 262314. Round v to the nearest 100000.
+	300000
+Suppose 5*t - 2 = -7. Let z be -612*1 + (-2 - -3). Let c be t/(-4) + z/(-4). What is c rounded to the nearest ten?
+	150
+Let m = 1.5 - 7.5. Let z = m - -22. Let v = z + -16.00017. Round v to four decimal places.
+	-0.0002
+Let k = -13375 - -13315.128. Let n = 0.128 - k. Let x = -59.9942 + n. Round x to three dps.
+	0.006
+Let b be ((-2)/1 - -11)/1. Let c be (1500/b)/((-2)/(-46800)). What is c rounded to the nearest 1000000?
+	4000000
+
+train-easy/polynomials__add.txt: 
+Let i(u) be the first derivative of u - 7. Let t(c) = c**2 + c - 6. Let w be 0 + -14*2/2. Give w*i(x) - 2*t(x).
+	-2*x**2 - 2*x - 2
+Let q(m) = m**3 + 2. Let r(c) = -4*c**3 - 9. What is 18*q(f) + 4*r(f)?
+	2*f**3
+Let m(u) = 63*u**2 + 6. Let a(g) = -42*g**2 - 4. Calculate 8*a(x) + 5*m(x).
+	-21*x**2 - 2
+Let f(a) be the second derivative of 13*a**3/6 - 3*a**2/2 + 10*a. Let n(p) = 7*p - 2. Determine -4*f(m) + 7*n(m).
+	-3*m - 2
+Let t(v) = 285*v**2 + 75*v + 75. Let x(l) = 15*l**2 + 4*l + 4. Determine 4*t(k) - 75*x(k).
+	15*k**2
+
+train-easy/polynomials__coefficient_named.txt: 
+Express -41*c - 16*c**2 + 18*c + 25*c in the form q*c**2 + p*c + u and give p.
+	2
+Express -37 - f**3 + 70 + 26 as b + w*f**2 + x*f + y*f**3 and give b.
+	59
+Express (0*a + 0*a - 2*a)*(a - 2*a + 3*a) + 2*a**2 - 11*a**2 - a**2 + 5*a**2 + 2 + 0 - 3*a**2 in the form j + t*a**2 + m*a and give j.
+	2
+Express -4*v + v + 0 + 2 + (3 + 3 - 5)*(4*v + 2*v - 4*v) in the form c*v + m and give m.
+	2
+Express -1 + 20 - 1 - 2*r**3 - 3*r + 4*r in the form q*r + f*r**2 + v*r**3 + g and give g.
+	18
+
+train-easy/polynomials__collect.txt: 
+Collect the terms in -8 + w**3 - 31 - 27 + 66.
+	w**3
+Collect the terms in -84 + y**3 + 127 - 43.
+	y**3
+Collect the terms in 0*w - 7*w + 3*w.
+	-4*w
+Collect the terms in -20*h**3 - 18*h**3 + 148 + 40*h**3 - 148.
+	2*h**3
+Collect the terms in -4*f**2 + 3*f**2 - 8*f**2 - f**2.
+	-10*f**2
+
+train-easy/polynomials__compose.txt: 
+Let p = -3 - -6. Let w(d) = 0*d**2 + p*d**2 - 2*d**2 - 3*d**2. Let t(b) = -3*b. Give t(w(k)).
+	6*k**2
+Let m(s) = 7*s - 12. Let z(g) = -5*g**2. What is z(m(k))?
+	-245*k**2 + 840*k - 720
+Let w(q) = 2*q**2. Let v(x) be the first derivative of 0*x + 0*x**2 + 4/3*x**3 - 2. Determine v(w(p)).
+	16*p**4
+Let f(v) = 2*v**2. Let m(s) = 11*s + 2. Suppose 5*r - 36 = 3*r. Let w(b) = 45*b + 9. Let g(i) = r*m(i) - 4*w(i). Calculate g(f(j)).
+	36*j**2
+Let y(t) = -4126*t**2. Let d(x) = 2*x. What is d(y(n))?
+	-8252*n**2
+
+train-easy/polynomials__evaluate.txt: 
+Let i(h) = -7*h - 15. Determine i(-2).
+	-1
+Let k(u) = u**2 + u - 4. What is k(0)?
+	-4
+Let x(f) = -f - 19. Calculate x(9).
+	-28
+Let t(x) = -x**2 + 3*x - 3. Calculate t(3).
+	-3
+Let s(c) = -7*c**2 - 2. Determine s(-2).
+	-30
+
+train-easy/polynomials__evaluate_composed.txt: 
+Let w(b) = -2*b - 3. Suppose 0*j + 16 = -3*j - o, j + 3*o = 8. Let u = j - -5. What is w(u)?
+	1
+Let p(o) = 2*o**3 - 12*o**2 + 6*o - 5. Let i(m) = -m**3 + 6*m**2 - 3*m + 2. Let q be 82/12 - 2/(-12). Let f(s) = q*i(s) + 3*p(s). Determine f(5).
+	9
+Let l(r) be the third derivative of 3*r**6/40 - r**5/60 - 6*r**2. What is l(-1)?
+	-10
+Let d = -5 + 7. Let z(p) be the third derivative of 0 + 1/3*p**3 + p**2 - 1/24*p**4 - 1/120*p**6 + 1/30*p**5 + 0*p. Calculate z(d).
+	0
+Let j(p) be the third derivative of 1/30*p**5 + 2/3*p**3 + 9*p**2 - 7/24*p**4 + 0*p + 0. What is j(4)?
+	8
+
+train-easy/polynomials__expand.txt: 
+Expand (-s + s + 2*s**5)*(4 - 1 - 2) - 3*s**5 + 4*s**5 + 0*s**5 - 2*s**5 - s**5 + 5*s**5 + (3*s**2 - 4 + 4)*(5*s**3 - 5*s**3 - s**3).
+	2*s**5
+Expand (d**4 + 2*d**4 + 2*d - 2*d**4)*(0*d + d - 4*d).
+	-3*d**5 - 6*d**2
+Expand -2*y**4 + 2*y**4 - 2*y**5 + 5*y**5 - 3*y**5 - y**5 + (1 - 2*y**4 - 1)*(-2*y + 2*y - 2*y) - 13*y - 8*y**5 + 13*y.
+	-5*y**5
+Expand ((4 + 1 - 6)*(-7 + 1 + 4) - 3 + 3 + 2 - 5 + 2 + 1 + 2 - 3 - 4)*(-r**3 + 4*r**3 - r**3) + r**2 - r**2 - r**3.
+	-7*r**3
+Expand (5 - 5 - 11)*(-4 + 4 + 2*y**2).
+	-22*y**2
+
+train-easy/polynomials__simplify_power.txt: 
+Simplify r**(1/9)/r**(-16) assuming r is positive.
+	r**(145/9)
+Simplify t**4/t**(-1/5) assuming t is positive.
+	t**(21/5)
+Simplify ((h/(h/(h*h**(-3/7)/h)))/h)/(h*(h**14*h)/h) assuming h is positive.
+	h**(-115/7)
+Simplify (j**(-2/7))**(-3)*(j/(j*j**(-1/4)))**41 assuming j is positive.
+	j**(311/28)
+Simplify (w/(w**(-2/13)/w)*w*w)/(w/(w*w/(w**(-4/5)*w)*w)) assuming w is positive.
+	w**(387/65)
+
+train-easy/probability__swr_p_level_set.txt: 
+What is prob of picking 1 b and 1 p when two letters picked without replacement from tpppbbpbbb?
+	4/9
+What is prob of picking 1 p and 1 y when two letters picked without replacement from {y: 1, p: 2, z: 1, n: 2}?
+	2/15
+Four letters picked without replacement from {y: 6, b: 1, u: 4}. What is prob of picking 2 y and 2 u?
+	3/11
+What is prob of picking 1 u and 1 a when two letters picked without replacement from {a: 1, u: 8, w: 4, j: 2}?
+	8/105
+Calculate prob of picking 2 i, 1 e, and 1 s when four letters picked without replacement from siiiisesszzsisisi.
+	21/340
+
+train-easy/probability__swr_p_sequence.txt: 
+What is prob of sequence ccbc when four letters picked without replacement from nnscspb?
+	0
+Three letters picked without replacement from {g: 3, w: 1, t: 7, u: 3}. Give prob of sequence tuw.
+	1/104
+Three letters picked without replacement from dxaxxaaxxxaax. What is prob of sequence aad?
+	5/429
+Calculate prob of sequence rsp when three letters picked without replacement from pogpphggsrpogs.
+	1/273
+Calculate prob of sequence bc when two letters picked without replacement from {b: 4, c: 3}.
+	2/7train-medium/algebra__linear_1d.txt: 
+Solve 24 = 1601*c - 1605*c for c.
+	-6
+Solve 657 = -220*t + 1086*t + 22307 for t.
+	-25
+Solve -11*y - 263*y + 3162 = -88*y for y.
+	17
+Solve 0 = -11*b - 4148 + 4225 for b.
+	7
+Solve 65*l - 361 + 881 = 0 for l.
+	-8
+
+train-medium/algebra__linear_1d_composed.txt: 
+Let n(m) = m**3 - 7*m**2 + 13*m - 2. Let j be n(4). Solve 0 = 3*x + j*x + 10 for x.
+	-2
+Let p(k) = 2*k**2 + k - 2. Let t be p(-3). Suppose -f - t = -5*n, n + 0*n + 4*f = 11. Solve n = o - 2 for o.
+	5
+Suppose 0 = 5*y + 51 - 6. Let w = 17 + y. Suppose 0 = -3*b + w*b - 20. Solve b = -0*c - 2*c for c.
+	-2
+Suppose -k - 2*w - 17 = 0, 0 = 4*k + 2*w + 30 + 8. Let f = 11 + k. Suppose f = 10*c - 6*c. Solve -c - 7 = -4*d for d.
+	2
+Let b be 0*(-5)/25 - -2. Let y be b/(-3) - 220/(-60). Solve -y*v = v + 12 for v.
+	-3
+
+train-medium/algebra__linear_2d.txt: 
+Solve 273*o + 19 = 272*o - 2*t, -2*o + 5*t + 34 = 0 for o.
+	-3
+Solve -21 = -5*r - 782*n + 785*n, 4*r - 5*n = 22 for r.
+	3
+Solve 4*m + 4*j - 50 - 54 = -32, 3*j = 12 for m.
+	14
+Solve 3*k + 21*f + 11 = 26*f, 0 = 5*f - 5 for k.
+	-2
+Solve 5*i = -5*c + 33 - 68, c + 19 = -4*i for c.
+	-3
+
+train-medium/algebra__linear_2d_composed.txt: 
+Suppose -4*s - 124*v + 125*v = -9, -4 = -s + 2*v. Solve 3*q - s*n = -q, -n = 4*q + 12 for q.
+	-2
+Suppose -x + 5*r = -26, 5*x = 4*r + 9 + 37. Suppose -5*i - u = 17, 2*u - 16 = 4*i + x. Let j = i + 6. Solve j*v + q - 8 = 0, 0 = -q + 2*q for v.
+	4
+Let v = 21 - 15. Let l = 1131 - 1129. Solve d + k = v, 2*k - 22 = -l*d - 2*k for d.
+	1
+Let a(x) = 2*x - 64. Let n be a(32). Let l be n - -4*(3 + -3 + 1). Solve 4*u + 6 = 2*u + k, 3*u - l*k = -19 for u.
+	-1
+Let p = -196 - -198. Solve -p*c = -v + 3, -2*c + 6 = 3*v - 11 for v.
+	5
+
+train-medium/algebra__polynomial_roots.txt: 
+Factor 2*k**2/5 - 44598*k/5 + 44596/5.
+	2*(k - 22298)*(k - 1)/5
+Solve -3*w**3 + 1374*w**2 - 5433*w - 6810 = 0 for w.
+	-1, 5, 454
+Suppose 27*u**3 - 7329*u**2 = 0. Calculate u.
+	0, 2443/9
+Suppose -5*t**2 - 72845*t - 291300 = 0. Calculate t.
+	-14565, -4
+Let -2*g**3 - 448774*g**2 - 897542*g - 448770 = 0. Calculate g.
+	-224385, -1
+
+train-medium/algebra__polynomial_roots_composed.txt: 
+Let w(f) be the second derivative of -18*f + 0 + 0*f**4 + 0*f**6 + 0*f**2 + 1/84*f**7 + 0*f**5 + 0*f**3. Factor w(c).
+	c**5/2
+Suppose 0*l + 3*l - 5*u - 16 = 0, 3*u + 15 = 0. Let w(k) = k**2 + 2*k - 1. Let o be w(l). Factor 4*i + 2*i**3 + 2 - 2*i + 0*i + 6*i**o + 4*i.
+	2*(i + 1)**3
+Determine t so that -10*t - 5*t + 48*t + 5*t**2 + 7*t + 25*t = 0.
+	-13, 0
+Let c = 3272/5 - 652. Let l(z) = 2*z - 14. Let j be l(7). Factor 0 + j*v + 0*v**2 + 32/5*v**4 + 16/5*v**3 + c*v**5.
+	4*v**3*(v + 2)*(3*v + 2)/5
+Let y = 26 - 12. Suppose 8*t + 14 - y = 0. Solve 12/5*v**4 - 3*v**3 - 3/5*v**5 + 0 + 6/5*v**2 + t*v = 0.
+	0, 1, 2
+
+train-medium/algebra__sequence_next_term.txt: 
+What is next in -6525, -6520, -6515, -6510?
+	-6505
+What is the next term in 144, 519, 1132, 1989, 3096, 4459, 6084, 7977?
+	10144
+What comes next: -7219, -14438, -21643, -28828, -35987, -43114?
+	-50203
+What is next in -1019, -2032, -3039, -4040, -5035, -6024?
+	-7007
+What is the next term in 557, 1104, 1655, 2210, 2769, 3332?
+	3899
+
+train-medium/algebra__sequence_nth_term.txt: 
+What is the f'th term of 2298, 2334, 2372, 2412, 2454?
+	f**2 + 33*f + 2264
+What is the x'th term of 270044, 270043, 270044, 270047, 270052?
+	x**2 - 4*x + 270047
+What is the g'th term of -64, 495, 2286, 5921, 12012, 21171?
+	102*g**3 + 4*g**2 - 167*g - 3
+What is the i'th term of -13835, -13854, -13873?
+	-19*i - 13816
+What is the b'th term of -952, -937, -920, -901, -880, -857, -832?
+	b**2 + 12*b - 965
+
+train-medium/arithmetic__add_or_sub.txt: 
+Total of 0.06 and -1977321735.
+	-1977321734.94
+Add together 2 and 436273715.
+	436273717
+Calculate 4062037 + -0.07.
+	4062036.93
+What is the difference between -57 and -18192.801?
+	18135.801
+2.427689 - -30925
+	30927.427689
+
+train-medium/arithmetic__add_or_sub_in_base.txt: 
+In base 5, what is 10 - 3311121?
+	-3311111
+In base 10, what is -31 + 1347?
+	1316
+In base 4, what is -122300313 - -10?
+	-122300303
+In base 13, what is -89 - 2731?
+	-27ba
+In base 9, what is -3774 - 22?
+	-3806
+
+train-medium/arithmetic__add_sub_multiple.txt: 
+What is 12 + -24 + (-11 - -2)?
+	-21
+Evaluate 60 - ((36 - 34) + 33).
+	25
+Evaluate 0 - 0 - (14 + -58 + 39).
+	5
+What is -5 + (-2 - (-12 + -6)) - (-2 - -4)?
+	9
+What is the value of -21 + 5 + (10 - -14) + -18?
+	-10
+
+train-medium/arithmetic__div.txt: 
+Divide -57912 by -57.
+	1016
+What is 391404 divided by -6?
+	-65234
+What is 24626 divided by -12313?
+	-2
+Calculate 157 divided by -62.
+	-157/62
+388 divided by 387
+	388/387
+
+train-medium/arithmetic__mixed.txt: 
+Calculate (4/14)/(954/96831).
+	29
+What is the value of (9/6)/((-2247)/1712)?
+	-8/7
+Evaluate 2054/9243 + 22/36.
+	5/6
+Evaluate (5 + -1)/(6/12*8/31).
+	31
+What is the value of 2/(-30)*5*-6?
+	2
+
+train-medium/arithmetic__mul.txt: 
+What is 5 times 134945?
+	674725
+Multiply 0 and -169144.
+	0
+Multiply -9344 and 0.
+	0
+Multiply -0.04 and 994.
+	-39.76
+Product of -22.0003 and 4.
+	-88.0012
+
+train-medium/arithmetic__mul_div_multiple.txt: 
+What is the value of ((-26)/65)/(7/(-280))?
+	16
+What is the value of (-1603)/229*(-10)/7?
+	10
+Calculate 21/(-48)*10524/30695.
+	-3/20
+Evaluate (2088/18096)/((-3)/(-13)).
+	1/2
+Calculate (1/3)/(2620/(-786)).
+	-1/10
+
+train-medium/arithmetic__nearest_integer_root.txt: 
+What is 922996 to the power of 1/4, to the nearest integer?
+	31
+What is 1453426 to the power of 1/7, to the nearest integer?
+	8
+What is the cube root of 13146210 to the nearest integer?
+	236
+What is 26321 to the power of 1/2, to the nearest integer?
+	162
+What is the square root of 4852919 to the nearest integer?
+	2203
+
+train-medium/arithmetic__simplify_surd.txt: 
+Simplify 3 + (2*sqrt(27))**2 + 2 + (6*sqrt(48)/sqrt(4))**2.
+	545
+Simplify (sqrt(500) - (sqrt(500) + (sqrt(500) - 1*sqrt(500)*5))) + 2 + sqrt(500) + -5 + -4.
+	-7 + 50*sqrt(5)
+Simplify 5 + ((sqrt(21) + -1*sqrt(21))*4)/(3*sqrt(48)).
+	5
+Simplify (-1*sqrt(5929)*-4)/(4*(-3*sqrt(847) - sqrt(847))).
+	-sqrt(7)/4
+Simplify (((sqrt(304) + 1)*3 - (sqrt(38)/sqrt(2) + -4 - (sqrt(19)*-2*-6 - sqrt(19))))*-6)**2.
+	11088*sqrt(19) + 332820
+
+train-medium/calculus__differentiate.txt: 
+Differentiate -186089*h**2 - 122007 with respect to h.
+	-372178*h
+What is the first derivative of 388896*d**3 - 222232?
+	1166688*d**2
+Find the first derivative of -14*q**2 - 1003*q - 64537 wrt q.
+	-28*q - 1003
+Find the third derivative of -d*n**6 - 1787*d*n - 2*n**6 - 2007*n**3 + 17*n**2 wrt n.
+	-120*d*n**3 - 240*n**3 - 12042
+What is the second derivative of -d**2*t*z - 94817*d**2*z - d**2 + 87*d*t*z + 6*d*z - 4*t*z - 2 wrt d?
+	-2*t*z - 189634*z - 2
+
+train-medium/calculus__differentiate_composed.txt: 
+Let d(x) be the first derivative of 3*x**5/5 + x**4/2 - 103*x**2/2 + 104. Find the second derivative of d(q) wrt q.
+	36*q**2 + 12*q
+Suppose 6*m - c = 5*m + 6, c + 14 = 5*m. Suppose -m*d = 4*l - d - 12, 0 = 4*d - 16. What is the third derivative of 19*n**l - 2*n**4 - 2*n**4 - 30*n**2 wrt n?
+	-96*n
+Let u(l) be the first derivative of 383*l**3/3 + 225*l**2/2 + 313. Find the second derivative of u(f) wrt f.
+	766
+Let u(q) be the first derivative of -11*q**6/15 - 21*q**2/2 + 12*q - 15. Let k(w) be the first derivative of u(w). What is the first derivative of k(r) wrt r?
+	-88*r**3
+Let a(v) = 5*v + 27. Let k be a(-5). What is the second derivative of -37*j**2 - 31*j**k + 36*j**2 + 3*j + 4*j wrt j?
+	-64
+
+train-medium/comparison__closest.txt: 
+Which is the nearest to -1/4?  (a) 2/15  (b) 1/2  (c) 4.1  (d) 3
+	a
+What is the nearest to 5/13 in 0.47, 1, 3/2, 2?
+	0.47
+Which is the closest to 1?  (a) -6  (b) -4  (c) 3  (d) -376
+	c
+What is the closest to 0.1 in 2, 0.8, 1, -0.48?
+	-0.48
+What is the closest to -4 in 4/25, -5, -55, 0.1?
+	-5
+
+train-medium/comparison__closest_composed.txt: 
+Let d = -27 - -26.5. Let p be (-3 + 1 + 1)*-1. What is the closest to p in 0.1, -0.3, d?
+	0.1
+Let i = -0.0424 + 5.7024. Let p = i - -0.34. Which is the nearest to 2?  (a) p  (b) 3  (c) -0.2
+	b
+Let v = 0.5 + 0.5. Let o = 25/6 - 4. Which is the closest to v?  (a) o  (b) -9  (c) 3/7
+	c
+Let o = 225 - 228.26. Let n = 0.26 + o. Which is the nearest to n?  (a) 4  (b) -2/21  (c) 2/5
+	b
+Let g = 23.9 + -25.9. Which is the nearest to 1?  (a) 1  (b) -1  (c) g
+	a
+
+train-medium/comparison__kth_biggest.txt: 
+Which is the fourth smallest value?  (a) -5  (b) 291577  (c) -0.9  (d) 0.3  (e) 0.2
+	d
+What is the second smallest value in 0.1, 4, 71/44?
+	71/44
+Which is the biggest value?  (a) 30  (b) -3/53  (c) -1/8  (d) 0.4  (e) -0.3
+	a
+Which is the third smallest value?  (a) -235/4  (b) -0.3  (c) -1/4  (d) 1/5  (e) -3  (f) -1/6
+	b
+What is the third smallest value in 5, 3, -2/3, -1/4, -44.34?
+	-1/4
+
+train-medium/comparison__kth_biggest_composed.txt: 
+Let u = 14 + -13.79. Let n = 0.11 - u. Let d(t) = -t**2 - 7*t + 6. Let f be d(-8). What is the third smallest value in f, -1, n?
+	n
+Let g = -5 - -1. Let t = 1.56 + 0.44. Which is the second smallest value?  (a) t  (b) 5  (c) g
+	a
+Let m = 20.9 - -3.1. Which is the biggest value?  (a) m  (b) -0.1  (c) 2
+	a
+Let h = -32.4 + 35. Let z = h + -4.4. Let j = 2.8 + z. Which is the second smallest value?  (a) -5  (b) j  (c) -2/7
+	c
+Let g = 14.64 - 13.64. Let l = 0.3 + -7.3. Which is the third smallest value?  (a) g  (b) 3/8  (c) l
+	a
+
+train-medium/comparison__pair.txt: 
+Do 7452/79 and 93 have different values?
+	True
+Which is bigger: 309/251 or 0?
+	309/251
+Are 162949 and 162948 unequal?
+	True
+Is -109576 greater than -109592?
+	True
+Which is smaller: -1249542 or -1249543?
+	-1249543
+
+train-medium/comparison__pair_composed.txt: 
+Suppose 4*a + x + 6 = 0, 0 = 4*a - 3*x + 7*x. Let i be a/(-10) - 28/(-35). Let s = i - 3. Is s bigger than -2?
+	False
+Let f = -17 - -2. Let p(k) = k**3 - 4*k**2 - k - 13. Let y be p(5). Let g = -10 - y. Is g greater than or equal to f?
+	False
+Let c(i) = -5*i**3 + 9*i + 5. Let j(p) = -p**3 + p**2 + p + 1. Let u(k) = c(k) - 6*j(k). Let z be u(5). Is -12 <= z?
+	True
+Let p be (13/((-117)/6))/(2/(-3)). Which is smaller: 90 or p?
+	p
+Let o = 12379 + -11818.7. Let c = 521 - o. Let f = -39 - c. Are f and 3 nonequal?
+	True
+
+train-medium/comparison__sort.txt: 
+Sort 221, -2, 80, -5, -1 in decreasing order.
+	221, 80, -1, -2, -5
+Put -2, 3, 462, -4, -176 in ascending order.
+	-176, -4, -2, 3, 462
+Sort 16, 0, 2, -4 in ascending order.
+	-4, 0, 2, 16
+Sort -65, 5, -66.
+	-66, -65, 5
+Sort -1, 461, 77, 0 in increasing order.
+	-1, 0, 77, 461
+
+train-medium/comparison__sort_composed.txt: 
+Let y = 486/25 - 1483/75. Suppose 0 = -3*h + 3*x - 15, 7*h + 4*x + 50 = 4*h. Put y, h, 1 in descending order.
+	1, y, h
+Let w(i) = -i**3 - 7*i**2 + 20*i + 18. Let c be w(-9). Suppose 4*j - 4*b + 20 = c, -25 + 0 = 3*j - 5*b. Sort 5, j, -7 in decreasing order.
+	5, j, -7
+Suppose -16*w - 5*w = -84. Put 112, w, 1 in decreasing order.
+	112, w, 1
+Let k = 0.087 + -0.191. Let r = k + 0.204. Let f = 1 + -0.6. Sort f, r, -1/4.
+	-1/4, r, f
+Let w = -8.23 - -6.23. Put -0.4, w, 0 in descending order.
+	0, -0.4, w
+
+train-medium/measurement__conversion.txt: 
+How many months are there in one fifth of a millennium?
+	2400
+What is 23/3 of a day in hours?
+	184
+How many milligrams are there in 50.05692kg?
+	50056920
+How many milligrams are there in 25/4 of a gram?
+	6250
+What is 47.57672 tonnes in kilograms?
+	47576.72
+
+train-medium/measurement__time.txt: 
+What is 514 minutes before 8:10 PM?
+	11:36 AM
+What is 391 minutes before 1:22 PM?
+	6:51 AM
+What is 320 minutes before 4:36 PM?
+	11:16 AM
+How many minutes are there between 9:31 AM and 4:56 PM?
+	445
+How many minutes are there between 1:44 PM and 10:11 PM?
+	507
+
+train-medium/numbers__base_conversion.txt: 
+What is 62a3 (base 14) in base 7?
+	100363
+-34862 (base 10) to base 4
+	-20200232
+What is 64e (base 16) in base 4?
+	121032
+-1895 (base 11) to base 13
+	-112b
+What is -6312 (base 9) in base 14?
+	-1988
+
+train-medium/numbers__div_remainder.txt: 
+Calculate the remainder when 25736 is divided by 144.
+	104
+What is the remainder when 4290 is divided by 1410?
+	60
+Calculate the remainder when 107590 is divided by 2289.
+	7
+Calculate the remainder when 9955 is divided by 68.
+	27
+What is the remainder when 14025 is divided by 499?
+	53
+
+train-medium/numbers__div_remainder_composed.txt: 
+Suppose 0 = 2*s - 2 + 20. Let y be 267/9 - 3/s. Suppose 5*w + o = y, -w + 2*o + 2*o = -27. Calculate the remainder when 13 is divided by w.
+	6
+Suppose -2*c - 3*u = -293, 0 = 4*c + u - 530 - 41. Calculate the remainder when c is divided by 50.
+	42
+Suppose 1183 = 36*z - 29*z. What is the remainder when z is divided by 44?
+	37
+Suppose 156 = 6*b - 540. Calculate the remainder when b is divided by 30.
+	26
+Suppose 44*w - 915 = 449. Suppose 0 = -5*v + 9*v - 68. Calculate the remainder when w is divided by v.
+	14
+
+train-medium/numbers__gcd.txt: 
+What is the greatest common factor of 56 and 38094?
+	14
+Calculate the highest common divisor of 2838 and 8184.
+	66
+Calculate the greatest common divisor of 19886 and 5978.
+	122
+What is the greatest common factor of 806848 and 21?
+	7
+What is the greatest common divisor of 2644650 and 54?
+	54
+
+train-medium/numbers__gcd_composed.txt: 
+Let x(c) = 3*c**2 + 3*c - 14. Let v(s) = -s**2 + s + 7. Let u be v(0). Let t be x(u). Calculate the greatest common factor of 22 and t.
+	22
+Suppose 3*k - 5*k = -12. Suppose 84 = k*p - p - 4*v, 100 = 4*p + 5*v. Calculate the greatest common divisor of p and 180.
+	20
+Let v(u) = 2*u**3 - 20*u**2 + 18*u - 1. Let l be v(9). Let n be (-1 - 4) + 5 + l + 44. Calculate the greatest common factor of 43 and n.
+	43
+Let k = 423 - 282. What is the greatest common divisor of k and 94?
+	47
+Let u(l) = 9*l**2 + 5*l - 111. Let w be u(-8). Calculate the highest common divisor of 75 and w.
+	25
+
+train-medium/numbers__is_factor.txt: 
+Is 72567 a multiple of 9?
+	True
+Is 91 a factor of 1012773?
+	False
+Is 76 a factor of 1017488?
+	True
+Is 165792 a multiple of 471?
+	True
+Is 311 a factor of 143731?
+	False
+
+train-medium/numbers__is_factor_composed.txt: 
+Let d = -588 + 1274. Is 14 a factor of d?
+	True
+Is (-8)/(-20) + (-3390)/(-25) a multiple of 17?
+	True
+Let g = 27 - 8. Suppose 1 = 5*w - g. Suppose 16 = -w*v + 64. Does 4 divide v?
+	True
+Suppose 0 = 5*u - 7*u + 850. Is 22 a factor of u?
+	False
+Let t(z) = -z**2 - 3*z + 30. Let k be t(6). Let h be 124/(-3) - 3/(-9). Let x = k - h. Does 11 divide x?
+	False
+
+train-medium/numbers__is_prime.txt: 
+Is 9609827 prime?
+	True
+Is 11280553 a composite number?
+	True
+Is 1870201 a prime number?
+	False
+Is 6169991 a composite number?
+	True
+Is 98890567 prime?
+	True
+
+train-medium/numbers__is_prime_composed.txt: 
+Let u = -15 - -16. Suppose -2 = -d + u. Suppose -w = -d*p + 705 + 530, 4*p + 2*w - 1660 = 0. Is p composite?
+	True
+Suppose 4*q - 12842 = -2*h, -5*h = -4*q - 21686 - 10433. Let o = -4052 + h. Is o a prime number?
+	True
+Suppose -11*t = -15*t + 12. Suppose -h = -t*h + 148. Is h composite?
+	True
+Let n = -4 + 3. Let t be 1 - 41*(2 + n). Let j = t + 75. Is j a composite number?
+	True
+Let u(h) = -h**3 + 3*h**2 + 5*h + 2. Let g be u(4). Suppose -5*v - g - 4 = 0, 3*k = -3*v + 1005. Is k prime?
+	True
+
+train-medium/numbers__lcm.txt: 
+What is the smallest common multiple of 19360 and 880?
+	19360
+What is the smallest common multiple of 2178 and 44?
+	4356
+What is the common denominator of -101/13702 and 149/1301690?
+	1301690
+Calculate the lowest common multiple of 16 and 60032.
+	60032
+Calculate the common denominator of -71/391702 and 3/2.
+	391702
+
+train-medium/numbers__lcm_composed.txt: 
+Let n(m) = -m**2 - 6*m - 6. Let i be n(-4). Suppose -7 + 1 = -3*z. Suppose 3*h - 12 = -z*s + h, 2 = i*h. Calculate the smallest common multiple of 4 and s.
+	20
+Let t = 1577/3 - 506. Let i(h) = -h**2 + h + 1. Let s be i(3). Find the common denominator of (-1*2/(-12))/(s/(-745)) and t.
+	6
+Suppose 4*k = 87 + 105. Find the common denominator of (-8)/(-20) + (-398)/(-80) and (k/(-64))/(3/(-14)).
+	8
+Suppose -1227 = -3*y - 3*l, -21*l + 19*l + 2033 = 5*y. Calculate the least common multiple of y and 25.
+	2025
+Let x(v) = -v**3 - 3*v - 1. Let s = 6 - 8. Let a be x(s). Find the common denominator of (2 - a/7)*-1 and 38/11.
+	77
+
+train-medium/numbers__list_prime_factors.txt: 
+List the prime factors of 8345159.
+	23, 179, 2027
+List the prime factors of 222193.
+	222193
+What are the prime factors of 20461700?
+	2, 5, 7, 29231
+What are the prime factors of 18845903?
+	1459, 12917
+List the prime factors of 20226773.
+	7, 19, 152081
+
+train-medium/numbers__list_prime_factors_composed.txt: 
+Suppose -3153 = -7*c - 381. Let z = c - 274. List the prime factors of z.
+	2, 61
+What are the prime factors of (-444)/(-14) - (8 + (-580)/70)?
+	2
+Let f(m) = 176*m**2 - 23*m - 114. What are the prime factors of f(-5)?
+	3, 163
+Suppose -4*t = 5*n - 21002, -4*n + 0*t - 3*t = -16802. List the prime factors of n.
+	2, 11, 191
+What are the prime factors of -2*(-2919)/14 + 2 - -1?
+	2, 3, 5, 7
+
+train-medium/numbers__place_value.txt: 
+What is the units digit of 80577?
+	7
+What is the hundred thousands digit of 393392?
+	3
+What is the thousands digit of 10117253?
+	7
+What is the hundred thousands digit of 1877469?
+	8
+What is the ten millions digit of 12181386?
+	1
+
+train-medium/numbers__place_value_composed.txt: 
+Let s be -2 + (-2)/(-1 - -2). Let g(b) = 3*b**2 - b + 5. What is the units digit of g(s)?
+	7
+What is the hundreds digit of ((-826)/(-3))/(62/279)?
+	2
+Suppose -4*z = 2*u - 158, -3*z - 2*z + 4*u + 191 = 0. Suppose -z = -5*a + 4*a. What is the tens digit of a?
+	3
+Let g(r) = -r - 1. Let b(v) = -11*v - 10. Suppose -c + 2*c = -5*i - 6, -4*i + 3*c = 20. Let f(s) = i*b(s) + 18*g(s). What is the units digit of f(4)?
+	8
+Suppose 3*h - 3*v - 2997 = 0, -v + 2977 = -0*h + 3*h. What is the hundreds digit of h?
+	9
+
+train-medium/numbers__round_number.txt: 
+Round 1.72315 to two decimal places.
+	1.72
+Round 49.26661 to the nearest ten.
+	50
+Round 0.0165733 to 3 decimal places.
+	0.017
+Round 7499.87 to the nearest one hundred.
+	7500
+What is -60.8312 rounded to 1 decimal place?
+	-60.8
+
+train-medium/numbers__round_number_composed.txt: 
+Let x = 114 - 80. Let h = x + 34. Let b = h - 68.0058. What is b rounded to 3 decimal places?
+	-0.006
+Let n = -161.2 - -214. Round n to zero decimal places.
+	53
+Let q(j) = -4*j - 3. Let y be q(-2). Suppose 5 = -y*f + 15. Suppose 1560000 = f*a - 0*a. Round a to the nearest 100000.
+	800000
+Let n = -18 + 27. Let u be 3/(-2)*12/n. Let l be 1 + 799998 + (u - -3). Round l to the nearest one million.
+	1000000
+Let j = -104 - -123.2. Let u = j - 0.1. Round u to zero dps.
+	19
+
+train-medium/polynomials__add.txt: 
+Let x(d) = 10*d - 2. Let w(q) = 35 - 3*q - 17 + 0*q - 17 + 4*q. What is 4*w(z) + x(z)?
+	14*z + 2
+Let j(l) = 171*l - 90*l + 6 - 75*l. Let i(m) = -7*m - 7. Determine -4*i(w) - 5*j(w).
+	-2*w - 2
+Let t(r) = 3*r**3 + 129*r**2 - 7*r + 7. Let z(c) = -2*c**3 - 65*c**2 + 4*c - 4. What is 4*t(s) + 7*z(s)?
+	-2*s**3 + 61*s**2
+Let q(u) = -u - 4. Let j be (-2)/4 - (-2)/((-36)/(-99)). Let w(c) = -c + 1. Calculate j*w(r) + q(r).
+	-6*r + 1
+Let v(b) = 53*b**2 + 15*b + 5. Let g(a) = -27*a**2 - 5*a - 3. Let k(f) = 5*g(f) + 2*v(f). Let j(z) = -246*z**2 + 42*z - 42. Give 5*j(n) - 42*k(n).
+	-12*n**2
+
+train-medium/polynomials__coefficient_named.txt: 
+Rearrange 66*a**2 + 286*a**2 + 1650*a + 240*a**2 - 1650*a to x*a + r + l*a**2 and give l.
+	592
+Express (-4*s + 0 + 0)*((-5 + 2 + 0)*(-2*s - 4*s + s) - 2 + 2 - 2*s) in the form w + o*s**2 + j*s and give o.
+	-52
+Express -r**3 - 2 + 0*r**3 - 2 + 8*r + 45*r - 2*r as s*r**2 + q*r**3 + x + w*r and give w.
+	51
+Rearrange (28608 - 534*l - 28608)*(4 - 3 + 1) to b*l + r and give b.
+	-1068
+Express -4*h + 4*h + h**3 + 20950 + h**4 - 20952 - 9*h**2 as w + j*h**3 + r*h + a*h**4 + o*h**2 and give w.
+	-2
+
+train-medium/polynomials__collect.txt: 
+Collect the terms in -396*u - 412*u + 801*u.
+	-7*u
+Collect the terms in -80*l**3 + 681 - 681.
+	-80*l**3
+Collect the terms in 2694*b - 1304*b - 1311*b.
+	79*b
+Collect the terms in -6*t**3 + t**2 + t**2 - 66*t + 66*t + 0*t**2.
+	-6*t**3 + 2*t**2
+Collect the terms in 407*m**3 - 498*m**3 - 1535*m**3 - 111*m**3.
+	-1737*m**3
+
+train-medium/polynomials__compose.txt: 
+Let h(c) = 21*c**2 + 4. Let z(x) = -1241*x**2 - 238. Let f(n) = 238*h(n) + 4*z(n). Let t(w) = -4*w**2. What is t(f(p))?
+	-4624*p**4
+Let b(h) = -890986*h**2. Let z(o) = 6*o**2. What is b(z(p))?
+	-32075496*p**4
+Let b(a) = -6714*a**2. Let y(u) = 28*u**2. Give y(b(q)).
+	1262178288*q**4
+Let m(u) = 44231*u**2. Let t(r) = 3*r. Determine m(t(z)).
+	398079*z**2
+Let d(s) be the first derivative of 11*s**2/2 + 2. Let r(p) = 24*p + 11. Let v(y) = 13*y + 6. Let x(z) = 6*r(z) - 11*v(z). Calculate d(x(w)).
+	11*w
+
+train-medium/polynomials__evaluate.txt: 
+Let z(p) = -18*p - 920. Give z(-35).
+	-290
+Let l(h) = -h**3 - 33*h**2 - 42*h + 99. Determine l(-31).
+	-521
+Let o(w) = w**3 - 10*w**2 - 14*w + 6. What is o(11)?
+	-27
+Let r(m) = -14*m + 1021. Calculate r(34).
+	545
+Let j(u) = -u**3 + 31*u**2 - 230*u - 66. Give j(18).
+	6
+
+train-medium/polynomials__evaluate_composed.txt: 
+Let l(g) be the third derivative of g**8/20160 + g**7/2520 + g**5/30 + 23*g**2. Let m(f) be the third derivative of l(f). What is m(-3)?
+	3
+Suppose -3*k - 3*o = -7*o - 49, 5*k + 3*o = 72. Let y(f) = f - 10. Give y(k).
+	5
+Suppose -20*a - 20*a - 160 = 0. Let p(r) = r**3 + 4*r**2 + 1. Determine p(a).
+	1
+Let s(n) = 9 + 6 - 9 + 20*n - 26*n. Calculate s(4).
+	-18
+Let s(p) = 13*p**3 - p - p**2 - 5 - 6*p + 13*p - 8*p. Let h(j) = -27*j**3 + 2*j**2 + 5*j + 11. Let u(y) = 4*h(y) + 9*s(y). What is u(1)?
+	9
+
+train-medium/polynomials__expand.txt: 
+Expand (t + 3 - 3)*(-7 + 2 + 1) - 3 + t + 3 + (-13 + 1 + 2)*(-2*t + t - t).
+	17*t
+Expand -4*z**2 + 2*z**5 + 12*z**2 - 3*z**2 + (-4*z**3 + 2*z**3 + 0*z**3)*(-7*z**2 - z**2 + 13*z**2).
+	-8*z**5 + 5*z**2
+Expand (3 - 3 + 2*x)*(-x**2 + 3*x**2 + 4*x**2) + (2*x**2 + 2*x**2 - x**2)*(6 - 6 - 6*x).
+	-6*x**3
+Expand -1144 + 1144 + 70*x**2 - 2*x**2 - 4*x + 4*x + (-2*x + 2*x + 2*x**2)*(-4 + 1 + 5).
+	72*x**2
+Expand (4*c + 5*c - 5*c)*((-1 - 1 + 3)*(-14 + 15*c + 14) + c + 0*c - 4*c).
+	48*c**2
+
+train-medium/polynomials__simplify_power.txt: 
+Simplify (q**(-12))**(-1/15)/(q**(4/9)*q*q*q**(-3)) assuming q is positive.
+	q**(61/45)
+Simplify (((s/(s**9*s)*s)/s)**(-4/3))**(-50) assuming s is positive.
+	s**(-600)
+Simplify (r**12/(r**(-4/17)*r))**(-1/9) assuming r is positive.
+	r**(-191/153)
+Simplify ((((d*d/(d*d**11*d))/d)/d*d**(-8))**(-44))**(2/89) assuming d is positive.
+	d**(1848/89)
+Simplify ((b**(2/5)/(b**11*b))**(1/12))**(14/9) assuming b is positive.
+	b**(-203/135)
+
+train-medium/probability__swr_p_level_set.txt: 
+Three letters picked without replacement from zzqzzzfqfzzfqtffftf. Give prob of picking 1 f and 2 z.
+	49/323
+Calculate prob of picking 3 t and 1 l when four letters picked without replacement from {r: 2, l: 2, n: 2, f: 2, t: 5}.
+	4/143
+Three letters picked without replacement from pooo. Give prob of picking 3 o.
+	1/4
+What is prob of picking 1 k, 1 h, and 1 c when three letters picked without replacement from {c: 1, y: 1, e: 1, n: 1, k: 1, h: 2}?
+	2/35
+Calculate prob of picking 1 h and 2 o when three letters picked without replacement from {h: 7, o: 2, t: 3}.
+	7/220
+
+train-medium/probability__swr_p_sequence.txt: 
+Two letters picked without replacement from {p: 12, v: 6, k: 1}. Give prob of sequence vk.
+	1/57
+What is prob of sequence dd when two letters picked without replacement from dnnonnodonvdnnv?
+	1/35
+Calculate prob of sequence yovy when four letters picked without replacement from {o: 2, y: 4, v: 4}.
+	2/105
+Four letters picked without replacement from {h: 4, a: 3, w: 1, e: 1, m: 6}. Give prob of sequence awah.
+	1/1365
+Three letters picked without replacement from {h: 11, p: 5}. Give prob of sequence ppp.
+	1/56train-hard/algebra__linear_1d.txt: 
+Solve 312*s + 276*s - 661*s + 952 = -362 for s.
+	18
+Solve 1058*a - 271 - 2541 = 14*a - 362*a for a.
+	2
+Solve 24*y + 134*y - 111*y = 90*y - 5031 for y.
+	117
+Solve 885*i + 5006 - 14741 = 0 for i.
+	11
+Solve 0 = -6950*o + 3487*o + 3481*o + 1764 for o.
+	-98
+
+train-hard/algebra__linear_1d_composed.txt: 
+Suppose 1249 + 1001 = -7*l + 17*l. Solve -l = 338*n - 313*n for n.
+	-9
+Suppose -2*i + 20 = 5*o, 2*o - 4 = 3*i + o. Suppose -g + 2 = i, 4*g - 6*g = -5*u - 19. Let f be -6 + 3 + 2 + u/(-1). Solve -f*l = -l for l.
+	0
+Let s = 3 - 3. Suppose 20 = 8*t - 4. Let h = t - s. Solve 4*a = h*a - 3 for a.
+	-3
+Suppose 14 = -10*i + 5*i + 24. Solve 8*u + 6 = -i for u.
+	-1
+Suppose -322 = -4*f - 2*h, 17*h = 5*f + 16*h - 399. Solve -136*o = -f*o - 224 for o.
+	4
+
+train-hard/algebra__linear_2d.txt: 
+Solve 208 = -4*u + 2*v, 961*v = -8*u + 967*v - 412 for u.
+	-53
+Solve 24*o = -732*l + 736*l - 152, 0 = 3*l - 11*o - 65 for l.
+	-4
+Solve -221 = n + 308*z - 304*z, 823 = 2*n - 15*z for n.
+	-1
+Solve 7*j + 5*t = -48, 0 = -2*j - t + 278 - 290 for j.
+	-4
+Solve 64 = -5*d - 7*j, 3*d - 5*j - 1180 = -1108 for d.
+	4
+
+train-hard/algebra__linear_2d_composed.txt: 
+Let i = -1285 + 1287. Solve -102*w + 100*w - 2*p + i = 0, 3*p + 1 = -w for w.
+	2
+Let o be ((-320)/6)/(5/(-15)). Let y = -145 + o. Solve 2*c = -3*j - 2*c + y, 5*j = -5*c + 20 for j.
+	1
+Let b be -2 + 1 + (1 - 2). Let m be 15/6 + 1/b. Suppose -32 = 2*j + 7*a - 11*a, a = -4*j + 17. Solve m*u + 2*w = 16, j*u = -u - w + 18 for u.
+	5
+Let c = -213 + 372. Let q = c - 159. Solve -5*k = -q*h + h - 2, 5*k - h = 8 for k.
+	1
+Let o(b) be the first derivative of -b**3/3 + 6*b**2 - 18*b + 18. Let f be o(9). Let z be (-1 + 1 + 4)/1. Solve 0 = 4*y + 4, 6*y - y = z*t - f for t.
+	1
+
+train-hard/algebra__polynomial_roots.txt: 
+Determine b so that -18*b**5 + 66654*b**4 - 3739744*b**3 - 3836048*b**2 + 1662112*b + 1691744 = 0.
+	-1, -2/3, 2/3, 58, 3646
+Find r, given that 3*r**3 + 7644783*r**2 = 0.
+	-2548261, 0
+Suppose 290*b**5/9 - 6031124*b**4/9 + 10451403836*b**3/3 + 32021141536*b**2/9 - 62071651798*b/9 - 432556804/3 = 0. What is b?
+	-2, -3/145, 1, 10399
+Determine z, given that 2*z**3 + 217724*z**2 - 3701886*z = 0.
+	-108879, 0, 17
+Factor 2*g**2 + 9616660*g + 11560018694450.
+	2*(g + 2404165)**2
+
+train-hard/algebra__polynomial_roots_composed.txt: 
+Let k(l) be the third derivative of -l**8/336 + l**7/70 + 97*l**6/120 - 299*l**5/60 + 25*l**4/2 - 50*l**3/3 + 266*l**2 + 18. Solve k(r) = 0.
+	-10, 1, 10
+Let o be 698 + -654 - (-125)/(-3). Factor o*s + 2/3*s**2 - 4/3.
+	(s + 4)*(2*s - 1)/3
+Let k(u) = 12*u**3 - 228*u**2 + 165*u - 84. Let n(t) = -3*t**3 + 59*t**2 - 41*t + 21. Let y(w) = 4*k(w) + 15*n(w). Factor y(d).
+	3*(d - 7)*(d - 1)**2
+Let q(u) be the third derivative of 0*u - 1/60*u**5 - 118*u**2 + 0 - 3/4*u**4 + 0*u**3. Find g, given that q(g) = 0.
+	-18, 0
+Find c, given that 2215/2*c**3 + 11505/4*c - 87025/2 + 1/4*c**5 + 7097*c**2 + 63/2*c**4 = 0.
+	-59, -5, 2
+
+train-hard/algebra__sequence_next_term.txt: 
+What is the next term in -890, -28, 782, 1534, 2222?
+	2840
+What comes next: 14496186, 14496188, 14496190, 14496192, 14496194?
+	14496196
+What is next in -43661, -88135, -133401, -179459?
+	-226309
+What is next in -1195, 614, 3667, 7964, 13505, 20290?
+	28319
+What comes next: 217, -9, -281, -623, -1059, -1613?
+	-2309
+
+train-hard/algebra__sequence_nth_term.txt: 
+What is the k'th term of 260914053, 521828109, 782742165?
+	260914056*k - 3
+What is the w'th term of 7445, 14881, 22359, 29891, 37489, 45165, 52931, 60799?
+	2*w**3 + 9*w**2 + 7395*w + 39
+What is the v'th term of 193157, 193251, 193407, 193625, 193905, 194247, 194651?
+	31*v**2 + v + 193125
+What is the u'th term of 558200, 1116282, 1674362, 2232440?
+	-u**2 + 558085*u + 116
+What is the n'th term of -4202118, -16808490, -37819118, -67234008, -105053166, -151276598?
+	-n**3 - 4202122*n**2 + n + 4
+
+train-hard/arithmetic__add_or_sub.txt: 
+Work out -0.5 - -1782838373837.
+	1782838373836.5
+What is 59086632155.4 + -3?
+	59086632152.4
+Total of 9207641 and -0.541.
+	9207640.459
+What is the difference between 173.47 and -272507015.8?
+	272507189.27
+Add together -4.154 and -1947579961.4.
+	-1947579965.554
+
+train-hard/arithmetic__add_or_sub_in_base.txt: 
+In base 6, what is -5 + -30353430?
+	-30353435
+In base 9, what is -26630043 + -47?
+	-26630101
+In base 9, what is -10 + -10505778?
+	-10505788
+In base 15, what is -bdae122 + 8?
+	-bdae119
+In base 13, what is 1ab34 - -251?
+	1b085
+
+train-hard/arithmetic__add_sub_multiple.txt: 
+What is the value of 2 + 21 + 2570 + -2684?
+	-91
+Evaluate (-17 - 2 - -39) + -51 + -82.
+	-113
+Calculate (71 - (187 + -94)) + (0 - 3).
+	-25
+What is the value of -2 + (1 - -44) + -52 + -51 + 110?
+	50
+What is the value of 15 + -76 + -3 + 27 + (0 - -9)?
+	-28
+
+train-hard/arithmetic__div.txt: 
+-103692 divided by -3905
+	103692/3905
+Divide -1560 by 125780.
+	-78/6289
+Calculate 41690064 divided by 66811.
+	624
+Calculate -7584226 divided by -291701.
+	26
+Divide 6435258 by 1072543.
+	6
+
+train-hard/arithmetic__mixed.txt: 
+What is the value of (-106)/(-160) + 2811/(-4685)?
+	1/16
+Evaluate ((-10224)/(-189) - 5) + 56/(-588).
+	49
+Calculate (-195)/(-45) + -2 + (314/(-60) - 24/(-60)).
+	-5/2
+(-4)/42 + ((-4)/86 - 134980/(-230265))
+	4/9
+Calculate 101 - 594/(-810)*-139.
+	-14/15
+
+train-hard/arithmetic__mul.txt: 
+What is 2 times 376.54543?
+	753.09086
+What is -418009 times 3?
+	-1254027
+Multiply 0.146 and -121864.
+	-17792.144
+What is the product of 3078 and -610?
+	-1877580
+Product of -0.4 and -0.36222647.
+	0.144890588
+
+train-hard/arithmetic__mul_div_multiple.txt: 
+What is 10*2*18690/(-44856)?
+	-25/3
+Evaluate (81175/(-64940))/(2/12*2/(-4)).
+	15
+What is ((-260)/3)/2*167/((-108550)/(-975))?
+	-65
+What is the value of (-8)/204*((-41)/(-492))/(8/(-48))?
+	1/51
+What is (36/((-212256)/(-220)))/(50/20)?
+	1/67
+
+train-hard/arithmetic__nearest_integer_root.txt: 
+What is 1202659093 to the power of 1/2, to the nearest integer?
+	34679
+What is the third root of 198449759 to the nearest integer?
+	583
+What is the tenth root of 58748036 to the nearest integer?
+	6
+What is the cube root of 103387409 to the nearest integer?
+	469
+What is the square root of 2665317763 to the nearest integer?
+	51627
+
+train-hard/arithmetic__simplify_surd.txt: 
+Simplify 1 + -5 + 5*(sqrt(24)/(sqrt(8) + sqrt(16)/(sqrt(8)/sqrt(4))))**2 + (sqrt(3) - (sqrt(3) + 1)**2) + -2 + -5 + -1.
+	-49/4 - sqrt(3)
+Simplify ((-5*(sqrt(11) + 3) + 2 + sqrt(99) + 4*(-2 + sqrt(176))*3)*-1)**2.
+	-3404*sqrt(11) + 24645
+Simplify ((-1*sqrt(153)*-5)/sqrt(3))/((-3*sqrt(120) + sqrt(30))/sqrt(10)) + -3.
+	-sqrt(17) - 3
+Simplify -2 + ((sqrt(875) + (1*sqrt(875) - sqrt(875)) + sqrt(875))*-1)/(sqrt(405) - sqrt(15)/sqrt(3)*-3).
+	-5*sqrt(7)/6 - 2
+Simplify (4*-5*sqrt(85) - (sqrt(85) + 2*3*sqrt(85) - sqrt(85)))/((sqrt(10) + 3*sqrt(90) + sqrt(10))/sqrt(2)*-3).
+	26*sqrt(17)/33
+
+train-hard/calculus__differentiate.txt: 
+Find the third derivative of 178776*b**4 + 312*b**3 - 3594*b**2 + 68923*b wrt b.
+	4290624*b + 1872
+Differentiate 214545431*i*q + 2*i + 2*q + 45166490 with respect to i.
+	214545431*q + 2
+Find the second derivative of q**5 - 391*q**4 + 1600*q**2 - 28211251*q.
+	20*q**3 - 4692*q**2 + 3200
+Find the first derivative of -119078754*z - 159729822.
+	-119078754
+Find the second derivative of -3*w**3*z + 56*w**3 - 23*w**2*z - 6093468*w*z wrt w.
+	-18*w*z + 336*w - 46*z
+
+train-hard/calculus__differentiate_composed.txt: 
+What is the derivative of -92 + 7238*g**2 - 3619*g**2 + 3*g + 15*g**4 - 3621*g**2 - 3*g wrt g?
+	60*g**3 - 4*g
+Let d(o) = 6015*o - 9339. Let b(j) = 859*j - 1334. Let c(n) = -27*b(n) + 4*d(n). Find the first derivative of c(q) wrt q.
+	867
+Let r(y) be the second derivative of 787*y**4/4 - 168*y**2 - 1718*y. What is the derivative of r(l) wrt l?
+	4722*l
+Suppose 4 - 2 = p, -4*p - 480 = -4*l. Let f be ((-11)/11)/(1/(-2)). What is the third derivative of 131*o**4 + l*o**4 - 243*o**4 + 22*o**f wrt o?
+	240*o
+Let k(v) be the first derivative of -699*v**5/5 - 12*v**2 + 8*v - 669. Find the second derivative of k(b) wrt b.
+	-8388*b**2
+
+train-hard/comparison__closest.txt: 
+Which is the closest to 2?  (a) -7659/7  (b) -2  (c) 4  (d) 0.14
+	d
+Which is the nearest to 8?  (a) 2/10513  (b) 1  (c) 0.3  (d) 2  (e) 0.2  (f) -83
+	d
+Which is the nearest to -3/529?  (a) 3/4  (b) 0.1  (c) -5  (d) -0.5
+	b
+What is the nearest to -4/31 in -0.3, -33, -2/67?
+	-2/67
+What is the nearest to 0.7 in 0.169, 3, 67, 0.3, -3/10?
+	0.3
+
+train-hard/comparison__closest_composed.txt: 
+Let m = 19.6 + -20. Let d be 0/15 + -3*(-2)/3. Suppose d*u = 5*n + 16, -2*u - n - 2*n = 16. What is the nearest to u in -1/7, 1/6, m?
+	m
+Let f = 149.5 - 149.3. Which is the nearest to 0.06?  (a) 1  (b) -0.054  (c) f
+	b
+Suppose 270*g = 268*g - 6. Let j = 462/5 + -92. Which is the closest to -0.3?  (a) g  (b) j  (c) 7
+	b
+Let z = 448.6 - 411. Let b = z - 37.6. What is the nearest to b in -0.2, -0.01, 1?
+	-0.01
+Let j = -11/6 - -25/12. Let f = -0.3285 - -0.2285. What is the nearest to f in 5, 24, j?
+	j
+
+train-hard/comparison__kth_biggest.txt: 
+What is the second biggest value in 0.1, 14, 305, -1, -0.136, 1?
+	14
+What is the second biggest value in 525, -5.3, 399/5?
+	399/5
+What is the smallest value in -155497, -0.3, 0, 137?
+	-155497
+Which is the smallest value?  (a) 2/3  (b) -4/31  (c) -71  (d) 3  (e) 16  (f) 2/11  (g) 1
+	c
+Which is the second smallest value?  (a) 266  (b) 2/7069  (c) 0.2
+	c
+
+train-hard/comparison__kth_biggest_composed.txt: 
+Let o = -0.341 - -0.035. Let s = o + 0.706. Let d = -1/28 + 2/7. What is the second smallest value in d, s, 0?
+	d
+Suppose 6*q + 15 = 3*q. Let f = -28058 - -56153/2. What is the second smallest value in -4, q, f?
+	-4
+Let i be (1*2/6)/1. Let q = 115 + -196. Let u = q + 86. What is the third smallest value in -4/9, i, u?
+	u
+Let v = -1094.1 - -1048. Let h = 46.2 + v. Let y = -0.02 + -0.28. Which is the fourth biggest value?  (a) y  (b) h  (c) 5  (d) -3
+	d
+Let i(w) = 7*w + 55. Let p(x) = 35*x + 276. Let q(u) = 11*i(u) - 2*p(u). Let z be q(-7). Which is the second smallest value?  (a) 0.2  (b) 2  (c) 5  (d) z
+	b
+
+train-hard/comparison__pair.txt: 
+Which is bigger: 5/235916176 or 1?
+	1
+Which is smaller: 266235/47 or 5666?
+	266235/47
+Which is greater: 20214 or 15590?
+	20214
+Which is bigger: -1292113 or -2/13?
+	-2/13
+Is 1 < 1107820?
+	True
+
+train-hard/comparison__pair_composed.txt: 
+Let l = 6376 - 6445. Is 1/37 at most as big as l?
+	False
+Let u = -3014 + 3726. Is 712 at least as big as u?
+	True
+Let y = 0.012 + 28.988. Let j = -29.023 - -0.223. Let o = y + j. Which is smaller: o or 0.5?
+	o
+Let z(k) = -644*k**2 - 420*k - 13. Let t be z(-3). Which is smaller: -4547 or t?
+	t
+Let g be (-13266)/81 + (-136)/(-36) + -4. Let m be (234/(-65))/(1/45). Which is bigger: m or g?
+	m
+
+train-hard/comparison__sort.txt: 
+Put 198, -45, 5, -2, -18, 2, 3 in decreasing order.
+	198, 5, 3, 2, -2, -18, -45
+Sort -0.2, 42826, 14, 501 in decreasing order.
+	42826, 501, 14, -0.2
+Sort -0.06, 2/3, 46, -18, -414 in descending order.
+	46, 2/3, -0.06, -18, -414
+Put -74/155, 6, 4, -151 in descending order.
+	6, 4, -74/155, -151
+Put -13, -1, -2, -5, -4, -14 in decreasing order.
+	-1, -2, -4, -5, -13, -14
+
+train-hard/comparison__sort_composed.txt: 
+Let j(n) = n**3 - 16*n**2 + 59*n + 2. Let x be j(6). Put 106, -3, x in increasing order.
+	x, -3, 106
+Let h = 146.98 + -436.98. Put h, 0.5, -2/13, 2, -3 in decreasing order.
+	2, 0.5, -2/13, -3, h
+Let u = 57.6 + -57.6. Sort 631, u, 1/6.
+	u, 1/6, 631
+Suppose -2*s + 3*s = -5. Suppose 3*g + 25 = 4*y, -4*g - 11*y - 20 = -15*y. Let b(j) = -j**2 - 5*j. Let r be b(-4). Put s, r, g in descending order.
+	g, r, s
+Let g = -0.859 - 0.141. Let s = -14 - -11. Let u be 90/25 - (s + 6). Sort u, g, -0.5.
+	g, -0.5, u
+
+train-hard/measurement__conversion.txt: 
+What is 3/5 of a millimeter in micrometers?
+	600
+What is 2/21 of a week in seconds?
+	57600
+What is 88937.07ms in minutes?
+	1.4822845
+What is 992214.1 decades in centuries?
+	99221.41
+How many years are there in 3647.718 decades?
+	36477.18
+
+train-hard/measurement__time.txt: 
+How many minutes are there between 10:25 AM and 10:13 PM?
+	708
+How many minutes are there between 8:04 PM and 1:09 AM?
+	305
+What is 366 minutes after 7:48 PM?
+	1:54 AM
+What is 240 minutes before 1:21 PM?
+	9:21 AM
+How many minutes are there between 12:34 AM and 6:40 AM?
+	366
+
+train-hard/numbers__base_conversion.txt: 
+12115240 (base 6) to base 16
+	5da08
+Convert -449a2 (base 11) to base 4.
+	-33321001
+What is -1609361 (base 12) in base 4?
+	-101021122321
+Convert -36104 (base 13) to base 6.
+	-2042302
+What is 12100120011001 (base 3) in base 6?
+	140553044
+
+train-hard/numbers__div_remainder.txt: 
+What is the remainder when 3234387 is divided by 30?
+	27
+Calculate the remainder when 42109961 is divided by 19.
+	14
+What is the remainder when 50789900 is divided by 7740?
+	20
+Calculate the remainder when 4245283 is divided by 223.
+	32
+Calculate the remainder when 4901774 is divided by 1633790.
+	404
+
+train-hard/numbers__div_remainder_composed.txt: 
+Let k = -20 + 24. Let i be (-2 - 1)/((-52)/(-16) - k). Suppose v - i*h = 38 - 8, 75 = 5*v - 5*h. What is the remainder when 29 is divided by v?
+	9
+Let g = 240 + -222. Let f be ((-282)/(-12) - -5)*2/3. Suppose b - 125 = -f. What is the remainder when b is divided by g?
+	16
+Let r(m) = 4*m**3 - 5*m**2 - 3*m - 6. What is the remainder when r(4) is divided by 33?
+	26
+Let s(x) = x**3 + 10*x**2 + 6*x + 22. Let h be s(-8). Suppose -5*b - 62 = -h. Suppose -b*j = 10*j - 144. Calculate the remainder when 30 is divided by j.
+	6
+Let l = -40785 - -40877. Let y = -23 - -35. Calculate the remainder when l is divided by y.
+	8
+
+train-hard/numbers__gcd.txt: 
+What is the highest common divisor of 85 and 2871147?
+	17
+What is the highest common factor of 268870 and 154560?
+	1610
+Calculate the highest common divisor of 148414 and 12740.
+	14
+What is the highest common divisor of 86 and 7556261?
+	43
+Calculate the greatest common factor of 9016 and 298724.
+	92
+
+train-hard/numbers__gcd_composed.txt: 
+Suppose -3*y - 12*t + 27 = -8*t, -2*t - 36 = -4*y. Suppose -a + 2 = -3*v - 22, a = 4*v + 27. Calculate the greatest common factor of a and y.
+	3
+Suppose 27*t = 43 + 11. Let f be (t + (-111)/(-12))/((-2)/(-8)). What is the highest common divisor of f and 15?
+	15
+Suppose -m + 0*m = w - 27, -2*w - 6 = 0. Let b = 93 - 89. Suppose 50 = 5*p + 3*q + 2*q, -q = b*p - 46. What is the highest common factor of m and p?
+	6
+Let k = 51 + 1. Suppose 0 = 2*d - d - k. Let m = d - 30. Calculate the greatest common divisor of 66 and m.
+	22
+Let z(k) = 20*k + 220 + 19*k - 22*k - 32. Let f be z(-11). What is the greatest common divisor of 64 and f?
+	1
+
+train-hard/numbers__is_factor.txt: 
+Is 86780716 a multiple of 53?
+	True
+Is 13193960 a multiple of 3?
+	False
+Is 1219 a factor of 47775563?
+	False
+Is 1400703069 a multiple of 7546?
+	False
+Does 77 divide 1566719?
+	True
+
+train-hard/numbers__is_factor_composed.txt: 
+Let j = 365 + -387. Let r(b) = -b**3 - 21*b**2 - 27*b + 2. Is r(j) a multiple of 24?
+	True
+Let q = 93 - 59. Let d = 41 - q. Suppose d*b - 27 = 15. Is 3 a factor of b?
+	True
+Let v(s) = 16*s + 780. Is 22 a factor of v(68)?
+	False
+Let z(b) = -b**3 - 40*b**2 - 6*b - 9. Suppose -27*q - 839 - 241 = 0. Is z(q) a multiple of 18?
+	False
+Let j(c) = -c**3 + 7*c**2 - 6*c. Let g be j(8). Let z = g - -149. Is 2 a factor of z?
+	False
+
+train-hard/numbers__is_prime.txt: 
+Is 2022618131 prime?
+	True
+Is 28388081507 a prime number?
+	False
+Is 183707648003 a prime number?
+	False
+Is 1397858047 a prime number?
+	False
+Is 29804034305 composite?
+	True
+
+train-hard/numbers__is_prime_composed.txt: 
+Is -5 - 2520752/(-130)*5 a composite number?
+	True
+Let q(n) = -22967*n + 2663. Is q(-10) composite?
+	False
+Let s(c) = c**2 + 25*c + 35. Let h be s(-24). Suppose 2*j = -h*j + 30329. Is j a composite number?
+	False
+Let c(l) = -21*l**3 + 7*l**2 + 21*l - 129. Is c(-14) composite?
+	False
+Let s = -1590848 + 2279359. Is s a prime number?
+	True
+
+train-hard/numbers__lcm.txt: 
+Calculate the least common multiple of 222 and 85321852.
+	255965556
+Calculate the least common multiple of 5915 and 661297.
+	3306485
+What is the smallest common multiple of 1020 and 4047360?
+	4047360
+Find the common denominator of -11/5916 and -73/1899471.
+	129164028
+Calculate the smallest common multiple of 3505075 and 630.
+	63091350
+
+train-hard/numbers__lcm_composed.txt: 
+Suppose 374*h + 4*b = 373*h + 87, 4*b = 3*h - 165. Let u(n) = 6*n**2 - 2*n - 3. Calculate the least common multiple of h and u(3).
+	315
+Let y be (1 + -2)/(2/(-26)). Calculate the common denominator of 5/408 and -13 + y + (-150)/4 - 3.
+	408
+Suppose 5*u = 399 + 71. Let d be (-348)/28 - (-15)/35. What is the common denominator of -71/2 and u/63 - d/54?
+	14
+Let w be 1/(49824/(-27004)) + -2. Let y = w + 1/3114. What is the common denominator of -143/36 and y?
+	72
+Let k = 195 + -195. Suppose 0*v + 5*v + 5*o = 300, v - 2*o - 60 = k. Calculate the lowest common multiple of v and 65.
+	780
+
+train-hard/numbers__list_prime_factors.txt: 
+What are the prime factors of 1450349017?
+	13, 127, 878467
+List the prime factors of 235448502.
+	2, 3, 109, 173, 2081
+What are the prime factors of 842422994?
+	2, 7, 8596153
+List the prime factors of 632683069.
+	15287, 41387
+What are the prime factors of 4279952413?
+	11, 389086583
+
+train-hard/numbers__list_prime_factors_composed.txt: 
+Let l(p) = 3*p**3 + 3*p**2 - 6*p - 4. Suppose -2*u = 8, -3*j - 6*u = -u + 11. Let h be l(j). Suppose 28*t + h = 30*t. What are the prime factors of t?
+	43
+Let o = -1003 + 587. Let f(u) = u**2 - 11*u + 14. Let k be f(9). What are the prime factors of ((-3)/k)/((-4)/o)?
+	2, 3, 13
+Suppose 2*g = -4*r + 6*r + 6, -2*g - 3*r = -31. Suppose 2563 = g*b - 61. List the prime factors of b.
+	2, 41
+Suppose 6*j - 3*j = z + 1806, -2*z - 3562 = 4*j. List the prime factors of -1 - z - (-24)/(-3).
+	2, 3, 11
+What are the prime factors of (-8 - (-31 - 4))/((-5)/(-2165))?
+	3, 433
+
+train-hard/numbers__place_value.txt: 
+What is the millions digit of 9967193?
+	9
+What is the hundred millions digit of 295868867?
+	2
+What is the hundred millions digit of 127051896?
+	1
+What is the hundred thousands digit of 130986158?
+	9
+What is the ten thousands digit of 65047566?
+	4
+
+train-hard/numbers__place_value_composed.txt: 
+Suppose -i - b - 4*b = -3, 5*i - b = 15. Let m = i + -7. What is the tens digit of ((-2)/m)/(9/738)?
+	4
+Suppose 94 = 18*w - 16*w. Let r = w + 36. What is the units digit of r?
+	3
+Suppose 3*z + 86 = 5*b, z + 60 = 3*b + 2*z. Suppose -l - b = o - 76, l = -4*o + 63. Let x = -13 + l. What is the units digit of x?
+	2
+Let q(r) be the third derivative of -7*r**6/40 - r**5/15 - r**4/24 - r**3/3 - 58*r**2. What is the hundreds digit of q(-2)?
+	1
+Let j(f) = 4*f**2 - 4*f - 3. Let i be 99/(-27) - 2/6. Let p(d) = -3*d - 19. Let t be p(i). What is the hundreds digit of j(t)?
+	2
+
+train-hard/numbers__round_number.txt: 
+What is -4483293740 rounded to the nearest 100000?
+	-4483300000
+What is 76099930350 rounded to the nearest one million?
+	76100000000
+Round -1.7653370439 to five decimal places.
+	-1.76534
+Round 189049.478 to the nearest ten thousand.
+	190000
+Round -5335.28325 to the nearest 10.
+	-5340
+
+train-hard/numbers__round_number_composed.txt: 
+Let y = -52.893 + 52.89300031501. Round y to 7 dps.
+	0.0000003
+Let g = 14577.925 + -14759. Let q = g - -0.075. Let j = 180.105 + q. Round j to one dp.
+	-0.9
+Let k = 482139.61 - 479985. Let p = 2168 - k. What is p rounded to the nearest integer?
+	13
+Let b = -439 - -786. Let u = b - 346.9402. What is u rounded to 3 decimal places?
+	0.06
+Let l = 35.3528 - 35.1. Let q = -0.0974 + l. What is q rounded to 2 decimal places?
+	0.16
+
+train-hard/polynomials__add.txt: 
+Let i(w) be the second derivative of -w**3/2 - 11*w**2/2 - 532*w. Let m(x) = 7*x + 21. Give -5*i(t) - 2*m(t).
+	t + 13
+Let f be ((-60)/(-54))/(22/(-99)). Let l(r) = 18*r. Let u(d) = 5*d. Give f*l(s) + 15*u(s).
+	-15*s
+Let v be 3 - (-6)/(-5)*25/(-5). Let g be ((-378)/v)/(-6) + -4. Let l(d) = -2*d. Let c(b) = -b**3 + 3*b. Give g*l(h) + 2*c(h).
+	-2*h**3
+Let v(f) = -11*f**2 - 5*f. Let w be 0 - (-3)/(-3)*-5. Suppose 2*b = -w + 25. Let n(d) = -6*d**2 - 3*d. Give b*n(o) - 6*v(o).
+	6*o**2
+Let w(r) = -62*r**2 - 45*r - 21. Let u(o) = 31*o**2 + 23*o + 12. Calculate 7*u(c) + 4*w(c).
+	-31*c**2 - 19*c
+
+train-hard/polynomials__coefficient_named.txt: 
+Rearrange (3 - 1 - 6)*(-3*p - 4*p + p)*(p + 4*p - 3*p)*(-5*p**2 + 13*p**2 + 9*p**2) to y + c*p**2 + i*p + a*p**4 + o*p**3 and give a.
+	816
+Rearrange 15*g**3 + 12*g**3 - 149*g**4 + g**2 - 23*g**3 + 89*g**4 + g - 131*g**4 to the form o + v*g**3 + m*g**2 + j*g**4 + s*g and give v.
+	4
+Rearrange -874320 - 7239*u + 874320 to the form d*u + b and give d.
+	-7239
+Express -11596 - 1032*f + 11593 - 127*f - f**3 in the form g*f**3 + b + i*f**2 + x*f and give x.
+	-1159
+Rearrange (-3854 - 981 - 2416)*(-3*a**4 + 7*a**4 - 3*a**4) to g*a + q*a**3 + c*a**4 + j + o*a**2 and give c.
+	-7251
+
+train-hard/polynomials__collect.txt: 
+Collect the terms in -6*m**2 + 13 - 13 + 4*m**2 + 1597*m.
+	-2*m**2 + 1597*m
+Collect the terms in -4 + 4 - 194*r**3 + 0 + 1 + 2*r + 28*r**2.
+	-194*r**3 + 28*r**2 + 2*r + 1
+Collect the terms in 1556*d + 1 - 3 - 13 - 1552*d.
+	4*d - 15
+Collect the terms in -135570*u - 7*u**3 + 135573*u - 23*u**3 - 19*u**3.
+	-49*u**3 + 3*u
+Collect the terms in 123*m - 185 + 187 - 31*m + 57*m.
+	149*m + 2
+
+train-hard/polynomials__compose.txt: 
+Let p(a) = -7087*a**2 - 12*a - 9. Let d(g) = 8*g**2. Calculate p(d(q)).
+	-453568*q**4 - 96*q**2 - 9
+Let b(r) = 3*r. Let u(x) = 25*x. Let w(v) = -51*b(v) + 6*u(v). Let d(p) be the second derivative of 0*p**2 + 7/6*p**3 + 0 + 62*p. Calculate d(w(a)).
+	-21*a
+Let t(q) be the first derivative of 2*q**3/3 - 6. Let y(l) be the third derivative of -4*l**5/3 - 65*l**2 - 1. Calculate t(y(s)).
+	12800*s**4
+Let z(k) be the second derivative of 0*k**3 + 17 + 2*k + 0*k**2 + 5/6*k**4. Let x(f) = -29*f. Calculate z(x(c)).
+	8410*c**2
+Let m(d) be the first derivative of 1/3*d**3 - 126 + 0*d**2 + 0*d. Let u(i) = 5*i - 4. What is m(u(y))?
+	25*y**2 - 40*y + 16
+
+train-hard/polynomials__evaluate.txt: 
+Let m(k) = -44*k**2 - 3513*k - 6359. What is m(-78)?
+	-41
+Let z(m) = -1648*m + 10013. What is z(6)?
+	125
+Let f(o) = 13*o**2 + 90*o - 776. Give f(-12).
+	16
+Let f(t) = -t**2 - 3502*t + 1239630. Determine f(324).
+	6
+Let w(q) = 440*q + 56636. Determine w(-128).
+	316
+
+train-hard/polynomials__evaluate_composed.txt: 
+Suppose -5*r - 8*b = -5*b - 9, 0 = 4*b - 12. Let l(u) = 2*u - 34. Give l(r).
+	-34
+Let h(m) = 3*m**2 - 7*m + 25. Let s(o) = o**2 - 3*o + 13. Let q(k) = -2*h(k) + 5*s(k). Let c(g) = 4*g**2 - 11*g + 6. Let d be c(2). Give q(d).
+	15
+Let n(x) be the second derivative of x**3/6 - x. Suppose -p + 7 = 4*k, 2*k - 4*k = -2. Suppose -4*v + 5*u = 48, 5*v + p*u = 4*u - 39. Calculate n(v).
+	-7
+Let q(s) = 4*s**3 + 34*s**2 - 2*s - 107. Let k(c) = -3*c**3 - 34*c**2 + c + 106. Let z(p) = 5*k(p) + 4*q(p). Calculate z(34).
+	0
+Let l(q) = -q**2 - q + 14. Suppose -53*b + 30 = -48*b. Let t be b/(-4) + (-4)/(16/(-6)). Determine l(t).
+	14
+
+train-hard/polynomials__expand.txt: 
+Expand -2389*x**3 + 385*x**2 - 257*x**2 - 127*x**2 - x - 5 + (-x**2 - x**2 + 3*x**2)*(2*x - 2*x - x).
+	-2390*x**3 + x**2 - x - 5
+Expand (-3*w - 2*w**2 + 3*w)*((-2*w - 4*w + 5*w)*(-3*w + w + 0*w) - 92 - 4*w**2 + 402 + 208).
+	4*w**4 - 1036*w**2
+Expand (10*z - 3 + 3 + (-2 + 3 + 1)*(-z + 2*z + 0*z) + 4*z - z - z)*(11*z - 132*z + 9*z).
+	-1568*z**2
+Expand (-2 + 2 + b)*((-2 - 1 + 1)*(-5 + 4 + 0) + 20 + 65 + 75).
+	162*b
+Expand (-2*b + 2 - 2 + (-1 + 1 + b)*(-1 + 0 + 3) + 3*b - 3*b + b + 2 - 2 + 3*b)*(28 + 33 - 14).
+	188*b
+
+train-hard/polynomials__simplify_power.txt: 
+Simplify (((j/((j/(j*j/j**(-1/14)*j))/j))/j*j)**(2/19)*(j*j**20)**(-45))**(-26) assuming j is positive.
+	j**(171912/7)
+Simplify (u**(-6)/(u*u**0))/(u**(-2/15)/(u*u**7))*(u**(-2/23)/((u**(-2/13)*u*u*u)/u))**39 assuming u is positive.
+	u**(-25619/345)
+Simplify ((o**(-2))**(-46))**(-43)/((o**6*o*((o**(-2/3)*o)/o)/o)/(((o/(o*o/(o/(o/(o/o**3)))*o))/o)/o**(-2/13))) assuming o is positive.
+	o**(-154681/39)
+Simplify ((w/w**(-1))**(-11/5))**23/(w*w**(3/7)*(w**(-5/4)/w)/w*w*w**(-1/2)/(w/(w/(w**(1/4)/w)))) assuming w is positive.
+	w**(-3522/35)
+Simplify (i/i**(2/17)*i**(4/3)*i*i**(-11/3)*i**25)**(2/7) assuming i is positive.
+	i**(2504/357)
+
+train-hard/probability__swr_p_level_set.txt: 
+What is prob of picking 2 f and 1 v when three letters picked without replacement from vvafvvvavavvvvvfvfv?
+	13/323
+Four letters picked without replacement from {e: 5, g: 2, k: 8}. What is prob of picking 4 e?
+	1/273
+What is prob of picking 1 h and 3 x when four letters picked without replacement from xkkxkhx?
+	1/35
+What is prob of picking 1 f, 1 d, and 1 r when three letters picked without replacement from ddrdrrddffrdrrrrrdf?
+	63/323
+What is prob of picking 1 m and 1 b when two letters picked without replacement from bytmbtybwwwwbwywbywb?
+	3/95
+
+train-hard/probability__swr_p_sequence.txt: 
+Two letters picked without replacement from uxjqxjjqxuxqx. What is prob of sequence xj?
+	5/52
+What is prob of sequence dd when two letters picked without replacement from cccadcdaddd?
+	2/11
+Calculate prob of sequence fxf when three letters picked without replacement from {a: 4, u: 3, f: 2, x: 8}.
+	1/255
+Three letters picked without replacement from {h: 1, r: 3}. Give prob of sequence rrr.
+	1/4
+Calculate prob of sequence cce when three letters picked without replacement from {j: 2, c: 4, e: 4}.
+	1/15
