@@ -56,11 +56,11 @@ def make_equality(expression1, expression2):
     return f"{expression1} = {expression2}"
 
 
-def equality_lhs(eq):
+def project_lhs(eq):
     return eq.split('=')[0].strip()
 
 
-def equality_rhs(eq):
+def project_rhs(eq):
     return eq.split('=')[1].strip()
 
 
@@ -133,4 +133,8 @@ def gcd(x, y):
 
 def factor(expression):
     return str(sym.factor(expression))
+
+def diff(expression):
+    return str(sym.diff(sym.sympify(expression)))
+
 

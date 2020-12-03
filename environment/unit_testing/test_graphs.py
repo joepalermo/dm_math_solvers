@@ -1,7 +1,7 @@
 import unittest
 from environment.utils import extract_formal_elements
 from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
-    make_equality, equality_lhs, simplify, solve_system, factor
+    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff
 
 
 # [op1, op2, ... f1, f2, ...]
@@ -21,8 +21,8 @@ class Test(unittest.TestCase):
         b = simplify(f[2])
         system = append(append(append(None, eq), b), f[3])
         soln = solve_system(system)
-        i = lookup_value(soln, equality_lhs(f[3]))
-        i_mapping = add_keypair(None, equality_lhs(f[3]), i)
+        i = lookup_value(soln, project_lhs(f[3]))
+        i_mapping = add_keypair(None, project_lhs(f[3]), i)
         lin_eq = apply_mapping(f[4], i_mapping)
         assert lookup_value(solve_system(lin_eq), f[5]) == -3
 
@@ -55,6 +55,18 @@ class Test(unittest.TestCase):
     def test_train_easy_algebra__polynomial_roots_composed_1(self): #TODO: implement this w sympy calculus
         problem_statement = 'Let $f[d = -25019/90 - -278]. Let $f[v(j)] be the third derivative of $f[0 + 1/27*j**3 - d*j**5 + 1/54*j**4 + 3*j**2 + 0*j]. Suppose $f[v(o) = 0]. What is $f[o]?'
         f = extract_formal_elements(problem_statement)
+        d = simplify(f[0])
+        exp = apply_mapping(f[3], add_keypair(None, project_lhs(d), project_rhs(d)))
+        v = diff(diff(diff(exp)))
+        assert lookup_value(solve_system(v),)
+
+
+        """
+        compute d
+        substitute into f[2]
+        differentiate result
+        solve equation
+        """
         assert lookup_value(solve_system(f[1]), f[0]) == {-1, 1/3, 997}
 
     # medium ---------
