@@ -6,8 +6,8 @@ current_time = dt.now().strftime('%Y%m%d_%H_%M-')
 
 class TransformerParams:
     def __init__(self):
-        self.experiment_dirpath = os.path.join('experiment_results', current_time + 'transformer_testing')
-        # self.experiment_dirpath = os.path.join('./experiment_results/reference')
+        # self.experiment_dirpath = os.path.join('experiment_results', current_time + 'transformer_testing')
+        self.experiment_dirpath = os.path.join('./experiment_results/reference')
         self.checkpoints_dirpath = os.path.join(self.experiment_dirpath, 'checkpoints')
         # self.checkpoints_dirpath = 'models'
 

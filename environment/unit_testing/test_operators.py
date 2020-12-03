@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from environment.operators.solve_linsys import extract_coefficients, solve_linsys
-from environment.operators import add_keypair
+from environment.operators import add_keypair, simplify
 
 
 class Test(unittest.TestCase):
@@ -76,3 +76,7 @@ class Test(unittest.TestCase):
     def test_key_pair(self):
         assert add_keypair(None, 'x', 2) == {'x': 2}
         assert add_keypair(add_keypair(None, 'x', 2), 'y', 3) == {'x': 2, 'y': 3}
+
+    def test_simplify(self):
+        assert simplify('x + 1 + 1') == 'x + 2'
+        assert simplify('b = w - -6') == 'b = w + 6'

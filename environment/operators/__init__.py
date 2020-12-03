@@ -1,4 +1,5 @@
 import re
+import sympy
 
 
 def append(ls, value):
@@ -55,6 +56,22 @@ def apply_mapping(expression, mapping):
 def make_equality(expression1, expression2):
     return f"{expression1} = {expression2}"
 
+
+def equality_lhs(eq):
+    return eq.split('=')[0].strip()
+
+
+def equality_rhs(eq):
+    return eq.split('=')[1].strip()
+
+
+def simplify(expression):
+    if '=' in expression:
+        lhs, rhs = expression.split('=')
+        lhs, rhs = lhs.strip(), rhs.strip()
+        return f'{sympy.simplify(lhs)} = {sympy.simplify(rhs)}'.strip()
+    else:
+        return str(sympy.simplify(expression)).strip()
 
 # arithmetic -------------------------------------
 

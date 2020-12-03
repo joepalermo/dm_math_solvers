@@ -68,6 +68,8 @@ def solve_linsys(system):
 
     :param system: either a string or a list of strings
     :return: dict mapping variable names to values
+
+    replace with https://reliability.readthedocs.io/en/latest/Solving%20simultaneous%20equations%20with%20sympy.html
     '''
     def setup_linear_system(all_coefficients, ordered_variables):
         rows = list()
