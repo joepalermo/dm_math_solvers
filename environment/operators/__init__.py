@@ -98,9 +98,9 @@ def solve_system(system):
         for soln in solutions:
             for k, v in soln.items():
                 if str(k) in solutions_dict.keys():
-                    solutions_dict[str(k)].add(v)
+                    solutions_dict[str(k)].add(float(v))
                 else:
-                    solutions_dict[str(k)] = set([v])
+                    solutions_dict[str(k)] = set([float(v)])
         return solutions_dict
 
 # arithmetic -------------------------------------
@@ -130,4 +130,7 @@ def calc(expression):
 def gcd(x, y):
     from math import gcd
     return gcd(x, y)
+
+def factor(expression):
+    return str(sym.factor(expression))
 

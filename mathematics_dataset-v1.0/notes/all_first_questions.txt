@@ -79,7 +79,7 @@ What is the next term in -363, -368, -383, -414, -467, -548, -663?
 	-818
 What is next in 3257, 6514, 9771?
 	13028
-What comes next: 13, 14, 11, 4, -7?
+What comes next: 13, 14, 11, 4, -7? +1 -3 -7 -11 -15
 	-22
 
 train-easy/algebra__sequence_nth_term.txt: 
