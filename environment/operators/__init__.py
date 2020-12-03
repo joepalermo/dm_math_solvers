@@ -1,6 +1,5 @@
 import re
-import sympy
-
+import sympy as sym
 
 def append(ls, value):
     if not ls:
@@ -69,9 +68,40 @@ def simplify(expression):
     if '=' in expression:
         lhs, rhs = expression.split('=')
         lhs, rhs = lhs.strip(), rhs.strip()
-        return f'{sympy.simplify(lhs)} = {sympy.simplify(rhs)}'.strip()
+        return f'{sym.simplify(lhs)} = {sym.simplify(rhs)}'.strip()
     else:
-        return str(sympy.simplify(expression)).strip()
+        return str(sym.simplify(expression)).strip()
+
+
+def solve_system(system):
+    '''
+    solve a system of linear equations.
+
+    :param system: either a string or a list of strings
+    :return: dict mapping variable names to values
+    '''
+    if type(system) == str:
+        system = [system]
+    sympy_equations = []
+    for equation in system:
+        lhs, rhs = equation.split('=')
+        sympy_eq = sym.Eq(sym.sympify(lhs), sym.sympify(rhs))
+        sympy_equations.append(sympy_eq)
+    solutions = sym.solve(sympy_equations)
+    # Convert list to dictionary if no solution found.
+    if len(solutions) == 0:
+        raise Exception("no solution found")
+    elif type(solutions) is dict:
+        return  {str(k): v for k,v in solutions.items()}
+    elif type(solutions) is list:
+        solutions_dict = {}
+        for soln in solutions:
+            for k, v in soln.items():
+                if str(k) in solutions_dict.keys():
+                    solutions_dict[str(k)].add(v)
+                else:
+                    solutions_dict[str(k)] = set([v])
+        return solutions_dict
 
 # arithmetic -------------------------------------
 
@@ -100,3 +130,4 @@ def calc(expression):
 def gcd(x, y):
     from math import gcd
     return gcd(x, y)
+
