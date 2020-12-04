@@ -1,6 +1,6 @@
 import re
 import sympy as sym
-
+from math import log
 
 def append(ls, value):
     if not ls:
@@ -104,6 +104,8 @@ def solve_system(system):
                     solutions_dict[str(k)] = set([float(v)])
         return solutions_dict
 
+def get_arg(function, var)
+
 
 def replace_arg(function, var):
     lhs, rhs = project_lhs(function), project_rhs(function)
@@ -113,8 +115,28 @@ def replace_arg(function, var):
     return make_equality(lhs.replace(arg,var), rhs.replace(arg,var))
 
 
-def substitution(exp_or_eq, eq2): #Left to right substitution
+def substitution_left_to_right(exp_or_eq, eq2):
     return exp_or_eq.replace(project_lhs(eq2), project_rhs(eq2))
+
+
+def substitution_right_to_left(exp_or_eq, eq2):
+    return exp_or_eq.replace(project_rhs(eq2), project_lhs(eq2))
+
+
+def max_arg(x, y):
+    return str(max(eval(x),eval(y)))
+
+
+def min_arg(x, y):
+    return str(min(eval(x),eval(y)))
+
+
+def greater_than(x, y):
+    return str(eval(x) > eval(y))
+
+
+def less_than(x, y):
+    return str(eval(x) < eval(y))
 
 # arithmetic -------------------------------------
 
@@ -128,6 +150,10 @@ def sub(x, y):
 
 def mult(x, y):
     return x * y
+
+def power(x, y):
+    x, y = eval(x), eval(y)
+    return str(x**y)
 
 
 def rational_div(x, y):
@@ -207,6 +233,22 @@ def eval_in_base(exp, base):
     new_exp += exp[prev_end:]
     return str(NumberInBase(eval(new_exp), base))
 
+def root(num, order):
+    return str(eval(num)**(1./eval(order)))
 
-def round(num, round_to):
-    pass
+def round_to_int(num, round_to):
+    num, round_to = eval(num), eval(round_to)
+    if round_to == 1:
+        return str(int(round(num, 0)))
+    elif round_to % 10 == 0:
+        base = -int(round(log(round_to, 10),0))
+        return str(int(round(num, base)))
+    else:
+        diff = num % round_to
+        if diff < round_to/2.:
+            return str(int(num - diff))
+        else:
+            return str(int(num + round_to - diff))
+
+def round_to_dec(num, round_to):
+    return str(round(float(num), round_to))

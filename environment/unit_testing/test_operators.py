@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from environment.operators import add_keypair, simplify, solve_system, eval_in_base
+from environment.operators import add_keypair, simplify, solve_system, eval_in_base, round_to_int
 
 
 class Test(unittest.TestCase):
@@ -57,3 +57,14 @@ class Test(unittest.TestCase):
         assert eval_in_base('7a79 - -5', '13') == '7a81'
         assert eval_in_base('-100 + -1001100', '2') == '-1010000'
         assert eval_in_base('-5aa - 8', '12') == '-5b6'
+
+    def test_round_to_int(self):
+        assert round_to_int('123456', '1000000') == '0'
+        assert round_to_int('123456', '100000') == '100000'
+        assert round_to_int('123456', '10000') == '120000'
+        assert round_to_int('123456', '1000') == '123000'
+        assert round_to_int('123456', '100') == '123500'
+        assert round_to_int('123456', '10') == '123460'
+        assert round_to_int('123456', '1') == '123456'
+        assert round_to_int('123456', '5') == '123455'
+        assert round_to_int('123453', '5') == '123455'

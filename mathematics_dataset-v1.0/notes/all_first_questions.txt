@@ -668,7 +668,9 @@ Three letters picked without replacement from dxaxxaaxxxaax. What is prob of seq
 Calculate prob of sequence rsp when three letters picked without replacement from pogpphggsrpogs.
 	1/273
 Calculate prob of sequence bc when two letters picked without replacement from {b: 4, c: 3}.
-	2/7train-medium/algebra__linear_1d.txt: 
+	2/7
+
+train-medium/algebra__linear_1d.txt:
 Solve 24 = 1601*c - 1605*c for c.
 	-6
 Solve 657 = -220*t + 1086*t + 22307 for t.
