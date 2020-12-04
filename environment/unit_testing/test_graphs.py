@@ -1,7 +1,8 @@
 import unittest
 from environment.utils import extract_formal_elements
 from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
-    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff
+    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff, replace_arg, substitution, \
+    eval_in_base
 
 
 # [op1, op2, ... f1, f2, ...]
@@ -52,22 +53,25 @@ class Test(unittest.TestCase):
         f = extract_formal_elements(problem_statement)
         assert lookup_value(solve_system(f[1]), f[0]) == {-1, 1/3, 997}
 
-    def test_train_easy_algebra__polynomial_roots_composed_1(self): #TODO: implement this w sympy calculus
+    def test_train_easy_algebra__polynomial_roots_composed_1(self):
         problem_statement = 'Let $f[d = -25019/90 - -278]. Let $f[v(j)] be the third derivative of $f[0 + 1/27*j**3 - d*j**5 + 1/54*j**4 + 3*j**2 + 0*j]. Suppose $f[v(o) = 0]. What is $f[o]?'
         f = extract_formal_elements(problem_statement)
         d = simplify(f[0])
-        exp = apply_mapping(f[3], add_keypair(None, project_lhs(d), project_rhs(d)))
-        v = diff(diff(diff(exp)))
-        assert lookup_value(solve_system(v),)
+        function = substitution(f[2], d)
+        v = diff(diff(diff(function)))
+        v_eq = make_equality(f[1], v)
+        v_eq_o = replace_arg(v_eq, f[4])
+        equation = substitution(f[3], v_eq_o)  # e.g. x.subs(sym.sympify('f(x)'), sym.sympify('v'))
+        assert lookup_value(solve_system(equation), f[4]) == {-1/3, 1}
 
+    def test_train_easy_arithmetic__add_or_sub_in_base(self):
+        problem_statement = 'In base $f[13], what is $f[7a79 - -5]?'
+        f = extract_formal_elements(problem_statement)
+        assert eval_in_base(f[1], f[0]) == '7a81'
 
-        """
-        compute d
-        substitute into f[2]
-        differentiate result
-        solve equation
-        """
-        assert lookup_value(solve_system(f[1]), f[0]) == {-1, 1/3, 997}
+    def test_train_easy_arithmetic__nearest_integer_root(self):
+        problem_statement = 'What is the $f[2] root of $f[664] to the nearest integer?'
+
 
     # medium ---------
     def test_medium_algebra__linear_1d_compose(self):

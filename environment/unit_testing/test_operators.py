@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from environment.operators import add_keypair, simplify, solve_system
+from environment.operators import add_keypair, simplify, solve_system, eval_in_base
 
 
 class Test(unittest.TestCase):
@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
 
         # quadratic equation
         system = '-3*h**2/2 - 24*h - 45/2 = 0'
-        assert solve_system(system) == [{'h': -15}, {'h': -1}]
+        assert solve_system(system) == {'h': {-15.0, -1.0}}
 
     def test_key_pair(self):
         assert add_keypair(None, 'x', 2) == {'x': 2}
@@ -52,3 +52,8 @@ class Test(unittest.TestCase):
     def test_simplify(self):
         assert simplify('x + 1 + 1') == 'x + 2'
         assert simplify('b = w - -6') == 'b = w + 6'
+
+    def test_eval_in_base(self):
+        assert eval_in_base('7a79 - -5', '13') == '7a81'
+        assert eval_in_base('-100 + -1001100', '2') == '-1010000'
+        assert eval_in_base('-5aa - 8', '12') == '-5b6'
