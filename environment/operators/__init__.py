@@ -25,6 +25,10 @@ def lookup_value(mapping, key):
     return mapping.get(key, None)
 
 
+def lookup_value_eq(mapping, key):
+    return f"{key} = {mapping.get(key, None)}"
+
+
 def function_application(function_definition, function_argument):
     '''
 
@@ -104,7 +108,9 @@ def solve_system(system):
                     solutions_dict[str(k)] = set([float(v)])
         return solutions_dict
 
-def get_arg(function, var)
+
+def get_arg(function, var):
+    pass
 
 
 def replace_arg(function, var):

@@ -3,7 +3,7 @@ from environment.utils import extract_formal_elements
 from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
     make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff, replace_arg, substitution_left_to_right, \
     eval_in_base, root, round_to_int, round_to_dec, power, substitution_right_to_left, max_arg, min_arg, greater_than, \
-    less_than
+    less_than, lookup_value_eq
 
 
 # [op1, op2, ... f1, f2, ...]
@@ -19,13 +19,11 @@ class Test(unittest.TestCase):
     def test_easy_algebra__linear_1d_composed(self):
         problem_statement = 'Let $f[w] be $f[(-1 + 13)*3/(-6)]. Let $f[b = w - -6]. Let $f[i = 2 - b]. Solve $f[-15 = 3*c + i*c] for $f[c].'
         f = extract_formal_elements(problem_statement)
-        eq = make_equality(f[0], calc(f[1]))
-        b = simplify(f[2])
-        system = append(append(append(None, eq), b), f[3])
+        eq1 = make_equality(f[0], f[1])
+        system = append(append(append(None, eq1), f[2]), f[3])
         soln = solve_system(system)
-        i = lookup_value(soln, project_lhs(f[3]))
-        i_mapping = add_keypair(None, project_lhs(f[3]), i)
-        lin_eq = apply_mapping(f[4], i_mapping)
+        i_eq = lookup_value_eq(soln, project_lhs(f[3]))
+        lin_eq = substitution_left_to_right(f[4], i_eq)
         assert lookup_value(solve_system(lin_eq), f[5]) == -3
 
     def test_easy_algebra__linear_2d(self):
@@ -84,12 +82,12 @@ class Test(unittest.TestCase):
         rounded_power_f0 = round_to_int(power_f0, f[2])
         assert rounded_power_f0 == '3'
 
-    def test_train_easy_comparison__closest(self):
-        problem_statement = 'Which is the closest to -1/3?  (a) -8/7  (b) 5  (c) -1.3'
-        f = extract_formal_elements(problem_statement)
-        power_f0 = power(f[0], f[1])
-        rounded_power_f0 = round_to_int(power_f0, f[2])
-        assert rounded_power_f0 == '3'
+    # def test_train_easy_comparison__closest(self):
+    #     problem_statement = 'Which is the closest to -1/3?  (a) -8/7  (b) 5  (c) -1.3'
+    #     f = extract_formal_elements(problem_statement)
+    #     power_f0 = power(f[0], f[1])
+    #     rounded_power_f0 = round_to_int(power_f0, f[2])
+    #     assert rounded_power_f0 == '3'
 
 
     def test_train_easy_comparison__pair_composed(self):
@@ -100,15 +98,12 @@ class Test(unittest.TestCase):
         assert substitution_right_to_left(m, o) == '-0.1'
 
 
-    def test_train_easy_comparison__sort_composed(self):
-        problem_statement = 'Suppose $f[0 = -4*x + 8*x - 40]. Let $f[h(i) = i**2 - 9*i - 14]. Let $f[n] be $f[h(x)]. Sort $f[-1], $f[4], $f[n].'
-        f = extract_formal_elements(problem_statement)
-        x = lookup_value(solve_system(f[0]), get
+    # def test_train_easy_comparison__sort_composed(self):
+    #     problem_statement = 'Suppose $f[0 = -4*x + 8*x - 40]. Let $f[h(i) = i**2 - 9*i - 14]. Let $f[n] be $f[h(x)]. Sort $f[-1], $f[4], $f[n].'
+    #     f = extract_formal_elements(problem_statement)
+    #     x = lookup_value(solve_system(f[0]), get
 
 
-
-
-    n, -1, 4
     # medium ---------
     def test_medium_algebra__linear_1d_compose(self):
         problem_statement = 'Let $f[n(m) = m**3 - 7*m**2 + 13*m - 2]. Let $f[j] be $f[n(4)]. Solve $f[0 = 3*x + j*x + 10] for $f[x].'
