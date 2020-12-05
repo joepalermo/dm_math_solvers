@@ -32,7 +32,12 @@ class MathEnv(gym.Env):
         -info: None
         '''
         self.compute_graph.add(action)
-        pass
+        output = self.compute_graph.eval()
+        observation = self.problem + str(self.compute_graph)
+        reward = 1 if output == self.answer else 0
+        done = output is not None
+        info = {}
+        return observation, reward, done, info
 
     def reset(self):
         '''
@@ -40,7 +45,7 @@ class MathEnv(gym.Env):
         :return: the initial oberservation (the problem statement)
         '''
         self.compute_graph.reset()
-        self.problem = self.problems.sample()
+        self.problem_statement, self.answer = self.problems.sample()
         return self.problem
 
     def render(self):

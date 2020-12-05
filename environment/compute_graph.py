@@ -33,6 +33,13 @@ class ComputeGraph:
         '''
         pass
 
+    def eval(self):
+        '''
+        evaluate the compute graph
+        :return: the output of the compute graph
+        '''
+        pass
+
     def add(self, action):
         '''
         Add an action to the compute graph. Elements are added breadth-first order.
