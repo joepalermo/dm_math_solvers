@@ -22,6 +22,16 @@ class Test(unittest.TestCase):
         assert str(cg) == "lookup_value(solve_system('0 = 4*b + b + 15'),'b')"
         assert cg.eval() == -3
 
+    def test_incomplete_compute_graph(self):
+        cg = ComputeGraph()
+        lookup_value_node = Node(lookup_value)
+        solve_system_node = Node(solve_system)
+        lookup_value_node.set_arg(solve_system_node)
+        cg.root = lookup_value_node
+        assert str(cg) == "lookup_value(solve_system('param_0'),'param_1')"
+        assert cg.eval() == None
+
+
     def test_easy_algebra__linear_1d_composed(self):
         problem_statement = 'Let $f[w] be $f[(-1 + 13)*3/(-6)]. Let $f[b = w - -6]. Let $f[i = 2 - b]. Solve $f[-15 = 3*c + i*c] for $f[c].'
         f = extract_formal_elements(problem_statement)

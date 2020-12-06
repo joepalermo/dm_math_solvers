@@ -10,7 +10,7 @@ class Node:
     def __init__(self, action):
         self.action = action
         self.args = []
-        if type(self.action) == 'str':  # if action is a formal element
+        if type(self.action) == str:  # if action is a formal element
             self.num_parameters = 0
         else:
             self.num_parameters = len(signature(self.action).parameters)
@@ -28,11 +28,17 @@ class Node:
 
 
 def build_string(current_node):
-    if current_node is None or type(current_node) == str:
+    if current_node.action is None or type(current_node.action) == str:
         return f"'{current_node}'" if type(current_node) == str else current_node
     else:
         arg_strings = []
-        for arg in current_node.args:
+        if len(current_node.args) < current_node.num_parameters:
+            num_params = current_node.num_parameters
+            num_args = len(current_node.args)
+            args = current_node.args + [f"param_{i}" for i in range(num_args, num_params)]
+        else:
+            args = current_node.args
+        for arg in args:
             arg_string = build_string(arg)
             arg_strings.append(arg_string)
         return f"{current_node.action.__name__}({','.join(['{}'.format(arg_string) for arg_string in arg_strings])})"
@@ -57,7 +63,10 @@ class ComputeGraph:
         evaluate the compute graph
         :return: the output of the compute graph
         '''
-        return eval(str(self))
+        try:
+            return eval(str(self))
+        except:
+            return None
 
     def add(self, action):
         '''
