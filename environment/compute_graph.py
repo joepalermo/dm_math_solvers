@@ -86,7 +86,7 @@ class ComputeGraph:
                 self.current_node = None
         else:
             new_node = Node(action)
-            self.current_node.set_arg(Node(action))
+            self.current_node.set_arg(new_node)
             if new_node.num_parameters > 0:
                 self.queue.append(new_node)  # add new node to queue for later processing
             if self.current_node.args_set():

@@ -45,7 +45,7 @@ class MathEnv(gym.Env):
         output = self.compute_graph.eval()
         compute_graph = str(self.compute_graph)
         observation = f"{self.problem_statement}; {compute_graph}"
-        reward = 1 if output == self.answer else 0
+        reward = 1 if str(output) == self.answer else 0
         done = True if not self.compute_graph.current_node else False
         info = {}
         return observation, reward, done, info
