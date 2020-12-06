@@ -6,12 +6,9 @@ from environment.operators import append, add_keypair, lookup_value, function_ap
     less_than, lookup_value_eq
 
 
-# [op1, op2, ... f1, f2, ...]
-
 class Test(unittest.TestCase):
 
-    @staticmethod
-    def test_easy_algebra__linear_1d():
+    def test_easy_algebra__linear_1d(self):
         problem_statement = 'Solve $f[0 = 4*b + b + 15] for $f[b].'
         f = extract_formal_elements(problem_statement)
         assert lookup_value(solve_system(f[0]), f[1]) == -3

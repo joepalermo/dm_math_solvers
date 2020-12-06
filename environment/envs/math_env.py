@@ -46,7 +46,7 @@ class MathEnv(gym.Env):
         '''
         self.compute_graph.reset()
         self.problem_statement, self.answer = self.problems.sample()
-        return self.problem
+        return self.problem_statement
 
     def render(self):
         pass
