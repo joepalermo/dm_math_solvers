@@ -43,9 +43,10 @@ class MathEnv(gym.Env):
         '''
         self.compute_graph.add(action)
         output = self.compute_graph.eval()
-        observation = self.problem_statement + str(self.compute_graph)
+        compute_graph = str(self.compute_graph)
+        observation = f"{self.problem_statement}; {compute_graph}"
         reward = 1 if output == self.answer else 0
-        done = output is not None
+        done = True if not self.compute_graph.current_node else False
         info = {}
         return observation, reward, done, info
 
@@ -57,6 +58,11 @@ class MathEnv(gym.Env):
         from random import sample
         self.compute_graph.reset()
         self.problem_statement, self.answer = sample(self.problems, 1)[0]
+        return self.problem_statement
+
+    def reset_by_index(self, index):
+        self.compute_graph.reset()
+        self.problem_statement, self.answer = self.problems[index]
         return self.problem_statement
 
     def render(self):

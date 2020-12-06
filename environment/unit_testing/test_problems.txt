@@ -1,0 +1,6 @@
+Solve $f[0 = 4*b + b + 15] for $f[b].
+-3
+Solve $f[-3*d = -0*d + 3] for $f[d].
+-1
+Solve $f[-4*h + 9 = 41] for $f[h].
+-8

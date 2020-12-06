@@ -28,8 +28,12 @@ class Node:
 
 
 def build_string(current_node):
-    if current_node.action is None or type(current_node.action) == str:
-        return f"'{current_node}'" if type(current_node) == str else current_node
+    if type(current_node) == str:
+        return f"'{current_node}'"
+    elif type(current_node.action) == str:
+        return f"'{current_node.action}'"
+    elif current_node.action is None:
+        return 'None'
     else:
         arg_strings = []
         if len(current_node.args) < current_node.num_parameters:
@@ -78,12 +82,18 @@ class ComputeGraph:
             self.root = Node(action)
             if not self.root.args_set():
                 self.current_node = self.root
+            else:
+                self.current_node = None
         else:
             new_node = Node(action)
             self.current_node.set_arg(Node(action))
-            self.queue.append(new_node)  # add new node to queue for later processing
+            if new_node.num_parameters > 0:
+                self.queue.append(new_node)  # add new node to queue for later processing
             if self.current_node.args_set():
-                self.current_node = self.queue.pop()
+                if len(self.queue) > 0:
+                    self.current_node = self.queue.pop()
+                else:
+                    self.current_node = None
 
     def reset(self):
         self.root = None
