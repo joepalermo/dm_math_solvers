@@ -7,13 +7,14 @@ from environment.operators import append, add_keypair, lookup_value, function_ap
     eval_in_base, root, round_to_int, round_to_dec, power, substitution_right_to_left, max_arg, min_arg, greater_than, \
     less_than, lookup_value_eq
 from environment.compute_graph import ComputeGraph
+from random import sample
 
 
 class MathEnv(gym.Env):
 
     def __init__(self, problem_filepaths):
-        self.operators = [append, lookup_value, solve_system]
-        self.max_formal_elements = 5
+        self.operators = [lookup_value, solve_system]
+        self.max_formal_elements = 2
         self.actions = self.operators + [f"f{i}" for i in range(self.max_formal_elements)]
         self.action_space = spaces.Discrete(len(self.actions))
         # load problems
@@ -26,8 +27,10 @@ class MathEnv(gym.Env):
                 question = lines[i].strip()
                 answer = lines[i + 1].strip()
                 self.problems.append((question, answer))
-        self.problem = None
-        self.compute_graph = ComputeGraph()
+        self.compute_graph = None
+
+    def sample_action(self):
+        return self.actions[self.action_space.sample()]
 
     def step(self, action):
         '''
@@ -55,14 +58,13 @@ class MathEnv(gym.Env):
         resets the environment by sampling a new problem.
         :return: the initial oberservation (the problem statement)
         '''
-        from random import sample
-        self.compute_graph.reset()
         self.problem_statement, self.answer = sample(self.problems, 1)[0]
+        self.compute_graph = ComputeGraph(self.problem_statement)
         return self.problem_statement
 
     def reset_by_index(self, index):
-        self.compute_graph.reset()
         self.problem_statement, self.answer = self.problems[index]
+        self.compute_graph = ComputeGraph(self.problem_statement)
         return self.problem_statement
 
     def render(self):
