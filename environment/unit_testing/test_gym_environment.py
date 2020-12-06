@@ -9,16 +9,6 @@ import unittest
 
 class Test(unittest.TestCase):
 
-    def test(self):
-        env = MathEnv(['environment/unit_testing/test_problems.txt'])
-        # reset
-        observation = env.reset_by_index(0)
-        f = extract_formal_elements(observation)  # for use below
-        assert observation == 'Solve $f[0 = 4*b + b + 15] for $f[b].'
-        action = solve_system
-        observation_, reward, done, _ = env.step(action)
-        print(env.compute_graph.current_node.action)
-
     def test_problem_1(self):
         env = MathEnv(['environment/unit_testing/test_problems.txt'])
         # reset - then fail after 1st action
