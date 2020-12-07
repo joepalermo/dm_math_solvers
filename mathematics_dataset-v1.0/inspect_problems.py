@@ -11,7 +11,7 @@ medium_composed_filepaths = [os.path.join(medium_dirpath, fn) for fn in os.listd
 hard_composed_filepaths = [os.path.join(hard_dirpath, fn) for fn in os.listdir(hard_dirpath) if 'composed' in fn]
 
 
-def write_first_questions(filepaths):
+def write_first_questions(filepaths, destination_filepath):
     first_questions = list()
     for fp in filepaths:
         with open(fp) as f:
@@ -21,13 +21,30 @@ def write_first_questions(filepaths):
         fn = fp.split('/')[-1].split('.txt')[0]
         first_questions.append(f'{fp}: \n{q1}\n\t{a1}\n{q2}\n\t{a2}\n{q3}\n\t{a3}\n{q4}\n\t{a4}\n{q5}\n\t{a5}')
     first_questions = sorted(first_questions)
-    with open('notes/all_first_questions.txt', 'a') as f:
+    with open(destination_filepath, 'a') as f:
         text = '\n\n'.join(first_questions)
         f.write(text)
 
 
-with open('notes/all_first_questions.txt', 'w') as f:
+def print_module_names(filepaths):
+    for fp in filepaths:
+        fn = fp.split('/')[-1]
+        print(fn)
+
+
+# destination_filepath = 'notes/samples_from_all_modules.txt'
+# with open(destination_filepath, 'w') as f:
+#     f.write('')
+# write_first_questions(easy_filepaths, destination_filepath)
+# write_first_questions(medium_filepaths, destination_filepath)
+# write_first_questions(hard_filepaths, destination_filepath)
+
+destination_filepath = 'notes/samples_from_all_composed_modules.txt'
+with open(destination_filepath, 'w') as f:
     f.write('')
-write_first_questions(easy_filepaths)
-write_first_questions(medium_filepaths)
-write_first_questions(hard_filepaths)
+write_first_questions(easy_composed_filepaths, destination_filepath)
+write_first_questions(medium_composed_filepaths, destination_filepath)
+write_first_questions(hard_composed_filepaths, destination_filepath)
+
+# print_module_names(sorted(easy_filepaths))
+# print_module_names(sorted(easy_composed_filepaths))
