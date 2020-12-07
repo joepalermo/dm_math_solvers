@@ -1,0 +1,47 @@
+core_set:
+    -lookup_value
+    -solve_system
+    -make_equality
+    -function_application
+    -substitution_left_to_right
+    -differentiate
+
+algebra__linear_1d_composed.txt
+    -core_set
+algebra__linear_2d_composed.txt
+    -core_set
+algebra__polynomial_roots_composed.txt
+    -core_set
+    -replace_arg
+    -factor
+calculus__differentiate_composed.txt
+    -core_set
+polynomials__evaluate_composed.txt
+    -core_set
+polynomials__compose.txt
+    -core_set
+
+comparison__closest_composed.txt
+    -core_set + LM or closest
+comparison__kth_biggest_composed.txt
+    -core_set + LM or kth biggest
+comparison__pair_composed.txt
+    -core_set + LM or compare
+comparison__sort_composed.txt
+    -core_set + LM or sort
+numbers__div_remainder_composed.txt
+    -core_set + mod
+numbers__gcd_composed.txt
+    -core_set + gcd
+numbers__is_factor_composed.txt
+    -core_set + mod_eq_0
+numbers__is_prime_composed.txt
+    -core_set + is_prime
+numbers__lcm_composed.txt
+    -core_set + lcm
+numbers__list_prime_factors_composed.txt
+    -core_set + prime_factors
+numbers__place_value_composed.txt
+    -core_set + place_value
+numbers__round_number_composed.txt
+    -core_set + round_number

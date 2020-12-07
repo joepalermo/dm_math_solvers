@@ -190,6 +190,18 @@ Let k = -13375 - -13315.128. Let n = 0.128 - k. Let x = -59.9942 + n. Round x to
 Let b be ((-2)/1 - -11)/1. Let c be (1500/b)/((-2)/(-46800)). What is c rounded to the nearest 1000000?
 	4000000
 
+train-easy/polynomials__compose.txt: 
+Let p = -3 - -6. Let w(d) = 0*d**2 + p*d**2 - 2*d**2 - 3*d**2. Let t(b) = -3*b. Give t(w(k)).
+	6*k**2
+Let m(s) = 7*s - 12. Let z(g) = -5*g**2. What is z(m(k))?
+	-245*k**2 + 840*k - 720
+Let w(q) = 2*q**2. Let v(x) be the first derivative of 0*x + 0*x**2 + 4/3*x**3 - 2. Determine v(w(p)).
+	16*p**4
+Let f(v) = 2*v**2. Let m(s) = 11*s + 2. Suppose 5*r - 36 = 3*r. Let w(b) = 45*b + 9. Let g(i) = r*m(i) - 4*w(i). Calculate g(f(j)).
+	36*j**2
+Let y(t) = -4126*t**2. Let d(x) = 2*x. What is d(y(n))?
+	-8252*n**2
+
 train-easy/polynomials__evaluate_composed.txt: 
 Let w(b) = -2*b - 3. Suppose 0*j + 16 = -3*j - o, j + 3*o = 8. Let u = j - -5. What is w(u)?
 	1
@@ -392,6 +404,18 @@ Let n = -18 + 27. Let u be 3/(-2)*12/n. Let l be 1 + 799998 + (u - -3). Round l 
 Let j = -104 - -123.2. Let u = j - 0.1. Round u to zero dps.
 	19
 
+train-medium/polynomials__compose.txt: 
+Let h(c) = 21*c**2 + 4. Let z(x) = -1241*x**2 - 238. Let f(n) = 238*h(n) + 4*z(n). Let t(w) = -4*w**2. What is t(f(p))?
+	-4624*p**4
+Let b(h) = -890986*h**2. Let z(o) = 6*o**2. What is b(z(p))?
+	-32075496*p**4
+Let b(a) = -6714*a**2. Let y(u) = 28*u**2. Give y(b(q)).
+	1262178288*q**4
+Let m(u) = 44231*u**2. Let t(r) = 3*r. Determine m(t(z)).
+	398079*z**2
+Let d(s) be the first derivative of 11*s**2/2 + 2. Let r(p) = 24*p + 11. Let v(y) = 13*y + 6. Let x(z) = 6*r(z) - 11*v(z). Calculate d(x(w)).
+	11*w
+
 train-medium/polynomials__evaluate_composed.txt: 
 Let l(g) be the third derivative of g**8/20160 + g**7/2520 + g**5/30 + 23*g**2. Let m(f) be the third derivative of l(f). What is m(-3)?
 	3
@@ -593,6 +617,18 @@ Let b = -439 - -786. Let u = b - 346.9402. What is u rounded to 3 decimal places
 	0.06
 Let l = 35.3528 - 35.1. Let q = -0.0974 + l. What is q rounded to 2 decimal places?
 	0.16
+
+train-hard/polynomials__compose.txt: 
+Let p(a) = -7087*a**2 - 12*a - 9. Let d(g) = 8*g**2. Calculate p(d(q)).
+	-453568*q**4 - 96*q**2 - 9
+Let b(r) = 3*r. Let u(x) = 25*x. Let w(v) = -51*b(v) + 6*u(v). Let d(p) be the second derivative of 0*p**2 + 7/6*p**3 + 0 + 62*p. Calculate d(w(a)).
+	-21*a
+Let t(q) be the first derivative of 2*q**3/3 - 6. Let y(l) be the third derivative of -4*l**5/3 - 65*l**2 - 1. Calculate t(y(s)).
+	12800*s**4
+Let z(k) be the second derivative of 0*k**3 + 17 + 2*k + 0*k**2 + 5/6*k**4. Let x(f) = -29*f. Calculate z(x(c)).
+	8410*c**2
+Let m(d) be the first derivative of 1/3*d**3 - 126 + 0*d**2 + 0*d. Let u(i) = 5*i - 4. What is m(u(y))?
+	25*y**2 - 40*y + 16
 
 train-hard/polynomials__evaluate_composed.txt: 
 Suppose -5*r - 8*b = -5*b - 9, 0 = 4*b - 12. Let l(u) = 2*u - 34. Give l(r).

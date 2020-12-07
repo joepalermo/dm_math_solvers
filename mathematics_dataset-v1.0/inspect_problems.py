@@ -6,9 +6,9 @@ hard_dirpath = 'train-hard'
 easy_filepaths = [os.path.join(easy_dirpath, fn) for fn in os.listdir(easy_dirpath)]
 medium_filepaths = [os.path.join(medium_dirpath, fn) for fn in os.listdir(medium_dirpath)]
 hard_filepaths = [os.path.join(hard_dirpath, fn) for fn in os.listdir(hard_dirpath)]
-easy_composed_filepaths = [os.path.join(easy_dirpath, fn) for fn in os.listdir(easy_dirpath) if 'composed' in fn]
-medium_composed_filepaths = [os.path.join(medium_dirpath, fn) for fn in os.listdir(medium_dirpath) if 'composed' in fn]
-hard_composed_filepaths = [os.path.join(hard_dirpath, fn) for fn in os.listdir(hard_dirpath) if 'composed' in fn]
+easy_composed_filepaths = [os.path.join(easy_dirpath, fn) for fn in os.listdir(easy_dirpath) if 'compose' in fn]
+medium_composed_filepaths = [os.path.join(medium_dirpath, fn) for fn in os.listdir(medium_dirpath) if 'compose' in fn]
+hard_composed_filepaths = [os.path.join(hard_dirpath, fn) for fn in os.listdir(hard_dirpath) if 'compose' in fn]
 
 
 def write_first_questions(filepaths, destination_filepath):
@@ -46,5 +46,5 @@ write_first_questions(easy_composed_filepaths, destination_filepath)
 write_first_questions(medium_composed_filepaths, destination_filepath)
 write_first_questions(hard_composed_filepaths, destination_filepath)
 
-# print_module_names(sorted(easy_filepaths))
-# print_module_names(sorted(easy_composed_filepaths))
+print_module_names(sorted(easy_filepaths))
+print_module_names(sorted(easy_composed_filepaths))

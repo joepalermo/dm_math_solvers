@@ -1,0 +1,28 @@
+algebra__linear_1d_composed.txt
+algebra__linear_2d_composed.txt
+-> algebra__linear_3d_composed.txt
+-> algebra__linear_4d_composed.txt
+-> algebra__linear_5d_composed.txt
+algebra__polynomial_roots_composed.txt
+e.g.
+Let m(t) = -2*t. Let h(d) = d**2 + 6*d. Let g(k) = 2*h(k) + 4*m(k). Factor g(v).
+but with 2 functions instead of 3
+-> substitution without function evaluation
+e.g.
+Let c(b) = -b - b + 2 + 3*b. Let i be c(5). Let -x**3 + 3*x**3 - 9*x - 12*x**2 - 2 - i*x**3 = 0. What is x?
+Let i be xyz. Let -x**3 + 3*x**3 - 9*x - 12*x**2 - 2 - i*x**3 = 0. What is x?
+calculus__differentiate_composed.txt
+comparison__closest_composed.txt
+comparison__kth_biggest_composed.txt
+comparison__pair_composed.txt
+comparison__sort_composed.txt
+numbers__div_remainder_composed.txt
+numbers__gcd_composed.txt
+numbers__is_factor_composed.txt
+numbers__is_prime_composed.txt
+numbers__lcm_composed.txt
+numbers__list_prime_factors_composed.txt
+numbers__place_value_composed.txt
+numbers__round_number_composed.txt
+polynomials__evaluate_composed.txt
+polynomials__compose.txt
