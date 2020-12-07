@@ -1,5 +1,0 @@
-lin_sys
-append
-add_keypair
-apply_var_assignment
-function application
