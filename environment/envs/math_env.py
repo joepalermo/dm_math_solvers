@@ -13,8 +13,8 @@ from random import sample
 class MathEnv(gym.Env):
 
     def __init__(self, problem_filepaths):
-        self.operators = [lookup_value, solve_system]
-        self.max_formal_elements = 2
+        self.operators = [lookup_value, solve_system]  # TODO: make into a hyperparameter
+        self.max_formal_elements = 2  # TODO: make into a hyperparameter
         self.actions = self.operators + [f"f{i}" for i in range(self.max_formal_elements)]
         self.action_space = spaces.Discrete(len(self.actions))
         # load problems
@@ -49,7 +49,7 @@ class MathEnv(gym.Env):
         compute_graph = str(self.compute_graph)
         observation = f"{self.problem_statement}; {compute_graph}"
         reward = 1 if str(output) == self.answer else 0
-        done = True if not self.compute_graph.current_node else False
+        done = self.compute_graph.current_node is None
         info = {}
         return observation, reward, done, info
 

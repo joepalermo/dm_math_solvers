@@ -24,7 +24,7 @@ class Node:
         assert len(self.args) == 0
         self.args = nodes
 
-    def args_set(self):
+    def are_args_set(self):
         return len(self.args) == self.num_parameters
 
 
@@ -80,13 +80,13 @@ class ComputeGraph:
 
     def add(self, action):
         '''
-        Add an action to the compute graph. Elements are added breadth-first order.
+        Add an action to the compute graph. Elements are added breadth-first order: KNOB.
 
         :param action: either an operator or a formal element
         '''
         if self.root is None:
             self.root = Node(action)
-            if not self.root.args_set():
+            if not self.root.are_args_set():
                 self.current_node = self.root
             else:
                 self.current_node = None
@@ -95,7 +95,7 @@ class ComputeGraph:
             self.current_node.set_arg(new_node)
             if new_node.num_parameters > 0:
                 self.queue.append(new_node)  # add new node to queue for later processing
-            if self.current_node.args_set():
+            if self.current_node.are_args_set():
                 if len(self.queue) > 0:
                     self.current_node = self.queue.pop()
                 else:

@@ -10,3 +10,41 @@ docker run -gpus all -it -p 6006:6006 -v /home/jpalermo:/home/ math /bin/bash
 
 tensorboard --logdir=/home/dm_math_solvers/experiment_results --bind_all
 tensorboard --logdir=logs/gradient_tape --bind_all
+
+____
+
+
+Tasks
+
+- Formalize a few problems from each module
+    - [x] buildup a library of operators
+    - [x] Turn that into RL env (Gym)
+    - [-] Define curriculum
+        - [x] First cut solution: start with uncomposed, then composed, but split composed by # sentences per problem
+        - Choose strategy:
+            - automatically (treat as a k-armed bandit)
+            - manually (define difficulty ordering on the modules, define master threshold, define strategy for mixing in easy problems)
+- write annotation script (to add the formal elements into the problem description)
+    - Use the script to generated a separate processed dataset which is used to construct RL env- Model and optimization
+- Decide on problem framing + NN architecture + training procedure
+    - input:
+        -raw text with annotations + intermediate (incomplete) graph as text
+        -raw text with annotations + intermediate (incomplete) graph as graph
+    - output: operator probability vector (i.e. policy)
+    - implementation: vanilla transformer, gated transformer XL (more stable for RL?)
+    - optimization: PPO?
+- Strategy to alternate between training and running the policy
+    1. Run the policy with search (e.g. BFS) and save a subset of actions/programs in a replay buffer
+    2. Train the policy from the replay buffer
+- Evaluate on test set
+
+Optional future work:
+    - Extend the dataset
+    - Systematically generalization of various sorts
+    - Use LM on top of NN
+    
+
+Other:
+-use brackets for substitution 
+-to use LM on top of NN will need to run program for various outputs, might need to make NN good at ignoring irrelevant info (can regularize by introducing garbage into problem statements)
+-
