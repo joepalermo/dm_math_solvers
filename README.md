@@ -13,24 +13,23 @@ tensorboard --logdir=logs/gradient_tape --bind_all
 
 ____
 
-
 Tasks
 
 - Formalize a few problems from each module
     - [x] buildup a library of operators
     - [x] Turn that into RL env (Gym)
     - [-] Define curriculum
-        - [x] First cut solution: start with uncomposed, then composed, but split composed by # sentences per problem
+        - [x] Difficulty ordering: start with uncomposed, then composed with 2 sentences, composed with 3 sentences, etc...
         - Choose strategy:
             - automatically (treat as a k-armed bandit)
-            - manually? (define difficulty ordering on the modules, define master threshold, define simple strategy for mixing in mastered problems to prevent forgetting)
+            - manually? (define master threshold and define simple strategy for mixing in mastered problems to prevent forgetting)
 - write annotation script (to add the formal elements into the problem description)
-    - Use the script to generated a separate processed dataset which is used to construct RL env- Model and optimization
-- Decide on problem framing, NN architecture, and training procedure
-    - Decide on input:
-        - raw text with annotations + intermediate (incomplete) graph as text
-        - raw text with annotations + intermediate (incomplete) graph as graph
-    - output: operator probability vector (i.e. policy)
+    - Use the script to generate a separate processed dataset which is used to construct RL env
+- Model and optimization
+    - Decide on how to represent incomplete compute graphs:
+        - text
+        - graph
+    - output: action probability vector (i.e. policy)
     - implementation: vanilla transformer or gated transformer XL (more stable for RL?)
     - optimization: PPO?
 - Strategy to alternate between training and running the policy
@@ -39,8 +38,8 @@ Tasks
 - Evaluate on test set
 
 Optional future work:
-    - Extend the dataset
-    - Systematically study generalization of different sorts
+    - Extend the dataset by composing all problem types more fully, then systematically study generalization of different sorts
     - Use LM on top of outputs from program synthesis to improve usability/robustness
-        - to use LM on top of NN will need to run program for various outputs, might need to make NN good at ignoring irrelevant info (can regularize by introducing garbage into problem statements)
+        - When using a LM on top of program synthesis one should extract all intermediate results
+            - Does this require a different training objective?
     
