@@ -23,15 +23,15 @@ Tasks
         - [x] First cut solution: start with uncomposed, then composed, but split composed by # sentences per problem
         - Choose strategy:
             - automatically (treat as a k-armed bandit)
-            - manually (define difficulty ordering on the modules, define master threshold, define strategy for mixing in easy problems)
+            - manually? (define difficulty ordering on the modules, define master threshold, define simple strategy for mixing in mastered problems to prevent forgetting)
 - write annotation script (to add the formal elements into the problem description)
     - Use the script to generated a separate processed dataset which is used to construct RL env- Model and optimization
-- Decide on problem framing + NN architecture + training procedure
-    - input:
-        -raw text with annotations + intermediate (incomplete) graph as text
-        -raw text with annotations + intermediate (incomplete) graph as graph
+- Decide on problem framing, NN architecture, and training procedure
+    - Decide on input:
+        - raw text with annotations + intermediate (incomplete) graph as text
+        - raw text with annotations + intermediate (incomplete) graph as graph
     - output: operator probability vector (i.e. policy)
-    - implementation: vanilla transformer, gated transformer XL (more stable for RL?)
+    - implementation: vanilla transformer or gated transformer XL (more stable for RL?)
     - optimization: PPO?
 - Strategy to alternate between training and running the policy
     1. Run the policy with search (e.g. BFS) and save a subset of actions/programs in a replay buffer
@@ -40,11 +40,7 @@ Tasks
 
 Optional future work:
     - Extend the dataset
-    - Systematically generalization of various sorts
-    - Use LM on top of NN
+    - Systematically study generalization of different sorts
+    - Use LM on top of outputs from program synthesis to improve usability/robustness
+        - to use LM on top of NN will need to run program for various outputs, might need to make NN good at ignoring irrelevant info (can regularize by introducing garbage into problem statements)
     
-
-Other:
--use brackets for substitution 
--to use LM on top of NN will need to run program for various outputs, might need to make NN good at ignoring irrelevant info (can regularize by introducing garbage into problem statements)
--
