@@ -15,14 +15,14 @@ ____
 
 Tasks
 
-- Formalize a few problems from each module
+- [x] Formalize a few problems from each module
     - [x] buildup a library of operators
-    - [x] Turn that into RL env (Gym)
-    - [-] Define curriculum
-        - [x] Difficulty ordering: start with uncomposed, then composed with 2 sentences, composed with 3 sentences, etc...
-        - Choose strategy:
-            - automatically (treat as a k-armed bandit)
-            - manually? (define master threshold and define simple strategy for mixing in mastered problems to prevent forgetting)
+- [x] Create RL env (Gym)
+- [-] Define curriculum
+    - [x] Difficulty ordering: start with uncomposed, then composed with 2 sentences, composed with 3 sentences, etc...
+    - Choose strategy:
+        - automatically (treat as a k-armed bandit)
+        - manually? (define master threshold and define simple strategy for mixing in mastered problems to prevent forgetting)
 - write annotation script (to add the formal elements into the problem description)
     - Use the script to generate a separate processed dataset which is used to construct RL env
 - Model and optimization
