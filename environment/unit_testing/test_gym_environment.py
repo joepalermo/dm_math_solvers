@@ -10,11 +10,12 @@ import unittest
 class Test(unittest.TestCase):
 
     def test_problem_0(self):
-        env = MathEnv(['environment/unit_testing/test_problems.txt'])
+        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
         # reset - then fail after 1st action
         observation = env.reset_by_index(0)
         f = extract_formal_elements(observation)  # for use below
-        assert observation == 'Solve $f[0 = 4*b + b + 15] for $f[b].'
+        assert f == ['0 = 4*b + b + 15', 'b']
+        assert observation == 'Solve 0 = 4*b + b + 15 for b.'
         action = 'f0'
         formal_element = env.compute_graph.lookup_formal_element(action)
         observation_, reward, done, _ = env.step(action)
@@ -23,7 +24,7 @@ class Test(unittest.TestCase):
         assert done
         # reset - then fail after 2nd action
         observation = env.reset_by_index(0)
-        assert observation == 'Solve $f[0 = 4*b + b + 15] for $f[b].'
+        assert observation == 'Solve 0 = 4*b + b + 15 for b.'
         action = solve_system
         observation_, reward, done, _ = env.step(action)
         assert observation_ == f"{observation}; solve_system('param_0')"
@@ -37,7 +38,7 @@ class Test(unittest.TestCase):
         assert done
         # reset - then succeed after 4th action
         observation = env.reset_by_index(0)
-        assert observation == 'Solve $f[0 = 4*b + b + 15] for $f[b].'
+        assert observation == 'Solve 0 = 4*b + b + 15 for b.'
         action = lookup_value
         observation_, reward, done, _ = env.step(action)
         assert observation_ == f"{observation}; lookup_value('param_0','param_1')"
@@ -68,11 +69,11 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_1(self):
-        env = MathEnv(['environment/unit_testing/test_problems.txt'])
+        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
         # reset - then succeed after 2nd action
         observation = env.reset_by_index(1)  # select short dummy problem
         f = extract_formal_elements(observation)  # for use below
-        assert observation == 'Solve $f[0 = 4*b + b + 15] for $f[b].'
+        assert observation == 'Solve 0 = 4*b + b + 15 for b.'
         action = solve_system
         observation_, reward, done, _ = env.step(action)
         assert observation_ == f"{observation}; solve_system('param_0')"
@@ -87,7 +88,7 @@ class Test(unittest.TestCase):
 
     def test_guess_problem_0(self):
         '''this test only terminates when the graph is correctly guessed'''
-        env = MathEnv(['environment/unit_testing/test_problems.txt'])
+        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
         episode_i = 0
         graph_guessed_correctly = False
         while not graph_guessed_correctly:
@@ -111,7 +112,7 @@ class Test(unittest.TestCase):
 
     def test_guess_problem_1(self):
         '''this test only terminates when the graph is correctly guessed'''
-        env = MathEnv(['environment/unit_testing/test_problems.txt'])
+        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
         episode_i = 0
         graph_guessed_correctly = False
         while not graph_guessed_correctly:

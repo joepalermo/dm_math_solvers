@@ -1,4 +1,4 @@
-Solve $f[0 = 4*b + b + 15] for $f[b].
+Solve 0 = 4*b + b + 15 for b.
 -3
-Solve $f[0 = 4*b + b + 15] for $f[b].
+Solve 0 = 4*b + b + 15 for b.
 {'b': -3}
