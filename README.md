@@ -23,9 +23,8 @@ Tasks
     - [x] Difficulty ordering: start with uncomposed, then composed with 2 sentences, composed with 3 sentences, etc...
     - Choose strategy:
         - automatically (treat as a k-armed bandit)
-        - manually? (define master threshold and define simple strategy for mixing in mastered problems to prevent forgetting)
-- write annotation script (to add the formal elements into the problem description)
-    - Use the script to generate a separate processed dataset which is used to construct RL env
+        - [-] manually? (define master threshold and define simple strategy for mixing in mastered problems to prevent forgetting)
+- [x] write annotation script (to add the formal elements into the problem description)
 - Model and optimization
     - Decide on how to represent incomplete compute graphs:
         - text
