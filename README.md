@@ -17,6 +17,7 @@ Tasks
 
 - [x] Formalize a few problems from each module
     - [x] buildup a library of operators
+    - use typed operators to reduce the combinatorial explosion?
 - [x] Create RL env (Gym)
 - [-] Define curriculum
     - [x] Difficulty ordering: start with uncomposed, then composed with 2 sentences, composed with 3 sentences, etc...
