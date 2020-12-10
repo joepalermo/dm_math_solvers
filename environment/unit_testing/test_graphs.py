@@ -1,18 +1,19 @@
 import unittest
-from environment.utils import extract_formal_elements
-from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
-    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff, replace_arg, substitution_left_to_right, \
-    eval_in_base, root, round_to_int, round_to_dec, power, substitution_right_to_left, max_arg, min_arg, greater_than, \
-    less_than, lookup_value_eq
+from environment.utils import extract_formal_elements, cast_formal_element
+from environment.typed_operators import lookup_value, solve_system, append
+from environment.typed_operators import Equation, Function, Expression, Variable, Value
 
 
 class Test(unittest.TestCase):
 
     def test_easy_algebra__linear_1d(self):
         problem_statement = 'Solve 0 = 4*b + b + 15 for b.'
-        f = extract_formal_elements(problem_statement)
-        assert f == ['0 = 4*b + b + 15', 'b']
-        assert lookup_value(solve_system(f[0]), f[1]) == -3
+        fs = extract_formal_elements(problem_statement)
+        assert fs == [Equation('0 = 4*b + b + 15'), Variable('b')]
+        system = append([], fs[0])
+        solution = solve_system(system)
+        value = lookup_value(solution, fs[1])
+        assert value == Value(-3)
 
     def test_easy_algebra__linear_1d_composed(self):
         problem_statement = 'Let w be (-1 + 13)*3/(-6). Let b = w - -6. Let i = 2 - b. Solve -15 = 3*c + i*c for c.'
