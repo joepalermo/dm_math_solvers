@@ -1,4 +1,4 @@
-# import re
+import re
 import sympy as sym
 from typing import List, Dict, Set
 # from math import log
@@ -31,8 +31,21 @@ class Equation(Arbitrary):
 
 
 class Function(Equation):
-    pass
+    def __init__(self, function: str):
+        assert len(function.split('=')) == 2
+        function_arg_pattern = '([a-zA-Z0-9\s]+)\(([a-zA-Z0-9\s]+)\)'
+        # extract parts of function definition
+        lhs, rhs = function.split('=')
+        match = re.match(function_arg_pattern, lhs)
+        assert match is not None
+        self.name, self.parameter = match.group(1), match.group(2)
+        self.function = function
 
+    def __str__(self):
+        return str(self.function)
+
+    def __eq__(self, function):
+        return self.function == str(function)
 
 class Expression(Arbitrary):
     def __init__(self, expression: str):
@@ -118,11 +131,13 @@ def append(system: List[Equation], equation: Equation) -> List[Equation]:
         return system
 
 
-def lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable) -> Value:
+def lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable):
     assert key in mapping
     corresponding_set = mapping[key]
-    value = corresponding_set.pop()
-    return value
+    if len(corresponding_set) == 1:
+        return corresponding_set.pop()
+    else:
+        return corresponding_set
 
 
 def lookup_value_eq(mapping: Dict[Variable, Set[Value]], key: Variable) -> Equation:
@@ -134,6 +149,9 @@ def lookup_value_eq(mapping: Dict[Variable, Set[Value]], key: Variable) -> Equat
 
 def make_equality(expression1: Expression, expression2: Expression) -> Equation:
     return Equation(f"{expression1} = {expression2}")
+
+def make_function(expression1: Expression, expression2: Expression) -> Function:
+    return Function(f"{expression1} = {expression2}")
 
 
 def extract_isolated_variable(equation: Equation) -> Variable:
@@ -160,4 +178,26 @@ def substitution_left_to_right(arb: Arbitrary, eq: Equation) -> Arbitrary:
 
 
 def substitution_right_to_left(arb: Arbitrary, eq: Equation) -> Arbitrary:
-    return Arbitrary(str(arb).replace(project_rhs(eq), project_lhs(eq)))
+    return Arbitrary(str(arb).replace(str(project_rhs(eq)), str(project_lhs(eq))))
+
+
+def factor(expression: Expression) -> Expression:
+    return Expression(str(sym.factor(expression)))
+
+def simplify(arb: Arbitrary) -> Arbitrary:
+    if '=' in str(arb):
+        lhs, rhs = str(arb).split('=')
+        lhs, rhs = lhs.strip(), rhs.strip()
+        return Equation(f'{sym.simplify(lhs)} = {sym.simplify(rhs)}'.strip())
+    else:
+        return Expression(str(sym.simplify(str(arb))).strip())
+
+def diff(expression: Expression) -> Expression:
+    return Expression(str(sym.diff(sym.sympify(str(expression)))))
+
+def replace_arg(function: Function, var: Variable) -> Function:
+    # TODO: make robust to longer names (e.g. max(x), y -> may(y) which is wrong)
+    return Function(str(function).replace(str(function.parameter), str(var)))
+
+# def max_arg(x: Expression, y: Expression) -> Expression:
+#     return str(max(eval(str(x)),eval(str(y))))
