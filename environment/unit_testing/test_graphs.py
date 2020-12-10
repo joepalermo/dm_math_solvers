@@ -1,6 +1,7 @@
 import unittest
 from environment.utils import extract_formal_elements, cast_formal_element
-from environment.typed_operators import lookup_value, solve_system, append
+from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
+    substitution_left_to_right, extract_isolated_variable
 from environment.typed_operators import Equation, Function, Expression, Variable, Value
 
 
@@ -18,19 +19,21 @@ class Test(unittest.TestCase):
     def test_easy_algebra__linear_1d_composed(self):
         problem_statement = 'Let w be (-1 + 13)*3/(-6). Let b = w - -6. Let i = 2 - b. Solve -15 = 3*c + i*c for c.'
         f = extract_formal_elements(problem_statement)
-        assert f == ['w', '(-1 + 13)*3/(-6)', 'b = w - -6', 'i = 2 - b', '-15 = 3*c + i*c', 'c']
+        assert f == [Variable('w'), Expression('(-1 + 13)*3/(-6)'), Equation('b = w - -6'), Equation('i = 2 - b'),
+                     Equation('-15 = 3*c + i*c'), Variable('c')]
         eq1 = make_equality(f[0], f[1])
-        system = append(append(append(None, eq1), f[2]), f[3])
+        system = append(append(append([], eq1), f[2]), f[3])
         soln = solve_system(system)
-        i_eq = lookup_value_eq(soln, project_lhs(f[3]))
+        i_eq = lookup_value_eq(soln, extract_isolated_variable(f[3]))
         lin_eq = substitution_left_to_right(f[4], i_eq)
-        assert lookup_value(solve_system(lin_eq), f[5]) == -3
+        assert lookup_value(solve_system(append([], lin_eq)), f[5]) == Value(-3)
 
     def test_easy_algebra__linear_2d(self):
         problem_statement = 'Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f.'
         f = extract_formal_elements(problem_statement)
-        assert f == ['0 = 4*f - 0*t - 4*t - 4', '-4*f + t = -13', 'f']
-        assert lookup_value(solve_system(append(append(None, f[0]), f[1])), f[2]) == 4
+        assert f == [Equation('0 = 4*f - 0*t - 4*t - 4'), Equation('-4*f + t = -13'), Variable('f')]
+
+        assert lookup_value(solve_system(append(append([], f[0]), f[1])), f[2]) == 4
 
     def test_train_easy_algebra__linear_2d_composed(self):
         problem_statement = 'Suppose 2*y + 12 = 6*y. Suppose y = f - 15. Solve -8 = -4*w, -3*d - 4*w + f = -8*d for d.'

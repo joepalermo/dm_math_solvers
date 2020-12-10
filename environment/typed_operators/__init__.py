@@ -4,7 +4,18 @@ from typing import List, Dict, Set
 # from math import log
 
 
-class Equation:
+# type definitions --------------------------------------
+
+
+class Arbitrary:
+    def __init__(self, arbitrary: str):
+        self.arbitrary = str(arbitrary)
+
+    def __str__(self):
+        return self.arbitrary
+
+
+class Equation(Arbitrary):
     def __init__(self, equation: str):
         assert len(equation.split('=')) == 2
         self.equation = equation
@@ -23,15 +34,28 @@ class Function(Equation):
     pass
 
 
-class Expression:
+class Expression(Arbitrary):
     def __init__(self, expression: str):
-        self.expression = expression
+        assert '=' not in expression
+        self.expression = str(expression)
+
+    def __str__(self):
+        return self.expression
+
+    def __eq__(self, other):
+        return self.expression == other.expression
+
+    def __hash__(self):
+        return hash(self.expression)
 
 
 class Variable(Expression):
     def __init__(self, variable: str):
+        self.variable = str(variable)
         assert variable.isalpha()
-        self.variable = variable
+
+    def __str__(self):
+        return self.variable
 
     def __eq__(self, variable):
         return self.variable == variable
@@ -42,24 +66,19 @@ class Variable(Expression):
 
 class Value(Expression):
     def __init__(self, value: float):
-        self.value = value
+        self.value = float(value)
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
     def __eq__(self, value):
-        return self.value == value
+        return self.value == value.value
 
     def __hash__(self):
         return hash(str(self.value))
-
-
-def append(system: List[Equation], equation: Equation) -> List[Equation]:
-    if not system:
-        return [equation]
-    else:
-        system.append(equation)
-        return system
+  
+    
+# operator definitions --------------------------------------
 
 
 def solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]:
@@ -71,7 +90,7 @@ def solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]:
     '''
     sympy_equations = []
     for equation in system:
-        lhs, rhs = equation.split('=')
+        lhs, rhs = str(equation).split('=')
         sympy_eq = sym.Eq(sym.sympify(lhs), sym.sympify(rhs))
         sympy_equations.append(sympy_eq)
     solutions = sym.solve(sympy_equations)
@@ -79,16 +98,24 @@ def solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]:
     if len(solutions) == 0:
         raise Exception("no solution found")
     elif type(solutions) is dict:
-        return {str(k): set([Value(float(v))]) for k,v in solutions.items()}
-    elif (type(solutions) is list) or (type(solutions) is dict):
+        return {Variable(str(k)): set([Value(float(v))]) for k,v in solutions.items()}
+    elif type(solutions) is list:
         solutions_dict = {}
         for soln in solutions:
             for k, v in soln.items():
                 if str(k) in solutions_dict.keys():
-                    solutions_dict[str(k)].add(Value(float(v)))
+                    solutions_dict[Variable(str(k))].add(Value(float(v)))
                 else:
-                    solutions_dict[str(k)] = set([Value(float(v))])
+                    solutions_dict[Variable(str(k))] = set([Value(float(v))])
         return solutions_dict
+
+
+def append(system: List[Equation], equation: Equation) -> List[Equation]:
+    if not system:
+        return [equation]
+    else:
+        system.append(equation)
+        return system
 
 
 def lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable) -> Value:
@@ -103,3 +130,34 @@ def lookup_value_eq(mapping: Dict[Variable, Set[Value]], key: Variable) -> Equat
     corresponding_set = mapping[key]
     value = corresponding_set.pop()
     return Equation(f"{key} = {value}")
+
+
+def make_equality(expression1: Expression, expression2: Expression) -> Equation:
+    return Equation(f"{expression1} = {expression2}")
+
+
+def extract_isolated_variable(equation: Equation) -> Variable:
+    lhs, rhs = str(equation).split('=')
+    lhs, rhs = lhs.strip(), rhs.strip()
+    if len(lhs) == 1 and lhs.isalpha():
+        return lhs
+    elif len(rhs) == 1 and rhs.isalpha():
+        return rhs
+    else:
+        raise Exception("there is no isolated variable")
+
+
+def project_lhs(equation: Equation) -> Expression:
+    return Expression(str(equation).split('=')[0].strip())
+
+
+def project_rhs(equation: Equation) -> Expression:
+    return Expression(str(equation).split('=')[1].strip())
+
+
+def substitution_left_to_right(arb: Arbitrary, eq: Equation) -> Arbitrary:
+    return Arbitrary(str(arb).replace(str(project_lhs(eq)), str(project_rhs(eq))))
+
+
+def substitution_right_to_left(arb: Arbitrary, eq: Equation) -> Arbitrary:
+    return Arbitrary(str(arb).replace(project_rhs(eq), project_lhs(eq)))
