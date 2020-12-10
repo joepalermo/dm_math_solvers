@@ -1,9 +1,7 @@
 from inspect import signature
 from environment.utils import extract_formal_elements
-from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
-    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff, replace_arg, substitution_left_to_right, \
-    eval_in_base, root, round_to_int, round_to_dec, power, substitution_right_to_left, max_arg, min_arg, greater_than, \
-    less_than, lookup_value_eq
+from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
+    substitution_left_to_right, extract_isolated_variable, factor, simplify, diff, replace_arg, make_function
 
 
 class Node:
@@ -13,8 +11,10 @@ class Node:
         self.args = []
         if type(self.action) == str:  # if action is a formal element
             self.num_parameters = 0
+            self.types = []
         else:
             self.num_parameters = len(signature(self.action).parameters)
+            self.types = [type_.annotation for name, type_ in signature(self.action).parameters.items()]
 
     def set_arg(self, node):
         assert len(self.args) < self.num_parameters
@@ -32,6 +32,7 @@ class ComputeGraph:
 
     def __init__(self, problem_statement):
         self.formal_elements = extract_formal_elements(problem_statement)
+        self.formal_element_types = [type(f) for f in self.formal_elements]
         self.root = None
         self.current_node = None  # reference to the first node (breadth-first) that requires one or more arguments
         self.queue = []

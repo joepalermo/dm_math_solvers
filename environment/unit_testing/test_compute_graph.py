@@ -1,10 +1,7 @@
 import unittest
 from environment.utils import extract_formal_elements
-from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
-    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff, replace_arg, \
-    substitution_left_to_right, \
-    eval_in_base, root, round_to_int, round_to_dec, power, substitution_right_to_left, max_arg, min_arg, greater_than, \
-    less_than, lookup_value_eq
+from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
+    substitution_left_to_right, extract_isolated_variable, factor, simplify, diff, replace_arg, make_function
 from environment.compute_graph import ComputeGraph, Node
 
 

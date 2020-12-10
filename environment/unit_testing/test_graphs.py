@@ -74,6 +74,8 @@ class Test(unittest.TestCase):
         equation = substitution_left_to_right(f[3], v_eq_o)  # e.g. x.subs(sym.sympify('f(x)'), sym.sympify('v'))
         assert lookup_value(solve_system(append([], equation)), f[4]) == {Value(-1/3), Value(1)}
 
+    #  requiring new operators --------------------------------------------
+
     # def test_train_easy_comparison__closest(self):
     #     problem_statement = 'Which is the closest to -1/3?  (a) -8/7  (b) 5  (c) -1.3'
     #     f = extract_formal_elements(problem_statement)
@@ -94,7 +96,7 @@ class Test(unittest.TestCase):
     #     f = extract_formal_elements(problem_statement)
     #     x = lookup_value(solve_system(f[0]), get
 
-    # other -----------
+    # non-composed --------------------------------------------
 
     # def test_train_easy_arithmetic__add_or_sub_in_base(self):
     #     problem_statement = 'In base 13, what is 7a79 - -5?'

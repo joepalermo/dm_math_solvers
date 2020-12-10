@@ -1,11 +1,12 @@
+import numpy as np
 import gym
 from environment.utils import extract_formal_elements
 from environment.envs.math_env import MathEnv
-from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
-    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff, replace_arg, substitution_left_to_right, \
-    eval_in_base, root, round_to_int, round_to_dec, power, substitution_right_to_left, max_arg, min_arg, greater_than, \
-    less_than, lookup_value_eq
+from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
+    substitution_left_to_right, extract_isolated_variable, factor, simplify, diff, replace_arg, make_function
 import unittest
+
+
 
 class Test(unittest.TestCase):
 
@@ -30,6 +31,9 @@ class Test(unittest.TestCase):
         assert observation_ == f"{observation}; solve_system('param_0')"
         assert reward == 0
         assert not done
+        # assert that lookup_value & append are the only actions not masked
+        policy_vector = env.sample_masked_policy_vector()
+        np.testing.assert_equal(np.ceil(policy_vector), np.array([1,0,1,0,0]))
         # next action
         action = 'f0'
         observation_, reward, done, _ = env.step(action)
@@ -45,6 +49,10 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert not done
         assert env.compute_graph.current_node == env.compute_graph.root
+        # assert that lookup_value & solve_system are the only actions not masked
+        # because dict: is object, is dict, is not list, is not Equation, is not Variable
+        policy_vector = env.sample_masked_policy_vector()
+        np.testing.assert_equal(np.ceil(policy_vector), np.array([1, 1, 0, 0, 0]))
         # next action
         action = solve_system
         observation_, reward, done, _ = env.step(action)
@@ -110,29 +118,29 @@ class Test(unittest.TestCase):
             episode_i += 1
         print(f'trials taken to guess problem 0: {episode_i}')
 
-    def test_guess_problem_1(self):
-        '''this test only terminates when the graph is correctly guessed'''
-        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
-        episode_i = 0
-        graph_guessed_correctly = False
-        while not graph_guessed_correctly:
-            problem_statement = env.reset_by_index(1)
-            observation = problem_statement
-            done = False
-            step_i = 0
-            # print(f"episode: {episode_i}")
-            while not done:
-                action = env.sample_action()
-                # print(f"\tstep: {step_i}")
-                # print(f"\t\tS: {observation}, A: {action}")
-                observation, reward, done, _ = env.step(action)
-                # print(f"\t\tS': {observation}, R: {reward}, done: {done}")
-                if reward == 1:
-                    assert observation == f"{problem_statement}; solve_system('0 = 4*b + b + 15')"
-                    graph_guessed_correctly = True
-                step_i += 1
-            episode_i += 1
-        print(f'trials taken to guess problem 1: {episode_i}')
+    # def test_guess_problem_1(self):
+    #     '''this test only terminates when the graph is correctly guessed'''
+    #     env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
+    #     episode_i = 0
+    #     graph_guessed_correctly = False
+    #     while not graph_guessed_correctly:
+    #         problem_statement = env.reset_by_index(1)
+    #         observation = problem_statement
+    #         done = False
+    #         step_i = 0
+    #         # print(f"episode: {episode_i}")
+    #         while not done:
+    #             action = env.sample_action()
+    #             # print(f"\tstep: {step_i}")
+    #             # print(f"\t\tS: {observation}, A: {action}")
+    #             observation, reward, done, _ = env.step(action)
+    #             # print(f"\t\tS': {observation}, R: {reward}, done: {done}")
+    #             if reward == 1:
+    #                 assert observation == f"{problem_statement}; solve_system('0 = 4*b + b + 15')"
+    #                 graph_guessed_correctly = True
+    #             step_i += 1
+    #         episode_i += 1
+    #     print(f'trials taken to guess problem 1: {episode_i}')
 
 
     # def test(self):

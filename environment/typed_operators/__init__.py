@@ -93,8 +93,8 @@ class Value(Expression):
     
 # operator definitions --------------------------------------
 
-
-def solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]:
+# solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]
+def solve_system(system: list) -> dict:
     '''
     solve a system of linear equations.
 
@@ -122,16 +122,17 @@ def solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]:
                     solutions_dict[Variable(str(k))] = set([Value(float(v))])
         return solutions_dict
 
-
-def append(system: List[Equation], equation: Equation) -> List[Equation]:
+# append(system: List[Equation], equation: Equation) -> List[Equation]
+def append(system: list, equation: Equation) -> list:
     if not system:
         return [equation]
     else:
         system.append(equation)
         return system
 
-
-def lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable):
+# lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable)
+def lookup_value(mapping: dict, key: Variable) -> object:
+    # TODO: figure out how to constrain output type in this case (multiple output types)
     assert key in mapping
     corresponding_set = mapping[key]
     if len(corresponding_set) == 1:
@@ -139,8 +140,8 @@ def lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable):
     else:
         return corresponding_set
 
-
-def lookup_value_eq(mapping: Dict[Variable, Set[Value]], key: Variable) -> Equation:
+# lookup_value_eq(mapping: Dict[Variable, Set[Value]], key: Variable) -> Equation:
+def lookup_value_eq(mapping: dict, key: Variable) -> Equation:
     assert key in mapping
     corresponding_set = mapping[key]
     value = corresponding_set.pop()

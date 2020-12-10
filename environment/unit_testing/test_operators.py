@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-# from environment.operators import add_keypair, simplify, solve_system, eval_in_base, round_to_int
 from environment.typed_operators import Equation, Expression, Variable, Value
 from environment.typed_operators import solve_system
 
