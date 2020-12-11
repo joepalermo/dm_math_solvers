@@ -120,7 +120,7 @@ def solve_system(system: list) -> dict:
         for soln in solutions:
             for k, v in soln.items():
                 if str(k) in solutions_dict.keys():
-                    solutions_dict[Variable(str(k))].add(V/alue(float(v)))
+                    solutions_dict[Variable(str(k))].add(Value(float(v)))
                 else:
                     solutions_dict[Variable(str(k))] = set([Value(float(v))])
         return solutions_dict
@@ -205,6 +205,32 @@ def diff(expression: Expression) -> Expression:
 def replace_arg(function: Function, var: Variable) -> Function:
     # TODO: make robust to longer names (e.g. max(x), y -> may(y) which is wrong)
     return Function(str(function).replace(str(function.parameter), str(var)))
+
+def mod(numerator: Value, discriminator: Value) -> Value:
+    return Value(numerator.value % discriminator.value)
+
+def mod_eq_0(numerator: Value, discriminator: Value) -> bool:
+    return numerator.value % discriminator.value == 0
+
+def gcd(x: Value, y: Value) -> Value:
+    from math import gcd
+    return Value(gcd(int(x.value), int(y.value)))
+
+def is_prime(x: Value) -> bool:
+    return sym.isprime(x.value)
+
+def lcm(x: Value, y: Value) -> Value:
+    import math
+    assert int(x.value) == x.value and int(y.value) == y.value
+    x, y = int(x.value), int(y.value)
+    return Value(abs(x*y) // math.gcd(x, y))
+
+def prime_factors(n: Value) -> set:
+    # https://stackoverflow.com/questions/16996217/prime-factorization-list
+    assert int(n.value) == n.value
+    n = int(n.value)
+    divisors = [d for d in range(2, n//2+1) if n % d == 0]
+    return set([Value(d) for d in divisors if all(d % od != 0 for od in divisors if od != d)])
 
 # def max_arg(x: Expression, y: Expression) -> Expression:
 #     return str(max(eval(str(x)),eval(str(y))))
