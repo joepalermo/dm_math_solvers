@@ -121,7 +121,7 @@ class Test(unittest.TestCase):
         episode_i = 0
         graph_guessed_correctly = False
         while not graph_guessed_correctly:
-            problem_statement = env.reset_by_index(0)
+            problem_statement = env.reset_by_index(1)
             observation = problem_statement
             done = False
             step_i = 0
@@ -133,12 +133,39 @@ class Test(unittest.TestCase):
                 observation, reward, done, _ = env.step(action)
                 print(f"\t\tS': {observation}, R: {reward}, done: {done}")
                 if reward == 1:
-                    assert observation == f"{problem_statement}; lookup_value(solve_system(append_to_empty_list('0 = 4*b + b + 15')),'b')"
+                    #assert observation == f"{problem_statement}; lookup_value(solve_system(append_to_empty_list('0 = 4*b + b + 15')),'b')"
                     graph_guessed_correctly = True
                 step_i += 1
             episode_i += 1
             print(episode_i)
-        print(f'trials taken to guess problem 0: {episode_i}')
+        print(f'trials taken to guess problem 1: {episode_i}')
+
+    def test_guess_problem_2(self):
+        '''this test only terminates when the graph is correctly guessed'''
+        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
+        episode_i = 0
+        graph_guessed_correctly = False
+        while not graph_guessed_correctly:
+            problem_statement = env.reset_by_index(1)
+            observation = problem_statement
+            done = False
+            step_i = 0
+            # print(f"episode: {episode_i}")
+            while not done:
+                action = env.sample_masked_action()
+                # print(f"\tstep: {step_i}")
+                # print(f"\t\tS: {observation}, A: {action}")
+                observation, reward, done, _ = env.step(action)
+                print(f"\t\tS': {observation}, R: {reward}, done: {done}")
+                if reward == 1:
+                    #assert observation == f"{problem_statement}; lookup_value(solve_system(append_to_empty_list('0 = 4*b + b + 15')),'b')"
+                    graph_guessed_correctly = True
+                step_i += 1
+            episode_i += 1
+            print(episode_i)
+        print(f'trials taken to guess problem 1: {episode_i}')
+
+
 
     # def test(self):
     #     # env = gym.make('math')

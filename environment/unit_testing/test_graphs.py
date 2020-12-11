@@ -74,6 +74,12 @@ class Test(unittest.TestCase):
         equation = substitution_left_to_right(f[3], v_eq_o)  # e.g. x.subs(sym.sympify('f(x)'), sym.sympify('v'))
         assert lookup_value(solve_system(append([], equation)), f[4]) == {Value(-1/3), Value(1)}
 
+    def test_train_easy_numbers__div_remainder_composed(self):
+        problem_statement = 'Suppose 3*x + 197 = 4*x. Calculate the remainder when x is divided by 33.'
+        f = extract_formal_elements(problem_statement)
+        assert f == [Equation('3*x + 197 = 4*x')]
+        assert factor(f[0]) == Expression('-(n + 8)*(n + 67)/3')
+
     #  requiring new operators --------------------------------------------
 
     # def test_train_easy_comparison__closest(self):

@@ -29,6 +29,12 @@ comparison__pair_composed.txt
     -core_set + LM or compare
 comparison__sort_composed.txt
     -core_set + LM or sort
+numbers__place_value_composed.txt
+    -core_set + place_value
+numbers__round_number_composed.txt
+    -core_set + round_number
+
+
 numbers__div_remainder_composed.txt
     -core_set + mod
 numbers__gcd_composed.txt
@@ -41,7 +47,4 @@ numbers__lcm_composed.txt
     -core_set + lcm
 numbers__list_prime_factors_composed.txt
     -core_set + prime_factors
-numbers__place_value_composed.txt
-    -core_set + place_value
-numbers__round_number_composed.txt
-    -core_set + round_number
+
