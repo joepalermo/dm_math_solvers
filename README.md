@@ -33,8 +33,12 @@ Tasks
     - implementation: vanilla transformer or gated transformer XL (more stable for RL?)
     - optimization: PPO?
 - Strategy to alternate between training and running the policy
-    1. Run the policy with search (e.g. BFS) and save a subset of actions/programs in a replay buffer
+    1. Gather train data: Run the policy and save a subset of actions/programs in a replay buffer
+        a. with deterministic search (e.g. BFS)
+        b. by random sampling from the policy vectors
     2. Train the policy from the replay buffer
+    3. Eval the policy
+    4. (optional) Determine curriculum for the next round based on eval performance across modules
 - Evaluate on test set
 
 Optional future work:
