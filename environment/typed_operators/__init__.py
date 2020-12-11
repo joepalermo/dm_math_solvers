@@ -82,7 +82,10 @@ class Value(Expression):
         self.value = float(value)
 
     def __str__(self):
-        return str(self.value)
+        if self.value % 1 == 0:
+            return str(int(self.value))
+        else:
+            return str(self.value)
 
     def __eq__(self, value):
         return self.value == value.value
@@ -117,7 +120,7 @@ def solve_system(system: list) -> dict:
         for soln in solutions:
             for k, v in soln.items():
                 if str(k) in solutions_dict.keys():
-                    solutions_dict[Variable(str(k))].add(Value(float(v)))
+                    solutions_dict[Variable(str(k))].add(V/alue(float(v)))
                 else:
                     solutions_dict[Variable(str(k))] = set([Value(float(v))])
         return solutions_dict
@@ -129,6 +132,9 @@ def append(system: list, equation: Equation) -> list:
     else:
         system.append(equation)
         return system
+
+def append_to_empty_list(equation: Equation) -> list:
+    return [equation]
 
 # lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable)
 def lookup_value(mapping: dict, key: Variable) -> object:

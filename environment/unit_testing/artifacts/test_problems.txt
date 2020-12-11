@@ -2,3 +2,5 @@ Solve 0 = 4*b + b + 15 for b.
 -3
 Solve 0 = 4*b + b + 15 for b.
 {'b': -3}
+Let w be (-1 + 13)*3/(-6). Let b = w - -6. Let i = 2 - b. Solve -15 = 3*c + i*c for c.
+-3

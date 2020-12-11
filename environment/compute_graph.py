@@ -1,7 +1,7 @@
 from inspect import signature
 from environment.utils import extract_formal_elements
 from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
-    substitution_left_to_right, extract_isolated_variable, factor, simplify, diff, replace_arg, make_function
+    substitution_left_to_right, extract_isolated_variable, factor, simplify, diff, replace_arg, make_function, append_to_empty_list
 
 
 class Node:
@@ -36,6 +36,7 @@ class ComputeGraph:
         self.root = None
         self.current_node = None  # reference to the first node (breadth-first) that requires one or more arguments
         self.queue = []
+        self.n_nodes = 0
 
     def lookup_formal_element(self, action):
         return self.formal_elements[int(action[1:])]
@@ -75,7 +76,11 @@ class ComputeGraph:
         :return: the output of the compute graph
         '''
         try:
-            return eval(str(self))
+            output = eval(str(self))
+            if type(output) == set:
+                return ", ".join(sorted(list(output)))
+            else:
+                return output
         except:
             return None
 
