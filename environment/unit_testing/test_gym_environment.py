@@ -10,7 +10,7 @@ import unittest
 
 class Test(unittest.TestCase):
 
-    def test_problem_0(self):
+    def test_problem_0_fail_1(self):
         env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
         # reset - then fail after 1st action
         observation = env.reset_by_index(0)
@@ -23,6 +23,9 @@ class Test(unittest.TestCase):
         assert observation_ == f"{observation}; '{formal_element}'"
         assert reward == 0
         assert done
+
+    def test_problem_0_fail_2(self):
+        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
         # reset - then fail after 2nd action
         observation = env.reset_by_index(0)
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
@@ -40,6 +43,9 @@ class Test(unittest.TestCase):
         assert observation_ == f"{observation}; solve_system('0 = 4*b + b + 15')"
         assert reward == 0
         assert done
+
+    def test_problem_0_success_1(self):
+        env = MathEnv(['environment/unit_testing/artifacts/test_problems.txt'])
         # reset - then succeed after 4th action
         observation = env.reset_by_index(0)
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
