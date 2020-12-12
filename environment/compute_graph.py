@@ -76,7 +76,7 @@ class ComputeGraph:
         try:
             output = eval(str(self))
             if type(output) == set:
-                return ", ".join(sorted(list(output)))
+                return ", ".join(sorted(list([str(x) for x in output]), reverse=True))
             else:
                 return output
         except:

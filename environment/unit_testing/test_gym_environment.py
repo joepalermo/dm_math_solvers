@@ -137,7 +137,9 @@ class Test(unittest.TestCase):
     def test_guess_until_correct(self):
         '''this test only terminates when the graph is correctly guessed'''
         env = MathEnv(['artifacts/short_problems.txt'])
-        for i in range(0,11):
+        for i in range(len(env.problems)):
             guess_until_problem_solved(env, i, verbose=False, max_episode_index=20000)
+
+
 
 
