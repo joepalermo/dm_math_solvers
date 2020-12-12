@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
-from environment.typed_operators import Equation, Expression, Variable, Value
-from environment.typed_operators import solve_system
+from environment.typed_operators import *
 
 class Test(unittest.TestCase):
 

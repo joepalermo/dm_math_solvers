@@ -3,9 +3,7 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 from gym import spaces
-from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
-    substitution_left_to_right, substitution_right_to_left, extract_isolated_variable, factor, simplify, diff, replace_arg, \
-    make_function, append_to_empty_list, mod, gcd, mod_eq_0, is_prime, lcm, prime_factors
+from environment.typed_operators import *
 from environment.compute_graph import ComputeGraph
 from random import sample
 from inspect import signature
@@ -21,7 +19,7 @@ class MathEnv(gym.Env):
         self.max_formal_elements = 6  # TODO: make into a hyperparameter
         self.actions = self.operators + [f"f{i}" for i in range(self.max_formal_elements)]
         self.action_space = spaces.Discrete(len(self.actions))
-        self.max_n_nodes = 20
+        self.max_n_nodes = 10
         # load problems
         self.problems = []
         for filepath in problem_filepaths:

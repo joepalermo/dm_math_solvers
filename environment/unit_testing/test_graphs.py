@@ -1,9 +1,6 @@
 import unittest
 from environment.utils import extract_formal_elements, cast_formal_element
-from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
-    substitution_left_to_right, extract_isolated_variable, factor, simplify, diff, replace_arg, make_function, append_to_empty_list, \
-    mod, gcd, mod_eq_0, is_prime, lcm, prime_factors
-from environment.typed_operators import Equation, Function, Expression, Variable, Value
+from environment.typed_operators import *
 
 
 class Test(unittest.TestCase):
@@ -78,36 +75,34 @@ class Test(unittest.TestCase):
     def test_train_easy_numbers__div_remainder(self):
         problem_statement = 'Calculate the remainder when 93 is divided by 59.'
         f = extract_formal_elements(problem_statement)
-        assert f == [Value(93), Value(59)]
-        assert mod(f[0], f[1]) == Value(34)
+        assert f == [Value('93'), Value('59')]
+        assert mod(f[0], f[1]) == Value('34')
 
     def test_train_easy_numbers__gcd(self):
         problem_statement = 'Calculate the greatest common factor of 11130 and 6.'
         f = extract_formal_elements(problem_statement)
-        assert f == [Value(11130), Value(6)]
-        assert gcd(f[0], f[1]) == Value(6)
+        assert f == [Value('11130'), Value('6')]
+        assert gcd(f[0], f[1]) == Value('6')
 
     def test_train_easy_numbers__is_factor(self):
         problem_statement = 'Is 15 a factor of 720?'
         f = extract_formal_elements(problem_statement)
-        assert f == [Value(15), Value(720)]
+        assert f == [Value('15'), Value('720')]
         assert mod_eq_0(f[1], f[0]) == True
 
     def test_train_easy_numbers__is_prime(self):
         problem_statement = 'Is 93163 a prime number?'
         f = extract_formal_elements(problem_statement)
-        assert f == [Value(93163)]
+        assert f == [Value('93163')]
         assert is_prime(f[0]) == False
 
     def test_train_easy_numbers__lcm(self):
-        from environment.typed_operators import lcm
         problem_statement = 'Calculate the smallest common multiple of 351 and 141.'
         f = extract_formal_elements(problem_statement)
         assert f == [Value('351'), Value('141')]
         assert lcm(f[0], f[1]) == Value('16497')
 
     def test_train_easy_numbers__list_prime_factors(self):
-        from environment.typed_operators import prime_factors
         problem_statement = 'What are the prime factors of 329?'
         f = extract_formal_elements(problem_statement)
         assert f == [Value('329')]
@@ -134,8 +129,6 @@ class Test(unittest.TestCase):
     #     problem_statement = 'Suppose $f[0 = -4*x + 8*x - 40]. Let $f[h(i) = i**2 - 9*i - 14]. Let $f[n] be $f[h(x)]. Sort $f[-1], $f[4], $f[n].'
     #     f = extract_formal_elements(problem_statement)
     #     x = lookup_value(solve_system(f[0]), get
-
-    # non-composed --------------------------------------------
 
     # def test_train_easy_arithmetic__add_or_sub_in_base(self):
     #     problem_statement = 'In base 13, what is 7a79 - -5?'

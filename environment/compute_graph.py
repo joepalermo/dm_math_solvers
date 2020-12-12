@@ -1,8 +1,6 @@
 from inspect import signature
 from environment.utils import extract_formal_elements
-from environment.typed_operators import lookup_value, solve_system, append, make_equality, lookup_value_eq, project_lhs, \
-    substitution_left_to_right, extract_isolated_variable, factor, simplify, diff, replace_arg, make_function, append_to_empty_list
-
+from environment.typed_operators import *
 
 class Node:
 
@@ -47,7 +45,7 @@ class ComputeGraph:
         elif type(current_node.action) == str:  # case: formal element
             assert current_node.action[0] == 'f'
             formal_element = self.lookup_formal_element(current_node.action)
-            return f"'{formal_element}'"
+            return f"{type(formal_element).__name__}('{formal_element}')"
         elif current_node.action is None:  # case: None (i.e. for an append)
             return 'None'
         else:

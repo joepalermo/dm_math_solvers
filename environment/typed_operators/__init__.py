@@ -232,5 +232,10 @@ def prime_factors(n: Value) -> set:
     divisors = [d for d in range(2, n//2+1) if n % d == 0]
     return set([Value(d) for d in divisors if all(d % od != 0 for od in divisors if od != d)])
 
+
+def common_denominator():
+    pass
+    # TODO
+
 # def max_arg(x: Expression, y: Expression) -> Expression:
 #     return str(max(eval(str(x)),eval(str(y))))
