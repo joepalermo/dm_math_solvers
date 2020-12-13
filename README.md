@@ -19,17 +19,14 @@ Tasks
 - Gather corpus of observations, then run BPE to get encoder/decoder mappings of fixed size
     - Implement encoder function which both encodes observations and also 0-pads to a max observation size  
 - Model and optimization
-    - Decide on how to represent incomplete compute graphs:
-        - text
-        - graph
-    - output: action probability vector (i.e. policy)
-    - implementation: vanilla transformer or gated transformer XL (more stable for RL?)
-    - optimization: PPO?
+    1. Implement a VPG training loop and connect it to vanilla Transformer model
+        - If this fails to do well, then here's a list of things to try:
+            - variants on VPG (see spinningup)
+            - gated transformer XL
+            - PPO
 - Strategy to alternate between training and running the policy
-    1. Gather train data: Run the policy and save a subset of actions/programs in a replay buffer
-        a. with deterministic search (e.g. BFS)
-        b. by random sampling from the policy vectors
-    2. Train the policy from the replay buffer
+    1. Gather train data
+    2. Train the policy on the most recent data
     3. Eval the policy
     4. (optional) Determine curriculum for the next round based on eval performance across modules
 - Evaluate on test set
