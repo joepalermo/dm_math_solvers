@@ -1,10 +1,6 @@
 from inspect import signature
 from environment.utils import extract_formal_elements
-from environment.operators import append, add_keypair, lookup_value, function_application, apply_mapping, calc, \
-    make_equality, project_lhs, project_rhs, simplify, solve_system, factor, diff, replace_arg, substitution_left_to_right, \
-    eval_in_base, root, round_to_int, round_to_dec, power, substitution_right_to_left, max_arg, min_arg, greater_than, \
-    less_than, lookup_value_eq
-
+from environment.typed_operators import *
 
 class Node:
 
@@ -13,8 +9,10 @@ class Node:
         self.args = []
         if type(self.action) == str:  # if action is a formal element
             self.num_parameters = 0
+            self.types = []
         else:
             self.num_parameters = len(signature(self.action).parameters)
+            self.types = [type_.annotation for name, type_ in signature(self.action).parameters.items()]
 
     def set_arg(self, node):
         assert len(self.args) < self.num_parameters
@@ -32,9 +30,11 @@ class ComputeGraph:
 
     def __init__(self, problem_statement):
         self.formal_elements = extract_formal_elements(problem_statement)
+        self.formal_element_types = [type(f) for f in self.formal_elements]
         self.root = None
         self.current_node = None  # reference to the first node (breadth-first) that requires one or more arguments
         self.queue = []
+        self.n_nodes = 0
 
     def lookup_formal_element(self, action):
         return self.formal_elements[int(action[1:])]
@@ -45,7 +45,7 @@ class ComputeGraph:
         elif type(current_node.action) == str:  # case: formal element
             assert current_node.action[0] == 'f'
             formal_element = self.lookup_formal_element(current_node.action)
-            return f"'{formal_element}'"
+            return f"{type(formal_element).__name__}('{formal_element}')"
         elif current_node.action is None:  # case: None (i.e. for an append)
             return 'None'
         else:
@@ -74,7 +74,11 @@ class ComputeGraph:
         :return: the output of the compute graph
         '''
         try:
-            return eval(str(self))
+            output = eval(str(self))
+            if type(output) == set:
+                return ", ".join(sorted(list([str(x) for x in output]), reverse=True))
+            else:
+                return output
         except:
             return None
 

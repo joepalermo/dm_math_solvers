@@ -2,6 +2,7 @@ import re
 import sympy as sym
 from math import log
 
+
 def append(ls, value):
     if not ls:
         return [value]

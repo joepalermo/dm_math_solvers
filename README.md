@@ -15,26 +15,20 @@ ____
 
 Tasks
 
-- [x] Formalize a few problems from each module
-    - [x] buildup a library of operators
-    - use typed operators to reduce the combinatorial explosion?
-- [x] Create RL env (Gym)
-- [-] Define curriculum
-    - [x] Difficulty ordering: start with uncomposed, then composed with 2 sentences, composed with 3 sentences, etc...
-    - Choose strategy:
-        - automatically (treat as a k-armed bandit)
-        - [-] manually? (define master threshold and define simple strategy for mixing in mastered problems to prevent forgetting)
-- [x] write annotation script (to add the formal elements into the problem description)
+- Reset environment with random problem selected by difficulty level, more generally enable sampling problems from a particular distribution (for curriculum learning)
+- Gather corpus of observations, then run BPE to get encoder/decoder mappings of fixed size
+    - Implement encoder function which both encodes observations and also 0-pads to a max observation size  
 - Model and optimization
-    - Decide on how to represent incomplete compute graphs:
-        - text
-        - graph
-    - output: action probability vector (i.e. policy)
-    - implementation: vanilla transformer or gated transformer XL (more stable for RL?)
-    - optimization: PPO?
+    1. Implement a VPG training loop and connect it to vanilla Transformer model
+        - If this fails to do well, then here's a list of things to try:
+            - variants on VPG (see spinningup)
+            - gated transformer XL
+            - PPO
 - Strategy to alternate between training and running the policy
-    1. Run the policy with search (e.g. BFS) and save a subset of actions/programs in a replay buffer
-    2. Train the policy from the replay buffer
+    1. Gather train data
+    2. Train the policy on the most recent data
+    3. Eval the policy
+    4. (optional) Determine curriculum for the next round based on eval performance across modules
 - Evaluate on test set
 
 Optional future work:

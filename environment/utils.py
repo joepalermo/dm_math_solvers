@@ -1,4 +1,5 @@
 import re
+from environment.typed_operators import Equation, Function, Expression, Variable, Value
 
 
 def is_numeric(string):
@@ -21,4 +22,18 @@ def extract_formal_elements(question):
     formal_elements = [string.strip() for string in split_on_words]
     # filter for the special case where the letter "a" gets included at the end of a formal element
     formal_elements = [f if len(re.findall('[0-9A-Za-z\)](\sa)', f)) < 1 else f.split(' a')[0] for f in formal_elements]
+    # cast types
+    formal_elements = [cast_formal_element(f) for f in formal_elements]
     return formal_elements
+
+
+def cast_formal_element(f):
+    # TODO: add function
+    if '=' in f:
+        return Equation(f)
+    elif len(f) == 1 and f.isalpha():
+        return Variable(f)
+    elif f.isnumeric():
+        return Value(f)
+    else:
+        return Expression(f)
