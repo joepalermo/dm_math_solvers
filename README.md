@@ -15,16 +15,9 @@ ____
 
 Tasks
 
-- [x] Formalize a few problems from each module
-    - [x] buildup a library of operators
-    - use typed operators to reduce the combinatorial explosion?
-- [x] Create RL env (Gym)
-- [-] Define curriculum
-    - [x] Difficulty ordering: start with uncomposed, then composed with 2 sentences, composed with 3 sentences, etc...
-    - Choose strategy:
-        - automatically (treat as a k-armed bandit)
-        - [-] manually? (define master threshold and define simple strategy for mixing in mastered problems to prevent forgetting)
-- [x] write annotation script (to add the formal elements into the problem description)
+- Reset environment with random problem selected by difficulty level, more generally enable sampling problems from a particular distribution (for curriculum learning)
+- Gather corpus of observations, then run BPE to get encoder/decoder mappings of fixed size
+    - Implement encoder function which both encodes observations and also 0-pads to a max observation size  
 - Model and optimization
     - Decide on how to represent incomplete compute graphs:
         - text
