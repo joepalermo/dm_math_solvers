@@ -14,7 +14,7 @@ class MathEnv(gym.Env):
     def __init__(self, problem_filepaths, num_problems_per_module=int(1e7)):
         self.operators = [lookup_value, solve_system, append, append_to_empty_list, make_equality, lookup_value_eq,
                           extract_isolated_variable, substitution_left_to_right, factor, diff, simplify, make_function,
-                          replace_arg, mod, gcd, mod_eq_0, is_prime, lcm, prime_factors]  # TODO: make into a hyperparameter
+                          replace_arg, mod, gcd, mod_eq_0, is_prime, lcm, prime_factors, function_application]  # TODO: make into a hyperparameter
         self.operator_output_types = [signature(operator).return_annotation for operator in self.operators]
         self.max_formal_elements = 6  # TODO: make into a hyperparameter
         self.actions = self.operators + [f"f{i}" for i in range(self.max_formal_elements)]

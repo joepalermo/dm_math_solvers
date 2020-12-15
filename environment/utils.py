@@ -28,9 +28,11 @@ def extract_formal_elements(question):
 
 
 def cast_formal_element(f):
-    # TODO: add function
     if '=' in f:
-        return Equation(f)
+        try:
+            return Function(f)
+        except:
+            return Equation(f)
     elif len(f) == 1 and f.isalpha():
         return Variable(f)
     elif f.isnumeric():
