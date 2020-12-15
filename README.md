@@ -15,8 +15,9 @@ ____
 
 Tasks
 
-- Gather corpus of observations, then run BPE to get encoder/decoder mappings of fixed size
-    - Implement encoder function which both encodes observations and also 0-pads to a max observation size  
+- Run BPE to get encoder/decoder mappings of fixed size
+    - Implement encoder function which both encodes observations and also 0-pads to a max observation size
+- Provide access to a test/val set within the environment  
 - Model and optimization
     1. Implement a VPG training loop and connect it to vanilla Transformer model
         - If this fails to do well, then here's a list of things to try:
