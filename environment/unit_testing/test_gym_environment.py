@@ -3,15 +3,18 @@ import gym
 from environment.utils import extract_formal_elements
 from environment.envs.math_env import MathEnv
 from environment.typed_operators import *
+from utils import read_text_file
 import unittest
+import glob
+import os
 
 
 def guess_until_problem_solved(env, problem_index, verbose=False, max_episode_index=1000):
     episode_i = 0
     graph_guessed_correctly = False
-    print(f'problem statement: {env.reset_by_index(problem_index)}')
+    print(f'problem statement: {env.reset_with_specific_problem("short_problems", 1, problem_index)}')
     while not graph_guessed_correctly and episode_i < max_episode_index:
-        _ = env.reset_by_index(problem_index)
+        _ = env.reset_with_specific_problem('short_problems', 1, problem_index)
         done = False
         step_i = 0
         if verbose:
@@ -25,6 +28,7 @@ def guess_until_problem_solved(env, problem_index, verbose=False, max_episode_in
                 graph_guessed_correctly = True
             step_i += 1
         episode_i += 1
+    print(f'graph: {observation.split(";")[1]}')
     print(f'trials taken to guess problem #{problem_index}: {episode_i}')
 
 
@@ -33,7 +37,7 @@ class Test(unittest.TestCase):
     def test_problem_0_fail_1(self):
         env = MathEnv(['artifacts/short_problems.txt'])
         # reset - then fail after 1st action
-        observation = env.reset_by_index(0)
+        observation = env.reset_with_specific_problem('short_problems', 1, 0)
         f = extract_formal_elements(observation)  # for use below
         assert f == ['0 = 4*b + b + 15', 'b']
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
@@ -47,7 +51,7 @@ class Test(unittest.TestCase):
     def test_problem_0_fail_2(self):
         env = MathEnv(['artifacts/short_problems.txt'])
         # reset - then fail after 2nd action
-        observation = env.reset_by_index(0)
+        observation = env.reset_with_specific_problem('short_problems', 1, 0)
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
         action = solve_system
         observation_, reward, done, _ = env.step(action)
@@ -67,7 +71,7 @@ class Test(unittest.TestCase):
     def test_problem_0_success_1(self):
         env = MathEnv(['artifacts/short_problems.txt'])
         # reset - then succeed after 4th action
-        observation = env.reset_by_index(0)
+        observation = env.reset_with_specific_problem('short_problems', 1, 0)
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
         action = lookup_value
         observation_, reward, done, _ = env.step(action)
@@ -111,7 +115,7 @@ class Test(unittest.TestCase):
     def test_problem_5_success(self):
         env = MathEnv(['artifacts/short_problems.txt'])
         # reset - then succeed after 4th action
-        observation = env.reset_by_index(5)
+        observation = env.reset_with_specific_problem('short_problems', 1, 5)
         assert observation == 'Calculate the remainder when 93 is divided by 59.'
         assert env.compute_graph.formal_elements == [Value('93'), Value('59')]
         # first action
@@ -137,9 +141,12 @@ class Test(unittest.TestCase):
     def test_guess_until_correct(self):
         '''this test only terminates when the graph is correctly guessed'''
         env = MathEnv(['artifacts/short_problems.txt'])
-        for i in range(len(env.problems)):
-            guess_until_problem_solved(env, i, verbose=False, max_episode_index=20000)
+        for i in range(11):
+            guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
 
 
-
+    # def test_load_all_problems(self):
+    #     filenames = read_text_file('../module_lists/composed.txt').split('\n')
+    #     filepaths = [f'../../mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
+    #     env = MathEnv(filepaths, num_problems_per_module=int(1e4))
 

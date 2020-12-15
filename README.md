@@ -15,7 +15,6 @@ ____
 
 Tasks
 
-- Reset environment with random problem selected by difficulty level, more generally enable sampling problems from a particular distribution (for curriculum learning)
 - Gather corpus of observations, then run BPE to get encoder/decoder mappings of fixed size
     - Implement encoder function which both encodes observations and also 0-pads to a max observation size  
 - Model and optimization

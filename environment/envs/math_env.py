@@ -11,7 +11,7 @@ from inspect import signature
 
 class MathEnv(gym.Env):
 
-    def __init__(self, problem_filepaths):
+    def __init__(self, problem_filepaths, num_problems_per_module=int(1e7)):
         self.operators = [lookup_value, solve_system, append, append_to_empty_list, make_equality, lookup_value_eq,
                           extract_isolated_variable, substitution_left_to_right, factor, diff, simplify, make_function,
                           replace_arg, mod, gcd, mod_eq_0, is_prime, lcm, prime_factors]  # TODO: make into a hyperparameter
@@ -20,16 +20,30 @@ class MathEnv(gym.Env):
         self.actions = self.operators + [f"f{i}" for i in range(self.max_formal_elements)]
         self.action_space = spaces.Discrete(len(self.actions))
         self.max_n_nodes = 10
-        # load problems
-        self.problems = []
+        # load data
+        self.module_type_to_difficulty_dict = {}
         for filepath in problem_filepaths:
+            module_name = filepath.split('/')[-1].split('.txt')[0]
+            if 'compose' in module_name:
+                compose = True
+                module_type = module_name.split('_compose')[0]
+            else:
+                compose = False
+                module_type = module_name
             with open(filepath, 'r') as f:
                 lines = f.readlines()
-            num_pairs = len(lines) // 2
+            num_pairs = min(len(lines) // 2, num_problems_per_module)
             for i in range(0, 2 * num_pairs, 2):
                 question = lines[i].strip()
                 answer = lines[i + 1].strip()
-                self.problems.append((question, answer))
+                difficulty = len(re.split('(?<![0-9])[.,;:?]|[.,;:?](?![0-9])', question)) - 1 if compose else 1
+                if module_type in self.module_type_to_difficulty_dict:
+                    if difficulty in self.module_type_to_difficulty_dict[module_type]:
+                        self.module_type_to_difficulty_dict[module_type][difficulty].append((question, answer))
+                    else:
+                        self.module_type_to_difficulty_dict[module_type][difficulty] = [(question, answer)]
+                else:
+                    self.module_type_to_difficulty_dict[module_type] = {difficulty: [(question, answer)]}
         self.compute_graph = None
 
     def sample_action(self):
@@ -80,17 +94,13 @@ class MathEnv(gym.Env):
             mask = np.concatenate([mask, np.zeros(self.max_formal_elements - len(self.compute_graph.formal_elements))])
         return mask * policy_vector
 
-    def reset(self):
-        '''
-        resets the environment by sampling a new problem.
-        :return: the initial oberservation (the problem statement)
-        '''
-        self.problem_statement, self.answer = sample(self.problems, 1)[0]
+    def reset_with_specific_problem(self, module_type, difficulty, problem_index):
+        self.problem_statement, self.answer = self.module_type_to_difficulty_dict[module_type][difficulty][problem_index]
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.problem_statement
 
-    def reset_by_index(self, index):
-        self.problem_statement, self.answer = self.problems[index]
+    def reset_by_module_and_difficulty(self, module_type, difficulty):
+        self.problem_statement, self.answer = sample(self.module_type_to_difficulty_dict[module_type][difficulty], 1)[0]
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.problem_statement
 
