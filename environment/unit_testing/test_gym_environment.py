@@ -139,7 +139,7 @@ class Test(unittest.TestCase):
 
 
     def test_guess_until_correct(self):
-        '''this test only terminates when the graph is correctly guessed'''
+        '''this test only terminates when the graph is correctly guessed or timeout is reached'''
         env = MathEnv(['artifacts/short_problems.txt'])
         for i in range(11):
             guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)

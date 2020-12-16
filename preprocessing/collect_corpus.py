@@ -3,14 +3,11 @@ from utils import read_text_file
 from environment.envs.math_env import MathEnv
 from tqdm import tqdm
 
-
-
-
-filenames = read_text_file('environment/module_lists/composed.txt').split('\n')
+filenames = read_text_file('../environment/module_lists/composed.txt').split('\n')
 filepaths = [f'mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
 env = MathEnv(filepaths, num_problems_per_module=int(1e5))
 all_observations = []
-for _ in tqdm(range(int(1e6))):
+for _ in tqdm(range(int(1e3))):
     done = False
     episode_observations = [env.reset()]
     while not done:
@@ -21,5 +18,7 @@ for _ in tqdm(range(int(1e6))):
             break
     random_episode_observation = sample(episode_observations, 1)[0]
     all_observations.append(random_episode_observation)
-for o in all_observations:
-    print(o)
+
+all_observations = '\n'.join(all_observations)
+with open('corpus/corpus.txt', 'w') as f:
+    f.write(all_observations)
