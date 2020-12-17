@@ -17,6 +17,7 @@ tokenizer.train(trainer, ["preprocessing/corpus/corpus.txt"])
 # save_to_filepath = 'preprocessing/tokenizer'
 # tokenizer.save(save_to_filepath)
 # tokenizer = Tokenizer.from_file(save_to_filepath)
+# Test out on random input
 inp = "Let s = -34/19 - -4715/304. Find the common denominator of -55/4 and s.; make_function(diff(lookup_value(lookup_value('param_0','param_1'),extract_isolated_variable(make_equality(simplify('param_0'),'param_1')))),Expression('-55/4'))"
 encoded = tokenizer.encode(inp)
 decoded = decode(tokenizer, encoded.ids)

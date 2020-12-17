@@ -19,7 +19,9 @@ from pathlib import Path
 import gym
 import numpy as np
 import ray
-from gym.spaces import Box, Discrete
+import torch
+import torch.nn.functional as F
+from gym.spaces import Box, Discrete, MultiDiscrete
 from ray import tune
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.tf.fcnet import FullyConnectedNetwork
@@ -29,8 +31,12 @@ from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from ray.rllib.utils.framework import try_import_tf, try_import_torch
 from ray.rllib.utils.test_utils import check_learning_achieved
 from ray.tune import grid_search
+from torch import Tensor, distributions, nn, tensor
+from torch.nn import Linear, ReLU, Sequential, Softmax
+from torch.optim import Adam
+from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-from environment.envs.math_env import MathEnv
+from environment.envs.math_env import EnvConfig, MathEnv
 
 """Example of a custom gym environment and model. Run this for a demo.
 
@@ -42,7 +48,6 @@ This example shows:
 You can visualize experiment results in ~/ray_results using TensorBoard.
 """
 
-torch, nn = try_import_torch()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--run", type=str, default="PPO")
@@ -55,12 +60,25 @@ parser.add_argument("--stop-reward", type=float, default=0.1)
 # TODO mathenv needs to take in dict `config` in __init__` (for ray to work
 
 
+# TODO lightning module
 class TorchCustomModel(TorchModelV2, nn.Module):
     """Example of a PyTorch custom model that just delegates to a fc-net."""
 
-    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
+    def __init__(
+        self,
+        obs_space: MultiDiscrete,
+        action_space: Discrete,
+        num_outputs: int,  # TODO should be action_space.n
+        model_config: dict,
+        name: str,
+    ):
         TorchModelV2.__init__(
-            self, obs_space, action_space, num_outputs, model_config, name
+            self,
+            obs_space,
+            action_space,
+            num_outputs,
+            model_config,
+            name,
         )
         nn.Module.__init__(self)
 
@@ -79,6 +97,13 @@ class TorchCustomModel(TorchModelV2, nn.Module):
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    env_config: EnvConfig = {
+        "problem_filepaths": ['numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
+        "num_problems_per_module": 10 ** 7,
+        # data used for validation
+        "p_val": 0.2,
+    }
+
     ray.init()
 
     # Can also register the env creator function explicitly with:
@@ -87,7 +112,7 @@ if __name__ == "__main__":
 
     config = {
         "env": MathEnv,  # or "corridor" if registered above
-        "env_config": {...},  # TODO
+        "env_config": env_config,  # TODO
         # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.
         "num_gpus": torch.cuda.device_count(),
         "model": {

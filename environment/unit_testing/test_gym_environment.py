@@ -146,9 +146,9 @@ class Test(unittest.TestCase):
             guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
 
 
-    # def test_load_all_problems(self):
-    #     filenames = read_text_file('../module_lists/composed.txt').split('\n')
-    #     filepaths = [f'../../mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
-    #     env = MathEnv(filepaths, num_problems_per_module=int(1e4))
-    #     print()
+    def test_load_all_problems(self):
+        filenames = read_text_file('../module_lists/composed.txt').split('\n')
+        filepaths = [f'../../mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
+        env = MathEnv(filepaths, num_problems_per_module=int(1e4))
+        print()
 
