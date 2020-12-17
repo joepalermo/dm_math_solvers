@@ -110,7 +110,7 @@ class MathEnv(gym.Env):
         # build or load encoder
         self.tokenizer = Tokenizer(BPE())
         trainer = BpeTrainer(vocab_size=280)
-        self.tokenizer.train(trainer, ["../../preprocessing/corpus/corpus.txt"])
+        self.tokenizer.train(trainer, [config['corpus_filepath']])
 
     def sample_action(self):
         return self.actions[self.action_space.sample()]
