@@ -14,11 +14,11 @@ def decode(tokenizer, ids):
 
 tokenizer = Tokenizer(BPE())
 trainer = BpeTrainer(vocab_size=280, special_tokens=["[PAD]"])
-tokenizer.train(trainer, ["environment/corpus/minimal_corpus.txt"])
+tokenizer.train(trainer, ["environment/corpus/10k_corpus.txt"])
 save_to_filepath = 'preprocessing/tokenizer'
 tokenizer.save(save_to_filepath)
 # tokenizer = Tokenizer.from_file(save_to_filepath)
-with open('environment/corpus/test_corpus.txt') as f:
+with open('environment/corpus/1k_corpus.txt') as f:
     corpus = f.read()
 observations = corpus.split('\n')
 max_observation_length = max([len(tokenizer.encode(obs)) for obs in observations])

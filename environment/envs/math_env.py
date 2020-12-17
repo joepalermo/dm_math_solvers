@@ -51,6 +51,8 @@ class MathEnv(gym.Env):
             f"f{i}" for i in range(self.max_formal_elements)
         ]
         self.action_space = spaces.Discrete(len(self.actions))
+        self.vocab_size = 280
+        self.observation_space = spaces.MultiDiscrete([self.vocab_size for _ in range(self.config['max_sequence_length'])])
         self.max_n_nodes = 15
         # load train data
         self.train = {}
@@ -102,9 +104,11 @@ class MathEnv(gym.Env):
         # TODO: load test data
         self.compute_graph = None
         # build or load encoder
+        self.vocab_size = 280
         self.tokenizer = Tokenizer(BPE())
-        trainer = BpeTrainer(vocab_size=280)
+        trainer = BpeTrainer(vocab_size=self.vocab_size)
         self.tokenizer.train(trainer, [self.config['corpus_filepath']])
+
 
     def sample_action(self):
         return self.actions[self.action_space.sample()]
@@ -154,7 +158,7 @@ class MathEnv(gym.Env):
         encoded_ids = self.tokenizer.encode(raw_observation).ids
         # pad the encoded ids up to a maximum length
         encoded_ids.extend([0 for _ in range(self.config['max_sequence_length']-len(encoded_ids))])
-        return encoded_ids
+        return np.array(encoded_ids)
 
     def decode(self, ids):
         return "".join([self.tokenizer.id_to_token(id_) for id_ in ids])

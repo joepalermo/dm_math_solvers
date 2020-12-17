@@ -36,7 +36,7 @@ class Test(unittest.TestCase):
 
     def test_problem_0_fail_1(self):
         env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
-                      'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
+                      'corpus_filepath': '../../environment/corpus/1k_corpus.txt',
                       'num_problems_per_module': 10**7,
                       'p_val': 0}
         env = MathEnv(env_config)
@@ -53,7 +53,7 @@ class Test(unittest.TestCase):
 
     def test_problem_0_fail_2(self):
         env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
-                      'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
+                      'corpus_filepath': '../../environment/corpus/1k_corpus.txt',
                       'num_problems_per_module': 10 ** 7,
                       'p_val': 0}
         env = MathEnv(env_config)
@@ -77,7 +77,7 @@ class Test(unittest.TestCase):
 
     def test_problem_0_success_1(self):
         env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
-                      'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
+                      'corpus_filepath': '../../environment/corpus/1k_corpus.txt',
                       'num_problems_per_module': 10**7,
                       'p_val': 0}
         env = MathEnv(env_config)
@@ -125,7 +125,7 @@ class Test(unittest.TestCase):
 
     def test_problem_5_success(self):
         env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
-                      'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
+                      'corpus_filepath': '../../environment/corpus/1k_corpus.txt',
                       'num_problems_per_module': 10 ** 7,
                       'p_val': 0}
         env = MathEnv(env_config)
@@ -156,7 +156,7 @@ class Test(unittest.TestCase):
     # def test_guess_until_correct(self):
     #     '''this test only terminates when the graph is correctly guessed or timeout is reached'''
     #     env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
-    #                   'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
+    #                   'corpus_filepath': '../../environment/corpus/1k_corpus.txt',
     #                   'num_problems_per_module': 10 ** 7,
     #                   'p_val': 0}
     #     env = MathEnv(env_config)
@@ -168,7 +168,7 @@ class Test(unittest.TestCase):
     #     filenames = read_text_file('../module_lists/composed.txt').split('\n')
     #     filepaths = [f'../../mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
     #     env_config = {'problem_filepaths': filepaths,
-    #                   'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
+    #                   'corpus_filepath': '../../environment/corpus/1k_corpus.txt',
     #                   'num_problems_per_module': 10 ** 7,
     #                   'p_val': 0}
     #     env = MathEnv(env_config)

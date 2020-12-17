@@ -99,7 +99,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     env_config = {
         "problem_filepaths": ['mathematics_dataset-v1.0/train-easy/numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
-        "corpus_filepath": "environment/corpus/minimal_corpus.txt",
+        "corpus_filepath": "environment/corpus/10k_corpus.txt",
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,
