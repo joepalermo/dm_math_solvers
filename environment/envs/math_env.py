@@ -8,11 +8,12 @@ from environment.compute_graph import ComputeGraph
 from random import sample
 from inspect import signature
 from tqdm import tqdm
+from typing import Sequence
 
 
 class MathEnv(gym.Env):
 
-    def __init__(self, problem_filepaths, num_problems_per_module=int(1e7), p_val=0.2):
+    def __init__(self, problem_filepaths:Sequence, num_problems_per_module=10**7, p_val=0.2):
         self.operators = [lookup_value, solve_system, append, append_to_empty_list, make_equality, lookup_value_eq,
                           extract_isolated_variable, substitution_left_to_right, factor, diff, simplify, make_function,
                           replace_arg, mod, gcd, mod_eq_0, is_prime, lcm, prime_factors, function_application]  # TODO: make into a hyperparameter
