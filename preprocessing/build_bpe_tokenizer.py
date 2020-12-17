@@ -6,24 +6,23 @@ from utils import write_pickle, read_pickle
 
 
 def decode(tokenizer, ids):
+    '''call with: decode(tokenizer, encoded.ids)'''
     return "".join([tokenizer.id_to_token(id_) for id_ in ids])
 
 # tokenizer.pre_tokenizer = Whitespace()
 # trainer = BpeTrainer(special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
 
 tokenizer = Tokenizer(BPE())
-trainer = BpeTrainer(vocab_size=280)
-tokenizer.train(trainer, ["preprocessing/corpus/corpus.txt"])
-# save_to_filepath = 'preprocessing/tokenizer'
-# tokenizer.save(save_to_filepath)
+trainer = BpeTrainer(vocab_size=280, special_tokens=["[PAD]"])
+tokenizer.train(trainer, ["environment/corpus/corpus.txt"])
+save_to_filepath = 'preprocessing/tokenizer'
+tokenizer.save(save_to_filepath)
 # tokenizer = Tokenizer.from_file(save_to_filepath)
-# Test out on random input
-inp = "Let s = -34/19 - -4715/304. Find the common denominator of -55/4 and s.; make_function(diff(lookup_value(lookup_value('param_0','param_1'),extract_isolated_variable(make_equality(simplify('param_0'),'param_1')))),Expression('-55/4'))"
-encoded = tokenizer.encode(inp)
-decoded = decode(tokenizer, encoded.ids)
-print(encoded.tokens)
-print(encoded.ids)
-print(decoded)
+with open('environment/corpus/minimal_corpus.txt') as f:
+    corpus = f.read()
+observations = corpus.split('\n')
+max_observation_length = max([len(tokenizer.encode(obs)) for obs in observations])
+print(max_observation_length)
 
 
 

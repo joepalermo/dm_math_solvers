@@ -16,13 +16,10 @@ from tokenizers.trainers import BpeTrainer
 from utils import write_pickle, read_pickle
 
 
-def decode(tokenizer, ids):
-    return "".join([tokenizer.id_to_token(id_) for id_ in ids])
-
-
-
 class MathEnv(gym.Env):
     def __init__(self, config):
+        if not config.get('max_sequence_length', None):
+            config['max_sequence_length'] = 250
         self.config = config
         self.operators = [
             lookup_value,
@@ -144,7 +141,7 @@ class MathEnv(gym.Env):
         output = self.compute_graph.eval()
         compute_graph = str(self.compute_graph)
         raw_observation = f"{self.problem_statement}; {compute_graph}"
-        observation = self.tokenizer.encode(raw_observation).ids
+        observation = self.encode(raw_observation)
         reward = 1 if str(output) == self.answer else 0
         done = (
             self.compute_graph.current_node is None
@@ -152,6 +149,15 @@ class MathEnv(gym.Env):
         )
         info = {'raw_observation': raw_observation}
         return observation, reward, done, info
+
+    def encode(self, raw_observation):
+        encoded_ids = self.tokenizer.encode(raw_observation).ids
+        # pad the encoded ids up to a maximum length
+        encoded_ids.extend([0 for _ in range(self.config['max_sequence_length']-len(encoded_ids))])
+        return encoded_ids
+
+    def decode(self, ids):
+        return "".join([self.tokenizer.id_to_token(id_) for id_ in ids])
 
     def mask_invalid_types(self, policy_vector):
         if not self.compute_graph.current_node:
