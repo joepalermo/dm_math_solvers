@@ -1,6 +1,5 @@
 from inspect import signature
 from random import sample
-from typing import Sequence, TypedDict
 
 import gym
 import numpy as np
@@ -10,18 +9,21 @@ from tqdm import tqdm
 
 from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
+from tokenizers import Tokenizer
+from tokenizers.models import BPE
+from tokenizers.pre_tokenizers import Whitespace
+from tokenizers.trainers import BpeTrainer
+from utils import write_pickle, read_pickle
 
 
-class EnvConfig(TypedDict):
-    problem_filepaths: Sequence
-    num_problems_per_module: int
-    # data used for validation
-    p_val: float
+def decode(tokenizer, ids):
+    return "".join([tokenizer.id_to_token(id_) for id_ in ids])
+
 
 
 class MathEnv(gym.Env):
     def __init__(
-            self, config:EnvConfig
+            self, config
     ):
         self.operators = [
             lookup_value,
@@ -54,11 +56,11 @@ class MathEnv(gym.Env):
         ]
         self.action_space = spaces.Discrete(len(self.actions))
         self.max_n_nodes = 15
-        self.p_val = p_val
+        self.p_val = config['p_val']
         # load train data
         self.train = {}
         print("loading problems")
-        for filepath in tqdm(problem_filepaths):
+        for filepath in tqdm(config['problem_filepaths']):
             module_name = filepath.split("/")[-1].split(".txt")[0]
             if "compose" in module_name:
                 compose = True
@@ -68,7 +70,7 @@ class MathEnv(gym.Env):
                 module_type = module_name
             with open(filepath, "r") as f:
                 lines = f.readlines()
-            num_pairs = min(len(lines) // 2, num_problems_per_module)
+            num_pairs = min(len(lines) // 2, config['num_problems_per_module'])
             for i in range(0, 2 * num_pairs, 2):
                 question = lines[i].strip()
                 answer = lines[i + 1].strip()
@@ -105,6 +107,10 @@ class MathEnv(gym.Env):
         # load test data
         # TODO
         self.compute_graph = None
+        # build or load encoder
+        self.tokenizer = Tokenizer(BPE())
+        trainer = BpeTrainer(vocab_size=280)
+        self.tokenizer.train(trainer, ["../../preprocessing/corpus/corpus.txt"])
 
     def sample_action(self):
         return self.actions[self.action_space.sample()]
@@ -140,13 +146,14 @@ class MathEnv(gym.Env):
         self.compute_graph.add(action)
         output = self.compute_graph.eval()
         compute_graph = str(self.compute_graph)
-        observation = f"{self.problem_statement}; {compute_graph}"
+        raw_observation = f"{self.problem_statement}; {compute_graph}"
+        observation = self.tokenizer.encode(raw_observation).ids
         reward = 1 if str(output) == self.answer else 0
         done = (
             self.compute_graph.current_node is None
             or self.compute_graph.n_nodes > self.max_n_nodes
         )
-        info = {}
+        info = {'raw_observation': raw_observation}
         return observation, reward, done, info
 
     def mask_invalid_types(self, policy_vector):

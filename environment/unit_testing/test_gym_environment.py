@@ -35,17 +35,18 @@ def guess_until_problem_solved(env, problem_index, verbose=False, max_episode_in
 class Test(unittest.TestCase):
 
     def test_problem_0_fail_1(self):
-        env = MathEnv(['artifacts/short_problems.txt'], p_val=0)
+        env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
+                      'num_problems_per_module': 10**7,
+                      'p_val': 0}
+        env = MathEnv(env_config)
         # reset - then fail after 1st action
-        observation = env.reset_with_specific_problem('short_problems', 1, 0)
-        print(observation)
-        f = extract_formal_elements(observation)  # for use below
+        problem_statement = env.reset_with_specific_problem('short_problems', 1, 0)
+        f = extract_formal_elements(problem_statement)  # for use below
         assert f == ['0 = 4*b + b + 15', 'b']
-        assert observation == 'Solve 0 = 4*b + b + 15 for b.'
         action = 'f0'
         formal_element = env.compute_graph.lookup_formal_element(action)
-        observation_, reward, done, _ = env.step(action)
-        assert observation_ == f"{observation}; Equation('0 = 4*b + b + 15')"
+        observation_, reward, done, info = env.step(action)
+        assert info['raw_observation'] == f"{problem_statement}; Equation('0 = 4*b + b + 15')"
         assert reward == 0
         assert done
 

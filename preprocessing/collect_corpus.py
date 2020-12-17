@@ -7,6 +7,7 @@ filenames = read_text_file('../environment/module_lists/composed.txt').split('\n
 filepaths = [f'mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
 env = MathEnv(filepaths, num_problems_per_module=int(1e5))
 all_observations = []
+# TODO: why does it get stuck
 for _ in tqdm(range(int(1e3))):
     done = False
     episode_observations = [env.reset()]
