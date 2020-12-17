@@ -153,15 +153,15 @@ class Test(unittest.TestCase):
         assert done
 
 
-    def test_guess_until_correct(self):
-        '''this test only terminates when the graph is correctly guessed or timeout is reached'''
-        env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
-                      'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
-                      'num_problems_per_module': 10 ** 7,
-                      'p_val': 0}
-        env = MathEnv(env_config)
-        for i in range(4,10):
-            guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
+    # def test_guess_until_correct(self):
+    #     '''this test only terminates when the graph is correctly guessed or timeout is reached'''
+    #     env_config = {'problem_filepaths': ['artifacts/short_problems.txt'],
+    #                   'corpus_filepath': '../../environment/corpus/minimal_corpus.txt',
+    #                   'num_problems_per_module': 10 ** 7,
+    #                   'p_val': 0}
+    #     env = MathEnv(env_config)
+    #     for i in range(4,10):
+    #         guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
 
     #
     # def test_load_all_problems(self):

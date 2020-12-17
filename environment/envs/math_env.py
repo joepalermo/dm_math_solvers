@@ -22,9 +22,8 @@ def decode(tokenizer, ids):
 
 
 class MathEnv(gym.Env):
-    def __init__(
-            self, config
-    ):
+    def __init__(self, config):
+        self.config = config
         self.operators = [
             lookup_value,
             solve_system,
@@ -56,11 +55,10 @@ class MathEnv(gym.Env):
         ]
         self.action_space = spaces.Discrete(len(self.actions))
         self.max_n_nodes = 15
-        self.p_val = config['p_val']
         # load train data
         self.train = {}
         print("loading problems")
-        for filepath in tqdm(config['problem_filepaths']):
+        for filepath in tqdm(self.config["problem_filepaths"]):
             module_name = filepath.split("/")[-1].split(".txt")[0]
             if "compose" in module_name:
                 compose = True
@@ -70,7 +68,7 @@ class MathEnv(gym.Env):
                 module_type = module_name
             with open(filepath, "r") as f:
                 lines = f.readlines()
-            num_pairs = min(len(lines) // 2, config['num_problems_per_module'])
+            num_pairs = min(len(lines) // 2, self.config['num_problems_per_module'])
             for i in range(0, 2 * num_pairs, 2):
                 question = lines[i].strip()
                 answer = lines[i + 1].strip()
@@ -92,7 +90,7 @@ class MathEnv(gym.Env):
             self.val[module_type] = {}
             for difficulty in self.train[module_type]:
                 num_examples = len(self.train[module_type][difficulty])
-                num_val = int(num_examples * self.p_val)
+                num_val = int(num_examples * self.config['p_val'])
                 self.val[module_type][difficulty] = self.train[module_type][difficulty][
                     :num_val
                 ]
@@ -104,13 +102,12 @@ class MathEnv(gym.Env):
                     + len(self.val[module_type][difficulty])
                     == num_examples
                 )
-        # load test data
-        # TODO
+        # TODO: load test data
         self.compute_graph = None
         # build or load encoder
         self.tokenizer = Tokenizer(BPE())
         trainer = BpeTrainer(vocab_size=280)
-        self.tokenizer.train(trainer, [config['corpus_filepath']])
+        self.tokenizer.train(trainer, [self.config['corpus_filepath']])
 
     def sample_action(self):
         return self.actions[self.action_space.sample()]

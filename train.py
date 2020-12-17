@@ -36,7 +36,7 @@ from torch.nn import Linear, ReLU, Sequential, Softmax
 from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-from environment.envs.math_env import EnvConfig, MathEnv
+from environment.envs.math_env import MathEnv
 
 """Example of a custom gym environment and model. Run this for a demo.
 
@@ -97,8 +97,9 @@ class TorchCustomModel(TorchModelV2, nn.Module):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    env_config: EnvConfig = {
-        "problem_filepaths": ['numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
+    env_config = {
+        "problem_filepaths": ['mathematics_dataset-v1.0/train-easy/numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
+        "corpus_filepath": "environment/corpus/minimal_corpus.txt",
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,
@@ -112,7 +113,7 @@ if __name__ == "__main__":
 
     config = {
         "env": MathEnv,  # or "corridor" if registered above
-        "env_config": env_config,  # TODO
+        "env_config": env_config,
         # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.
         "num_gpus": torch.cuda.device_count(),
         "model": {
