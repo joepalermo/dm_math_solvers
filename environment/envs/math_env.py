@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 class MathEnv(gym.Env):
 
-    def __init__(self, problem_filepaths, num_problems_per_module=int(1e7)):
+    def __init__(self, problem_filepaths, num_problems_per_module=int(1e7), p_val=0.2):
         self.operators = [lookup_value, solve_system, append, append_to_empty_list, make_equality, lookup_value_eq,
                           extract_isolated_variable, substitution_left_to_right, factor, diff, simplify, make_function,
                           replace_arg, mod, gcd, mod_eq_0, is_prime, lcm, prime_factors, function_application]  # TODO: make into a hyperparameter
@@ -21,7 +21,7 @@ class MathEnv(gym.Env):
         self.actions = self.operators + [f"f{i}" for i in range(self.max_formal_elements)]
         self.action_space = spaces.Discrete(len(self.actions))
         self.max_n_nodes = 15
-        self.p_val = 0.2
+        self.p_val = p_val
         # load train data
         self.train = {}
         print('loading problems')

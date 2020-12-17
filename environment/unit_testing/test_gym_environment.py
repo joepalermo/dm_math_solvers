@@ -35,9 +35,10 @@ def guess_until_problem_solved(env, problem_index, verbose=False, max_episode_in
 class Test(unittest.TestCase):
 
     def test_problem_0_fail_1(self):
-        env = MathEnv(['artifacts/short_problems.txt'])
+        env = MathEnv(['artifacts/short_problems.txt'], p_val=0)
         # reset - then fail after 1st action
         observation = env.reset_with_specific_problem('short_problems', 1, 0)
+        print(observation)
         f = extract_formal_elements(observation)  # for use below
         assert f == ['0 = 4*b + b + 15', 'b']
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
@@ -49,7 +50,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_0_fail_2(self):
-        env = MathEnv(['artifacts/short_problems.txt'])
+        env = MathEnv(['artifacts/short_problems.txt'], p_val=0)
         # reset - then fail after 2nd action
         observation = env.reset_with_specific_problem('short_problems', 1, 0)
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
@@ -69,7 +70,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_0_success_1(self):
-        env = MathEnv(['artifacts/short_problems.txt'])
+        env = MathEnv(['artifacts/short_problems.txt'], p_val=0)
         # reset - then succeed after 4th action
         observation = env.reset_with_specific_problem('short_problems', 1, 0)
         assert observation == 'Solve 0 = 4*b + b + 15 for b.'
@@ -113,7 +114,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_5_success(self):
-        env = MathEnv(['artifacts/short_problems.txt'])
+        env = MathEnv(['artifacts/short_problems.txt'], p_val=0)
         # reset - then succeed after 4th action
         observation = env.reset_with_specific_problem('short_problems', 1, 5)
         assert observation == 'Calculate the remainder when 93 is divided by 59.'
@@ -140,13 +141,14 @@ class Test(unittest.TestCase):
 
     def test_guess_until_correct(self):
         '''this test only terminates when the graph is correctly guessed or timeout is reached'''
-        env = MathEnv(['artifacts/short_problems.txt'])
-        for i in range(11):
+        env = MathEnv(['artifacts/short_problems.txt'], p_val=0)
+        for i in range(1,2):
             guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
 
 
-    def test_load_all_problems(self):
-        filenames = read_text_file('../module_lists/composed.txt').split('\n')
-        filepaths = [f'../../mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
-        env = MathEnv(filepaths, num_problems_per_module=int(1e4))
+    # def test_load_all_problems(self):
+    #     filenames = read_text_file('../module_lists/composed.txt').split('\n')
+    #     filepaths = [f'../../mathematics_dataset-v1.0/train-easy/{filename}' for filename in filenames]
+    #     env = MathEnv(filepaths, num_problems_per_module=int(1e4))
+    #     print()
 
