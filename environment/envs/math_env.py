@@ -109,15 +109,16 @@ class MathEnv(gym.Env):
         trainer = BpeTrainer(vocab_size=self.vocab_size)
         self.tokenizer.train(trainer, [self.config['corpus_filepath']])
 
+    def get_action_index(self, action):
+        return self.actions.index(action)
 
-    def sample_action(self):
-        return self.actions[self.action_space.sample()]
+    def sample_action_index(self):
+        return self.action_space.sample()
 
-    def sample_masked_action(self):
+    def sample_masked_action_index(self):
         choices = np.arange(len(self.actions))
         masked_policy_vector = self.sample_masked_policy_vector()
-        choice = np.random.choice(choices, p=masked_policy_vector)
-        return self.actions[choice]
+        return np.random.choice(choices, p=masked_policy_vector)
 
     def sample_masked_policy_vector(self):
         policy_vector = np.random.uniform(size=len(self.actions))
@@ -127,10 +128,10 @@ class MathEnv(gym.Env):
         )
         return masked_normed_policy_vector
 
-    def step(self, action):
+    def step(self, action_index):
         """an action fills the next element in the compute graph.
 
-        :param action: an operator or a formal element
+        :param action_index: index into the action space
         :return: observation, reward, done, info
 
         -observation: problem statement + interim compute graph
@@ -140,6 +141,7 @@ class MathEnv(gym.Env):
         """
         #(alok): TODO obs space should be multidiscrete?
         #(alok): TODO discrete (list of operators we're using)
+        action = self.actions[action_index]
         self.compute_graph.n_nodes += 1
         self.compute_graph.add(action)
         output = self.compute_graph.eval()
@@ -161,7 +163,7 @@ class MathEnv(gym.Env):
         return np.array(encoded_ids)
 
     def decode(self, ids):
-        return "".join([self.tokenizer.id_to_token(id_) for id_ in ids])
+        return "".join([self.tokenizer.id_to_token(id_) for id_ in ids]).strip()
 
     def mask_invalid_types(self, policy_vector):
         if not self.compute_graph.current_node:
@@ -202,14 +204,14 @@ class MathEnv(gym.Env):
             problem_index
         ]
         self.compute_graph = ComputeGraph(self.problem_statement)
-        return self.problem_statement
+        return self.encode(self.problem_statement)  # TODO: Fix tests which this breaks
 
     def reset_by_module_and_difficulty(self, module_type, difficulty, train=True):
         self.problem_statement, self.answer = sample(
             self.train[module_type][difficulty], 1
         )[0]
         self.compute_graph = ComputeGraph(self.problem_statement)
-        return self.problem_statement
+        return self.encode(self.problem_statement)  # TODO: Fix tests which this breaks
 
     def render(self):
         pass

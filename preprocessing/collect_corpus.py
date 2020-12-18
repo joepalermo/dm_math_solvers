@@ -16,7 +16,7 @@ for _ in tqdm(range(int(10**4))):
     done = False
     episode_observations = [env.reset()]
     while not done:
-        action = env.sample_masked_action()
+        action = env.sample_masked_action_index()
         observation, reward, done, info = env.step(action)
         episode_observations.append(info['raw_observation'])
         if reward == 1:

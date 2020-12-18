@@ -37,7 +37,13 @@ class ComputeGraph:
         self.n_nodes = 0
 
     def lookup_formal_element(self, action):
-        return self.formal_elements[int(action[1:])]
+        '''f12 => int(12)'''
+        try:
+            selected_formal_element = self.formal_elements[int(action[1:])]
+        except:
+            selected_formal_element = action  # if index is out of range, return dummy value
+        return selected_formal_element
+
 
     def build_string(self, current_node):
         if type(current_node) == str:  # case: param
