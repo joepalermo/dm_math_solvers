@@ -15,11 +15,13 @@ ____
 
 Tasks
 
-- Run BPE to get encoder/decoder mappings of fixed size
-    - Implement encoder function which both encodes observations and also 0-pads to a max observation size
-- Provide access to a test/val set within the environment  
+- Provide access to a test set within the environment  
 - Model and optimization
-    1. Implement a VPG training loop and connect it to vanilla Transformer model
+    1. Get Ray RLLIB working well
+        - Add an embedding layer
+        - Add type-constraint masking
+        - Try scaling the environment
+    2. Implement a VPG training loop and connect it to vanilla Transformer model
         - If this fails to do well, then here's a list of things to try:
             - variants on VPG (see spinningup)
             - gated transformer XL
