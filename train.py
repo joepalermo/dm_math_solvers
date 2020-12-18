@@ -116,8 +116,8 @@ class TorchCustomModel(TorchModelV2, nn.Module):
 if __name__ == "__main__":
     args = parser.parse_args()
     env_config = {
-        "problem_filepaths": ['mathematics_dataset-v1.0/train-easy/numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
-        "corpus_filepath": "environment/corpus/10k_corpus.txt",
+        "problem_filepaths": ['/Users/joe/workspace/projects/dm_math_solvers/mathematics_dataset-v1.0/train-easy/numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
+        "corpus_filepath": "/Users/joe/workspace/projects/dm_math_solvers/environment/corpus/10k_corpus.txt",
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,
@@ -129,18 +129,45 @@ if __name__ == "__main__":
     # register_env("corridor", lambda config: SimpleCorridor(config))
     ModelCatalog.register_custom_model("my_model", TorchCustomModel)
 
+    # config = {
+    #     "env": MathEnv,  # or "corridor" if registered above
+    #     "env_config": env_config,
+    #     # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.
+    #     "num_gpus": torch.cuda.device_count(),
+    #     "model": {
+    #         "custom_model": "my_model",
+    #         "max_seq_len": 50  # TODO: should this be here?
+    #     },
+    #     "vf_share_layers": True,
+    #     "lr": grid_search([1e-2]),  # try different lrs
+    #     "num_workers": 1,  # parallelism
+    #     "framework": "torch",
+    # }
+
     config = {
-        "env": MathEnv,  # or "corridor" if registered above
+        "env": MathEnv,
         "env_config": env_config,
+        "gamma": 0.99,
         # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.
-        "num_gpus": torch.cuda.device_count(),
+        "num_gpus": int(os.environ.get("RLLIB_NUM_GPUS", 0)),
+        "num_workers": 0,
+        "num_envs_per_worker": 1,
+        "entropy_coeff": 0.001,
+        "num_sgd_iter": 5,
+        "vf_loss_coeff": 1e-5,
         "model": {
-            "custom_model": "my_model",
+            "custom_model": GTrXLNet,
+            "max_seq_len": 250,
+            "custom_model_config": {
+                "num_transformer_units": 1,
+                "attn_dim": 64,
+                "num_heads": 2,
+                "memory_tau": 50,
+                "head_dim": 32,
+                "ff_hidden_dim": 32,
+            },
         },
-        "vf_share_layers": True,
-        "lr": grid_search([1e-2]),  # try different lrs
-        "num_workers": 1,  # parallelism
-        "framework": "torch",
+        "framework": "torch" if args.torch else "tf",
     }
 
     stop = {

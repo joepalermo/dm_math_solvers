@@ -46,14 +46,20 @@ class MathEnv(gym.Env):
         self.operator_output_types = [
             signature(operator).return_annotation for operator in self.operators
         ]
-        self.max_formal_elements = 13  # TODO: make into a hyperparameter
-        self.actions = self.operators + [
+        # self.max_formal_elements = 13  # TODO: make into a hyperparameter
+        # self.actions = self.operators + [
+        #     f"f{i}" for i in range(self.max_formal_elements)
+        # ]
+        # TODO: undo hack for testing
+        self.max_formal_elements = 2
+        self.actions = [gcd] + [
             f"f{i}" for i in range(self.max_formal_elements)
         ]
+        self.max_n_nodes = 3
+        # TODO: undo hack for testing
         self.action_space = spaces.Discrete(len(self.actions))
         self.vocab_size = 280
         self.observation_space = spaces.MultiDiscrete([self.vocab_size for _ in range(self.config['max_sequence_length'])])
-        self.max_n_nodes = 15
         # load train data
         self.train = {}
         print("loading problems")
@@ -65,6 +71,8 @@ class MathEnv(gym.Env):
             else:
                 compose = False
                 module_type = module_name
+            import os
+            print(os.getcwd())
             with open(filepath, "r") as f:
                 lines = f.readlines()
             num_pairs = min(len(lines) // 2, self.config['num_problems_per_module'])
