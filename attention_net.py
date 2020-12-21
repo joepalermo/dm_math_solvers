@@ -162,6 +162,7 @@ class GTrXLNet(RecurrentNetwork):
                  model_config,
                  name,
                  num_transformer_units,
+                 vocab_size,
                  attn_dim,
                  num_heads,
                  memory_tau,
@@ -173,6 +174,8 @@ class GTrXLNet(RecurrentNetwork):
         Args:
             num_transformer_units (int): The number of Transformer repeats to
                 use (denoted L in [2]).
+            vocab_size (int): Size of the vocab, i.e. embedding input size.
+                (Added by JP)
             attn_dim (int): The input and output dimensions of one Transformer
                 unit.
             num_heads (int): The number of attention heads to use in parallel.
@@ -196,6 +199,7 @@ class GTrXLNet(RecurrentNetwork):
                          model_config, name)
 
         self.num_transformer_units = num_transformer_units
+        self.vocab_size = vocab_size
         self.attn_dim = attn_dim
         self.num_heads = num_heads
         self.memory_tau = memory_tau
@@ -209,7 +213,7 @@ class GTrXLNet(RecurrentNetwork):
 
         # Raw observation input.
         input_layer = tf.keras.layers.Input(
-            shape=(self.max_seq_len, self.obs_dim), name="inputs")
+            shape=(self.max_seq_len), name="inputs")
         memory_ins = [
             tf.keras.layers.Input(
                 shape=(self.memory_tau, self.attn_dim),
@@ -218,8 +222,8 @@ class GTrXLNet(RecurrentNetwork):
             for i in range(self.num_transformer_units)
         ]
 
-        # Map observation dim to input/output transformer (attention) dim.
-        E_out = tf.keras.layers.Dense(self.attn_dim)(input_layer)
+        embedding_layer = tf.keras.layers.Embedding(self.vocab_size, self.attn_dim)(input_layer)
+        E_out = tf.keras.layers.Dense(self.attn_dim)(embedding_layer)
         # Output, collected and concat'd to build the internal, tau-len
         # Memory units used for additional contextual information.
         memory_outs = [E_out]
