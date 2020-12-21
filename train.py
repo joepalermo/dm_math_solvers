@@ -28,6 +28,7 @@ from ray.rllib.models.tf.fcnet import FullyConnectedNetwork
 from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 from ray.rllib.models.torch.fcnet import FullyConnectedNetwork as TorchFC
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
+# from attention_net import GTrXLNet
 from ray.rllib.models.tf.attention_net import GTrXLNet
 from ray.rllib.utils.framework import try_import_tf, try_import_torch
 from ray.rllib.utils.test_utils import check_learning_achieved
@@ -98,6 +99,7 @@ class TorchCustomModel(TorchModelV2, nn.Module):
         self.torch_sub_model = GTrXLNet(
             obs_space, action_space, num_outputs, model_config, name,
             num_transformer_units=1,
+            # vocab_size=280,
             attn_dim=64,
             num_heads=2,
             memory_tau=50,
