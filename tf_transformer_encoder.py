@@ -107,22 +107,9 @@ class Encoder(tf.keras.layers.Layer):
 
 
 class TransformerEncoder(tf.keras.Model):
-    def __init__(self, params):
+    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout):
         super(TransformerEncoder, self).__init__()
-
-        # Model config
-        self.params = params
-        num_layers = params.num_layers
-        d_model = params.d_model
-        num_heads = params.num_heads
-        dff = params.dff
-        vocab_size = params.vocab_size
-        pe_input = params.questions_max_length
-        pe_target = params.answer_max_length
-        attention_dropout = params.attention_dropout
-
-        # Instantiate the model
-        self.encoder = Encoder(num_layers, d_model, num_heads, dff, vocab_size, pe_input, attention_dropout)
+        self.encoder = Encoder(num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout)
         self.policy_layer = tf.keras.layers.Dense(3)
         self.value_layer = tf.keras.layers.Dense(1)
 

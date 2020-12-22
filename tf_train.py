@@ -6,7 +6,7 @@ import ray
 from ray import tune
 from ray.rllib.utils.test_utils import check_learning_achieved
 from environment.envs.math_env import MathEnv
-from transformer_encoder import TransformerModel
+from tf_transformer_encoder import TransformerEncoder
 
 """Example of a custom gym environment and model. Run this for a demo.
 
@@ -50,13 +50,15 @@ if __name__ == "__main__":
         "num_sgd_iter": 5,
         "vf_loss_coeff": 1e-5,
         "model": {
-            "custom_model": TransformerModel,
+            "custom_model": TransformerEncoder,
             "custom_model_config": {
-                "ntoken": 280,
-                "ninp": 250,
-                "nhead": 4,
-                "nhid": 256,
-                "nlayers": 1
+                "num_layers": 1,
+                "d_model": 256,
+                "num_heads": 4,
+                "dff": 256,
+                "vocab_size": 280,
+                "seq_len": 250,
+                "attention_dropout": 0.1
             },
         },
         "framework": "torch",
