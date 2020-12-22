@@ -6,7 +6,11 @@ import ray
 from ray import tune
 from ray.rllib.utils.test_utils import check_learning_achieved
 from environment.envs.math_env import MathEnv
-from tf_transformer_encoder import TransformerEncoder
+from tf_transformer_encoder import Encoder
+from transformer.transformer_utils import create_padding_mask
+from ray.rllib.models.tf.tf_modelv2 import TFModelV2
+import tensorflow as tf
+
 
 """Example of a custom gym environment and model. Run this for a demo.
 
@@ -20,11 +24,41 @@ You can visualize experiment results in ~/ray_results using TensorBoard.
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--run", type=str, default="PPO")
-parser.add_argument("--torch", action="store_true")
 parser.add_argument("--as-test", action="store_true")
 parser.add_argument("--stop-iters", type=int, default=50)
 parser.add_argument("--stop-timesteps", type=int, default=100000)
 parser.add_argument("--stop-reward", type=float, default=0.1)
+
+
+class TransformerEncoder(TFModelV2):
+    def __init__(self, obs_space, action_space, num_outputs, model_config,
+                 name, num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout):
+        super(TransformerEncoder, self).__init__(obs_space, action_space,
+                                           num_outputs, model_config, name)
+        self.encoder = Encoder(num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout)
+        self.policy_layer = tf.keras.layers.Dense(3)
+        self.value_layer = tf.keras.layers.Dense(1)
+
+    def call(self, inp, enc_padding_mask):
+        enc_output = self.encoder(inp, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
+        select_first_pos = tf.keras.layers.Lambda(lambda x: x[:, 0, :])
+        policy_output = self.policy_layer(select_first_pos(enc_output))  # (batch_size, 3)
+        value_output = self.value_layer(select_first_pos(enc_output))  # (batch_size, 1)
+        return policy_output, value_output
+
+    def forward(self, input_dict, state, seq_lens):
+        obs = input_dict["obs"]
+        enc_padding_mask = create_padding_mask(obs)
+        model_out, self._value_out = self.call(obs, enc_padding_mask)
+        return model_out, state
+
+    def value_function(self):
+        return self._value_out
+        # return tf.reshape(self._value_out, [-1])
+
+    def metrics(self):
+        return {"foo": tf.constant(42.0)}
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -61,7 +95,7 @@ if __name__ == "__main__":
                 "attention_dropout": 0.1
             },
         },
-        "framework": "torch",
+        "framework": "tf",
     }
 
     stop = {

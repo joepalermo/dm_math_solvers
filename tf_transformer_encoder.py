@@ -106,17 +106,3 @@ class Encoder(tf.keras.layers.Layer):
         return x  # (batch_size, input_seq_len, d_model)
 
 
-class TransformerEncoder(tf.keras.Model):
-    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout):
-        super(TransformerEncoder, self).__init__()
-        self.encoder = Encoder(num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout)
-        self.policy_layer = tf.keras.layers.Dense(3)
-        self.value_layer = tf.keras.layers.Dense(1)
-
-    def call(self, inp, enc_padding_mask):
-        enc_output = self.encoder(inp, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
-        select_first_pos = tf.keras.layers.Lambda(lambda x: x[:, 0, :])
-        policy_output = self.policy_layer(select_first_pos(enc_output))  # (batch_size, 3)
-        value_output = self.value_layer(select_first_pos(enc_output))  # (batch_size, 1)
-        return policy_output, value_output
-
