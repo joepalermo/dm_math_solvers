@@ -41,18 +41,20 @@ class TransformerModel(TorchModelV2, nn.Module):
         self.value_output = nn.Linear(nhid, 1)
 
     def forward(self, input_dict, state, seq_lens):
+        print(type(state))
+        print(state)
         token_idxs = input_dict['obs'].type(torch.LongTensor)
         embedding = self.token_embedding(token_idxs) * math.sqrt(self.ninp)
         embedding_with_pos = self.pos_encoder(embedding)
         encoding = self.transformer_encoder(embedding_with_pos)
         logits = self.policy_output(encoding[:,0,:])
-        # value = self.value_output(encoding[:,0,:])
+        self.value = self.value_output(encoding[:,0,:])
         # print(token_idxs.shape)
         # print(self.embedding.shape)
         # print(self.embedding_with_pos.shape)
         # print(self.encoding.shape)
         # print(self.logits.shape)
-        return logits, state
+        return logits, [[torch.ones((2,2)) for _ in range(10)]]
 
     def value_function(self) -> TensorType:
         return self.value
