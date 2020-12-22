@@ -18,7 +18,8 @@ Tasks
 - Provide access to a test set within the environment  
 - Model and optimization
     1. Get Ray RLLIB working well
-        - Add an embedding layer
+        - Add an embedding layer (why does SL dissapear in the shape after embedding?)
+            - Try a radically simpler model such as a vanilla transformer?
         - Add type-constraint masking
         - Try scaling the environment
     2. Implement a VPG training loop and connect it to vanilla Transformer model
