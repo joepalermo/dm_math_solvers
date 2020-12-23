@@ -98,9 +98,9 @@ class MyKerasModel(TFModelV2):
 if __name__ == "__main__":
     env_config = {
         "problem_filepaths": [
-            Path("mathematics_dataset-v1.0/train-easy/numbers__gcd.txt").resolve()
+            str(Path("mathematics_dataset-v1.0/train-easy/numbers__gcd.txt").resolve())
         ],  # TODO hardcode single path to make this easy to run
-        "corpus_filepath": Path("environment/corpus/10k_corpus.txt").resolve(),
+        "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,
