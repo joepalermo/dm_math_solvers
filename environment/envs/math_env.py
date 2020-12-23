@@ -18,8 +18,8 @@ from utils import write_pickle, read_pickle
 
 class MathEnv(gym.Env):
     def __init__(self, config):
-        if not config.get('max_sequence_length', None):
-            config['max_sequence_length'] = 250
+        if not config.get("max_sequence_length", None):
+            config["max_sequence_length"] = 250
         self.config = config
         self.operators = [
             lookup_value,
@@ -52,14 +52,14 @@ class MathEnv(gym.Env):
         # ]
         # TODO: undo hack for testing
         self.max_formal_elements = 2
-        self.actions = [gcd] + [
-            f"f{i}" for i in range(self.max_formal_elements)
-        ]
+        self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
         self.max_n_nodes = 3
         # TODO: undo hack for testing
         self.action_space = spaces.Discrete(len(self.actions))
         self.vocab_size = 280
-        self.observation_space = spaces.MultiDiscrete([self.vocab_size for _ in range(self.config['max_sequence_length'])])
+        self.observation_space = spaces.MultiDiscrete(
+            [self.vocab_size for _ in range(self.config["max_sequence_length"])]
+        )
         # load train data
         self.train = {}
         print("loading problems")
@@ -72,10 +72,11 @@ class MathEnv(gym.Env):
                 compose = False
                 module_type = module_name
             import os
+
             print(os.getcwd())
             with open(filepath, "r") as f:
                 lines = f.readlines()
-            num_pairs = min(len(lines) // 2, self.config['num_problems_per_module'])
+            num_pairs = min(len(lines) // 2, self.config["num_problems_per_module"])
             for i in range(0, 2 * num_pairs, 2):
                 question = lines[i].strip()
                 answer = lines[i + 1].strip()
@@ -97,7 +98,7 @@ class MathEnv(gym.Env):
             self.val[module_type] = {}
             for difficulty in self.train[module_type]:
                 num_examples = len(self.train[module_type][difficulty])
-                num_val = int(num_examples * self.config['p_val'])
+                num_val = int(num_examples * self.config["p_val"])
                 self.val[module_type][difficulty] = self.train[module_type][difficulty][
                     :num_val
                 ]
@@ -115,7 +116,7 @@ class MathEnv(gym.Env):
         self.vocab_size = 280
         self.tokenizer = Tokenizer(BPE())
         trainer = BpeTrainer(vocab_size=self.vocab_size)
-        self.tokenizer.train(trainer, [self.config['corpus_filepath']])
+        self.tokenizer.train(trainer, [self.config["corpus_filepath"]])
 
     def get_action_index(self, action):
         return self.actions.index(action)
@@ -147,8 +148,8 @@ class MathEnv(gym.Env):
         -done: True if the graph is complete, False if it isn't
         -info: None
         """
-        #(alok): TODO obs space should be multidiscrete?
-        #(alok): TODO discrete (list of operators we're using)
+        # (alok): TODO obs space should be multidiscrete?
+        # (alok): TODO discrete (list of operators we're using)
         action = self.actions[action_index]
         self.compute_graph.n_nodes += 1
         self.compute_graph.add(action)
@@ -161,13 +162,15 @@ class MathEnv(gym.Env):
             self.compute_graph.current_node is None
             or self.compute_graph.n_nodes > self.max_n_nodes
         )
-        info = {'raw_observation': raw_observation}
+        info = {"raw_observation": raw_observation}
         return observation, reward, done, info
 
     def encode(self, raw_observation):
         encoded_ids = self.tokenizer.encode(raw_observation).ids
         # pad the encoded ids up to a maximum length
-        encoded_ids.extend([0 for _ in range(self.config['max_sequence_length']-len(encoded_ids))])
+        encoded_ids.extend(
+            [0 for _ in range(self.config["max_sequence_length"] - len(encoded_ids))]
+        )
         return np.array(encoded_ids)
 
     def decode(self, ids):

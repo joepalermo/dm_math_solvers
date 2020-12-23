@@ -1,6 +1,7 @@
 import re
 import sympy as sym
 from typing import List, Dict, Set
+
 # from math import log
 
 
@@ -17,7 +18,7 @@ class Arbitrary:
 
 class Equation(Arbitrary):
     def __init__(self, equation: str):
-        assert len(equation.split('=')) == 2
+        assert len(equation.split("=")) == 2
         self.equation = equation
 
     def __str__(self):
@@ -32,10 +33,10 @@ class Equation(Arbitrary):
 
 class Function(Equation):
     def __init__(self, function: str):
-        assert len(function.split('=')) == 2
-        function_arg_pattern = '([a-zA-Z0-9\s]+)\(([a-zA-Z0-9\s]+)\)'
+        assert len(function.split("=")) == 2
+        function_arg_pattern = "([a-zA-Z0-9\s]+)\(([a-zA-Z0-9\s]+)\)"
         # extract parts of function definition
-        lhs, rhs = function.split('=')
+        lhs, rhs = function.split("=")
         match = re.match(function_arg_pattern, lhs)
         assert match is not None
         self.name, self.parameter = match.group(1), match.group(2)
@@ -50,7 +51,7 @@ class Function(Equation):
 
 class Expression(Arbitrary):
     def __init__(self, expression: str):
-        assert '=' not in expression
+        assert "=" not in expression
         self.expression = str(expression)
 
     def __str__(self):
@@ -93,21 +94,21 @@ class Value(Expression):
 
     def __hash__(self):
         return hash(str(self.value))
-  
-    
+
+
 # operator definitions --------------------------------------
 
 # solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]
 def solve_system(system: list) -> dict:
-    '''
+    """
     solve a system of linear equations.
 
     :param system: List[
     :return: Dict[Variable, Value]
-    '''
+    """
     sympy_equations = []
     for equation in system:
-        lhs, rhs = str(equation).split('=')
+        lhs, rhs = str(equation).split("=")
         sympy_eq = sym.Eq(sym.sympify(lhs), sym.sympify(rhs))
         sympy_equations.append(sympy_eq)
     solutions = sym.solve(sympy_equations)
@@ -115,7 +116,7 @@ def solve_system(system: list) -> dict:
     if len(solutions) == 0:
         raise Exception("no solution found")
     elif type(solutions) is dict:
-        return {Variable(str(k)): set([Value(float(v))]) for k,v in solutions.items()}
+        return {Variable(str(k)): set([Value(float(v))]) for k, v in solutions.items()}
     elif type(solutions) is list:
         solutions_dict = {}
         for soln in solutions:
@@ -168,7 +169,7 @@ def make_function(expression1: Expression, expression2: Expression) -> Function:
 
 
 def extract_isolated_variable(equation: Equation) -> Variable:
-    lhs, rhs = str(equation).split('=')
+    lhs, rhs = str(equation).split("=")
     lhs, rhs = lhs.strip(), rhs.strip()
     if len(lhs) == 1 and lhs.isalpha():
         return lhs
@@ -179,11 +180,11 @@ def extract_isolated_variable(equation: Equation) -> Variable:
 
 
 def project_lhs(equation: Equation) -> Expression:
-    return Expression(str(equation).split('=')[0].strip())
+    return Expression(str(equation).split("=")[0].strip())
 
 
 def project_rhs(equation: Equation) -> Expression:
-    return Expression(str(equation).split('=')[1].strip())
+    return Expression(str(equation).split("=")[1].strip())
 
 
 def substitution_left_to_right(arb: Arbitrary, eq: Equation) -> Arbitrary:
@@ -199,10 +200,10 @@ def factor(expression: Expression) -> Expression:
 
 
 def simplify(arb: Arbitrary) -> Arbitrary:
-    if '=' in str(arb):
-        lhs, rhs = str(arb).split('=')
+    if "=" in str(arb):
+        lhs, rhs = str(arb).split("=")
         lhs, rhs = lhs.strip(), rhs.strip()
-        return Equation(f'{sym.simplify(lhs)} = {sym.simplify(rhs)}'.strip())
+        return Equation(f"{sym.simplify(lhs)} = {sym.simplify(rhs)}".strip())
     else:
         return Expression(str(sym.simplify(str(arb))).strip())
 
@@ -226,6 +227,7 @@ def mod_eq_0(numerator: Value, discriminator: Value) -> bool:
 
 def gcd(x: Value, y: Value) -> Value:
     from math import gcd
+
     return Value(gcd(int(x.value), int(y.value)))
 
 
@@ -235,36 +237,44 @@ def is_prime(x: Value) -> bool:
 
 def lcm(x: Value, y: Value) -> Value:
     import math
+
     assert int(x.value) == x.value and int(y.value) == y.value
     x, y = int(x.value), int(y.value)
-    return Value(abs(x*y) // math.gcd(x, y))
+    return Value(abs(x * y) // math.gcd(x, y))
 
 
 def prime_factors(n: Value) -> set:
     # https://stackoverflow.com/questions/16996217/prime-factorization-list
     assert int(n.value) == n.value
     n = int(n.value)
-    divisors = [d for d in range(2, n//2+1) if n % d == 0]
-    return set([Value(d) for d in divisors if all(d % od != 0 for od in divisors if od != d)])
+    divisors = [d for d in range(2, n // 2 + 1) if n % d == 0]
+    return set(
+        [Value(d) for d in divisors if all(d % od != 0 for od in divisors if od != d)]
+    )
 
 
-def function_application(function_definition: Function, function_argument: Expression) -> Value:
-    '''
+def function_application(
+    function_definition: Function, function_argument: Expression
+) -> Value:
+    """
 
     :param function_definition: e.g. 'f(x) = x + x**3'
     :param function_argument: e.g. either '2' or 'f(2)'
     :return:
-    '''
-    function_definition_pattern = '([a-zA-Z0-9\s]+)\(([a-zA-Z0-9\s]+)\)'
-    function_arg_pattern = '([a-zA-Z0-9\s]+)\((-?[a-zA-Z0-9\s]+)\)'
+    """
+    function_definition_pattern = "([a-zA-Z0-9\s]+)\(([a-zA-Z0-9\s]+)\)"
+    function_arg_pattern = "([a-zA-Z0-9\s]+)\((-?[a-zA-Z0-9\s]+)\)"
     # extract parts of function definition
-    lhs, rhs = str(function_definition).split('=')
+    lhs, rhs = str(function_definition).split("=")
     match = re.match(function_definition_pattern, lhs)
     function_name_from_definition, function_parameter = match.group(1), match.group(2)
     # extract parts of function argument
     function_argument_ = re.match(function_arg_pattern, str(function_argument))
     if function_argument_ is not None:
-        function_name_from_argument, function_argument = function_argument_.group(1), function_argument_.group(2)
+        function_name_from_argument, function_argument = (
+            function_argument_.group(1),
+            function_argument_.group(2),
+        )
         assert function_name_from_definition == function_name_from_argument
     # evaluate function
     rhs_with_arg = rhs.replace(function_parameter, str(function_argument))
@@ -274,6 +284,7 @@ def function_application(function_definition: Function, function_argument: Expre
 def common_denominator():
     pass
     # TODO
+
 
 # def max_arg(x: Expression, y: Expression) -> Expression:
 #     return str(max(eval(str(x)),eval(str(y))))

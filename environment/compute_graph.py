@@ -2,8 +2,8 @@ from inspect import signature
 from environment.utils import extract_formal_elements
 from environment.typed_operators import *
 
-class Node:
 
+class Node:
     def __init__(self, action):
         self.action = action
         self.args = []
@@ -12,7 +12,10 @@ class Node:
             self.types = []
         else:
             self.num_parameters = len(signature(self.action).parameters)
-            self.types = [type_.annotation for name, type_ in signature(self.action).parameters.items()]
+            self.types = [
+                type_.annotation
+                for name, type_ in signature(self.action).parameters.items()
+            ]
 
     def set_arg(self, node):
         assert len(self.args) < self.num_parameters
@@ -27,7 +30,6 @@ class Node:
 
 
 class ComputeGraph:
-
     def __init__(self, problem_statement):
         self.formal_elements = extract_formal_elements(problem_statement)
         self.formal_element_types = [type(f) for f in self.formal_elements]
@@ -37,29 +39,32 @@ class ComputeGraph:
         self.n_nodes = 0
 
     def lookup_formal_element(self, action):
-        '''f12 => int(12)'''
+        """f12 => int(12)"""
         try:
             selected_formal_element = self.formal_elements[int(action[1:])]
         except:
-            selected_formal_element = action  # if index is out of range, return dummy value
+            selected_formal_element = (
+                action  # if index is out of range, return dummy value
+            )
         return selected_formal_element
-
 
     def build_string(self, current_node):
         if type(current_node) == str:  # case: param
             return f"'{current_node}'"
         elif type(current_node.action) == str:  # case: formal element
-            assert current_node.action[0] == 'f'
+            assert current_node.action[0] == "f"
             formal_element = self.lookup_formal_element(current_node.action)
             return f"{type(formal_element).__name__}('{formal_element}')"
         elif current_node.action is None:  # case: None (i.e. for an append)
-            return 'None'
+            return "None"
         else:
             arg_strings = []
             if len(current_node.args) < current_node.num_parameters:
                 num_params = current_node.num_parameters
                 num_args = len(current_node.args)
-                args = current_node.args + [f"param_{i}" for i in range(num_args, num_params)]
+                args = current_node.args + [
+                    f"param_{i}" for i in range(num_args, num_params)
+                ]
             else:
                 args = current_node.args
             for arg in args:
@@ -68,17 +73,17 @@ class ComputeGraph:
             return f"{current_node.action.__name__}({','.join(['{}'.format(arg_string) for arg_string in arg_strings])})"
 
     def __str__(self):
-        '''
+        """
         traverse the graph to construct a string representing the compute graph.
         :return:
-        '''
+        """
         return self.build_string(self.root)
 
     def eval(self):
-        '''
+        """
         evaluate the compute graph
         :return: the output of the compute graph
-        '''
+        """
         try:
             output = eval(str(self))
             if type(output) == set:
@@ -89,11 +94,11 @@ class ComputeGraph:
             return None
 
     def add(self, action):
-        '''
+        """
         Add an action to the compute graph. Elements are added breadth-first order: KNOB.
 
         :param action: either an operator or a formal element
-        '''
+        """
         if self.root is None:
             self.root = Node(action)
             if not self.root.are_args_set():
@@ -104,7 +109,9 @@ class ComputeGraph:
             new_node = Node(action)
             self.current_node.set_arg(new_node)
             if new_node.num_parameters > 0:
-                self.queue.append(new_node)  # add new node to queue for later processing
+                self.queue.append(
+                    new_node
+                )  # add new node to queue for later processing
             if self.current_node.are_args_set():
                 if len(self.queue) > 0:
                     self.current_node = self.queue.pop()

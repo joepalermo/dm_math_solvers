@@ -1,7 +1,11 @@
 import os
 from preprocessing import load_tokenizers
-from transformer.transformer_utils import positional_encoding, create_masks, scaled_dot_product_attention, \
-    point_wise_feed_forward_network
+from transformer.transformer_utils import (
+    positional_encoding,
+    create_masks,
+    scaled_dot_product_attention,
+    point_wise_feed_forward_network,
+)
 import tensorflow as tf
 import numpy as np
 import datetime
@@ -45,13 +49,16 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
         # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
         scaled_attention, attention_weights = scaled_dot_product_attention(
-            q, k, v, mask)
+            q, k, v, mask
+        )
 
-        scaled_attention = tf.transpose(scaled_attention,
-                                        perm=[0, 2, 1, 3])  # (batch_size, seq_len_q, num_heads, depth)
+        scaled_attention = tf.transpose(
+            scaled_attention, perm=[0, 2, 1, 3]
+        )  # (batch_size, seq_len_q, num_heads, depth)
 
-        concat_attention = tf.reshape(scaled_attention,
-                                      (batch_size, -1, self.d_model))  # (batch_size, seq_len_q, d_model)
+        concat_attention = tf.reshape(
+            scaled_attention, (batch_size, -1, self.d_model)
+        )  # (batch_size, seq_len_q, d_model)
 
         output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
 
@@ -78,20 +85,33 @@ class EncoderLayer(tf.keras.layers.Layer):
 
         ffn_output = self.ffn(out1)  # (batch_size, input_seq_len, d_model)
         # ffn_output = self.dropout2(ffn_output, training=training)
-        out2 = self.layernorm2(out1 + ffn_output)  # (batch_size, input_seq_len, d_model)
+        out2 = self.layernorm2(
+            out1 + ffn_output
+        )  # (batch_size, input_seq_len, d_model)
 
         return out2
 
 
 class Encoder(tf.keras.layers.Layer):
-    def __init__(self, num_layers, d_model, num_heads, dff, vocab_size, maximum_position_encoding, rate=0.1):
+    def __init__(
+        self,
+        num_layers,
+        d_model,
+        num_heads,
+        dff,
+        vocab_size,
+        maximum_position_encoding,
+        rate=0.1,
+    ):
         super(Encoder, self).__init__()
 
         self.d_model = d_model
         self.num_layers = num_layers
         self.embedding = tf.keras.layers.Embedding(vocab_size, d_model)
         self.pos_encoding = positional_encoding(maximum_position_encoding, self.d_model)
-        self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
+        self.enc_layers = [
+            EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
+        ]
         # self.dropout = tf.keras.layers.Dropout(rate)
 
     def call(self, x, mask):
@@ -104,5 +124,3 @@ class Encoder(tf.keras.layers.Layer):
         for i in range(self.num_layers):
             x = self.enc_layers[i](x, mask)
         return x  # (batch_size, input_seq_len, d_model)
-
-

@@ -32,18 +32,38 @@ parser.add_argument("--stop-reward", type=float, default=0.1)
 
 
 class TransformerEncoder(TFModelV2):
-    def __init__(self, obs_space, action_space, num_outputs, model_config,
-                 name, num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout):
-        super(TransformerEncoder, self).__init__(obs_space, action_space,
-                                           num_outputs, model_config, name)
-        self.encoder = Encoder(num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout)
+    def __init__(
+        self,
+        obs_space,
+        action_space,
+        num_outputs,
+        model_config,
+        name,
+        num_layers,
+        d_model,
+        num_heads,
+        dff,
+        vocab_size,
+        seq_len,
+        attention_dropout,
+    ):
+        super(TransformerEncoder, self).__init__(
+            obs_space, action_space, num_outputs, model_config, name
+        )
+        self.encoder = Encoder(
+            num_layers, d_model, num_heads, dff, vocab_size, seq_len, attention_dropout
+        )
         self.policy_layer = tf.keras.layers.Dense(3)
         self.value_layer = tf.keras.layers.Dense(1)
 
     def call(self, inp, enc_padding_mask):
-        enc_output = self.encoder(inp, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
+        enc_output = self.encoder(
+            inp, enc_padding_mask
+        )  # (batch_size, inp_seq_len, d_model)
         select_first_pos = tf.keras.layers.Lambda(lambda x: x[:, 0, :])
-        policy_output = self.policy_layer(select_first_pos(enc_output))  # (batch_size, 3)
+        policy_output = self.policy_layer(
+            select_first_pos(enc_output)
+        )  # (batch_size, 3)
         value_output = self.value_layer(select_first_pos(enc_output))  # (batch_size, 1)
         return policy_output, value_output
 
@@ -64,7 +84,9 @@ class TransformerEncoder(TFModelV2):
 if __name__ == "__main__":
     args = parser.parse_args()
     env_config = {
-        "problem_filepaths": [Path('mathematics_dataset-v1.0/train-easy/numbers__gcd.txt')],  # TODO hardcode single path to make this easy to run
+        "problem_filepaths": [
+            Path("mathematics_dataset-v1.0/train-easy/numbers__gcd.txt")
+        ],  # TODO hardcode single path to make this easy to run
         "corpus_filepath": Path("environment/corpus/10k_corpus.txt"),
         "num_problems_per_module": 10 ** 7,
         # data used for validation
@@ -93,7 +115,7 @@ if __name__ == "__main__":
                 "dff": 256,
                 "vocab_size": 280,
                 "seq_len": 250,
-                "attention_dropout": 0.1
+                "attention_dropout": 0.1,
             },
         },
         "framework": "tf",

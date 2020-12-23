@@ -3,14 +3,14 @@ import numpy as np
 
 
 def get_angles(pos, i, d_model):
-    angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
+    angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d_model))
     return pos * angle_rates
 
 
 def positional_encoding(position, d_model):
-    angle_rads = get_angles(np.arange(position)[:, np.newaxis],
-                            np.arange(d_model)[np.newaxis, :],
-                            d_model)
+    angle_rads = get_angles(
+        np.arange(position)[:, np.newaxis], np.arange(d_model)[np.newaxis, :], d_model
+    )
     # apply sin to even indices in the array; 2i
     angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
     # apply cos to odd indices in the array; 2i+1
@@ -69,16 +69,20 @@ def scaled_dot_product_attention(q, k, v, mask):
     scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
     # add the mask to the scaled tensor.
     if mask is not None:
-        scaled_attention_logits += (mask * -1e9)
+        scaled_attention_logits += mask * -1e9
         # softmax is normalized on the last axis (seq_len_k) so that the scores
     # add up to 1.
-    attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
+    attention_weights = tf.nn.softmax(
+        scaled_attention_logits, axis=-1
+    )  # (..., seq_len_q, seq_len_k)
     output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
     return output, attention_weights
 
 
 def point_wise_feed_forward_network(d_model, dff):
-  return tf.keras.Sequential([
-      tf.keras.layers.Dense(dff, activation='relu'),  # (batch_size, seq_len, dff)
-      tf.keras.layers.Dense(d_model)  # (batch_size, seq_len, d_model)
-  ])
+    return tf.keras.Sequential(
+        [
+            tf.keras.layers.Dense(dff, activation="relu"),  # (batch_size, seq_len, dff)
+            tf.keras.layers.Dense(d_model),  # (batch_size, seq_len, d_model)
+        ]
+    )

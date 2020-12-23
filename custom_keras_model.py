@@ -37,14 +37,20 @@ class TransformerEncoder(tf.keras.Model):
         attention_dropout = params.attention_dropout
 
         # Instantiate the model
-        self.encoder = Encoder(num_layers, d_model, num_heads, dff, vocab_size, pe_input, attention_dropout)
+        self.encoder = Encoder(
+            num_layers, d_model, num_heads, dff, vocab_size, pe_input, attention_dropout
+        )
         self.policy_layer = tf.keras.layers.Dense(3)
         self.value_layer = tf.keras.layers.Dense(1)
 
     def call(self, inp, enc_padding_mask):
-        enc_output = self.encoder(inp, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
+        enc_output = self.encoder(
+            inp, enc_padding_mask
+        )  # (batch_size, inp_seq_len, d_model)
         select_first_pos = tf.keras.layers.Lambda(lambda x: x[:, 0, :])
-        policy_output = self.policy_layer(select_first_pos(enc_output))  # (batch_size, 3)
+        policy_output = self.policy_layer(
+            select_first_pos(enc_output)
+        )  # (batch_size, 3)
         value_output = self.value_layer(select_first_pos(enc_output))  # (batch_size, 1)
         return policy_output, value_output
 
@@ -52,27 +58,29 @@ class TransformerEncoder(tf.keras.Model):
 class MyKerasModel(TFModelV2):
     """Custom model for policy gradient algorithms."""
 
-    def __init__(self, obs_space, action_space, num_outputs, model_config,
-                 name):
-        super(MyKerasModel, self).__init__(obs_space, action_space,
-                                           num_outputs, model_config, name)
-        self.inputs = tf.keras.layers.Input(
-            shape=obs_space.shape, name="observations")
+    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
+        super(MyKerasModel, self).__init__(
+            obs_space, action_space, num_outputs, model_config, name
+        )
+        self.inputs = tf.keras.layers.Input(shape=obs_space.shape, name="observations")
         layer_1 = tf.keras.layers.Dense(
             128,
             name="my_layer1",
             activation=tf.nn.relu,
-            kernel_initializer=normc_initializer(1.0))(self.inputs)
+            kernel_initializer=normc_initializer(1.0),
+        )(self.inputs)
         layer_out = tf.keras.layers.Dense(
             num_outputs,
             name="my_out",
             activation=None,
-            kernel_initializer=normc_initializer(0.01))(layer_1)
+            kernel_initializer=normc_initializer(0.01),
+        )(layer_1)
         value_out = tf.keras.layers.Dense(
             1,
             name="value_out",
             activation=None,
-            kernel_initializer=normc_initializer(0.01))(layer_1)
+            kernel_initializer=normc_initializer(0.01),
+        )(layer_1)
         self.base_model = tf.keras.Model(self.inputs, [layer_out, value_out])
         self.register_variables(self.base_model.variables)
 
@@ -89,7 +97,9 @@ class MyKerasModel(TFModelV2):
 
 if __name__ == "__main__":
     env_config = {
-        "problem_filepaths": [Path('mathematics_dataset-v1.0/train-easy/numbers__gcd.txt').resolve()],  # TODO hardcode single path to make this easy to run
+        "problem_filepaths": [
+            Path("mathematics_dataset-v1.0/train-easy/numbers__gcd.txt").resolve()
+        ],  # TODO hardcode single path to make this easy to run
         "corpus_filepath": Path("environment/corpus/10k_corpus.txt").resolve(),
         "num_problems_per_module": 10 ** 7,
         # data used for validation
@@ -121,8 +131,8 @@ if __name__ == "__main__":
                 "callbacks": {
                     "on_train_result": check_has_custom_metric,
                 },
-                "model": {
-                    "keras_model"
-                },
+                "model": {"keras_model"},
                 "framework": "tf",
-            }))
+            }
+        ),
+    )
