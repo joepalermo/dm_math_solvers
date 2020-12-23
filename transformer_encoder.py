@@ -57,8 +57,6 @@ class TransformerModel(TorchModelV2, nn.Module):
         self.value_output = nn.Linear(nhid, 1)
 
     def forward(self, input_dict, state, seq_lens):
-        print(type(state))
-        print(state)
         token_idxs = input_dict["obs"].type(torch.LongTensor)
         embedding = self.token_embedding(token_idxs) * math.sqrt(self.ninp)
         embedding_with_pos = self.pos_encoder(embedding)
