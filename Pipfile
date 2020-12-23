@@ -4,8 +4,23 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+ray = {extras = ["tune"], version = "*"}
+numpy = "*"
+scipy = "*"
+tensorflow = "*"
+torch = "*"
+tqdm = "*"
+sympy = "*"
+gym = {extras = ["atari"], version = "*"}
+setproctitle = "*"
+dm-tree = "*"
+atari-py = "*"
+lz4 = "*"
+opencv-python-headless = "*"
+pyyaml = "*"
+tokenizers = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.8.5"
