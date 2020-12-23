@@ -10,6 +10,7 @@ from tf_transformer_encoder import Encoder
 from transformer.transformer_utils import create_padding_mask
 from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 import tensorflow as tf
+from pathlib import Path
 
 
 """Example of a custom gym environment and model. Run this for a demo.
@@ -63,8 +64,8 @@ class TransformerEncoder(TFModelV2):
 if __name__ == "__main__":
     args = parser.parse_args()
     env_config = {
-        "problem_filepaths": ['/Users/joe/workspace/projects/dm_math_solvers/mathematics_dataset-v1.0/train-easy/numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
-        "corpus_filepath": "/Users/joe/workspace/projects/dm_math_solvers/environment/corpus/10k_corpus.txt",
+        "problem_filepaths": [Path('mathematics_dataset-v1.0/train-easy/numbers__gcd.txt')],  # TODO hardcode single path to make this easy to run
+        "corpus_filepath": Path("environment/corpus/10k_corpus.txt"),
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,

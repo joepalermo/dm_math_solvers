@@ -7,6 +7,7 @@ from ray import tune
 from ray.rllib.utils.test_utils import check_learning_achieved
 from environment.envs.math_env import MathEnv
 from transformer_encoder import TransformerModel
+from pathlib import Path
 
 """Example of a custom gym environment and model. Run this for a demo.
 
@@ -29,8 +30,8 @@ parser.add_argument("--stop-reward", type=float, default=0.1)
 if __name__ == "__main__":
     args = parser.parse_args()
     env_config = {
-        "problem_filepaths": ['/Users/joe/workspace/projects/dm_math_solvers/mathematics_dataset-v1.0/train-easy/numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
-        "corpus_filepath": "/Users/joe/workspace/projects/dm_math_solvers/environment/corpus/10k_corpus.txt",
+        "problem_filepaths": [Path('mathematics_dataset-v1.0/train-easy/numbers__gcd.txt').resolve()],  # TODO hardcode single path to make this easy to run
+        "corpus_filepath": Path("environment/corpus/10k_corpus.txt").resolve(),
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,

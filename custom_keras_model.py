@@ -10,6 +10,7 @@ from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 from ray.rllib.utils.framework import try_import_tf
 from environment.envs.math_env import MathEnv
 from tf_transformer_encoder import Encoder
+from pathlib import Path
 
 
 tf1, tf, tfv = try_import_tf()
@@ -88,8 +89,8 @@ class MyKerasModel(TFModelV2):
 
 if __name__ == "__main__":
     env_config = {
-        "problem_filepaths": ['/Users/joe/workspace/projects/dm_math_solvers/mathematics_dataset-v1.0/train-easy/numbers__gcd.txt'],  # TODO hardcode single path to make this easy to run
-        "corpus_filepath": "/Users/joe/workspace/projects/dm_math_solvers/environment/corpus/10k_corpus.txt",
+        "problem_filepaths": [Path('mathematics_dataset-v1.0/train-easy/numbers__gcd.txt').resolve()],  # TODO hardcode single path to make this easy to run
+        "corpus_filepath": Path("environment/corpus/10k_corpus.txt").resolve(),
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,
