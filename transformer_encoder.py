@@ -54,7 +54,7 @@ class TransformerModel(TorchModelV2, nn.Module):
         # print(self.embedding_with_pos.shape)
         # print(self.encoding.shape)
         # print(self.logits.shape)
-        return logits, [[torch.ones((2,2)) for _ in range(10)]]
+        return logits, state
 
     def value_function(self) -> TensorType:
         return self.value
