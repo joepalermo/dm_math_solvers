@@ -21,6 +21,7 @@ pyyaml = "*"
 tokenizers = "*"
 
 [dev-packages]
+pudb = "*"
 
 [requires]
 python_version = "3.8.5"
