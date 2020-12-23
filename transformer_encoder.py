@@ -62,7 +62,8 @@ class TransformerModel(TorchModelV2, nn.Module):
         embedding_with_pos = self.pos_encoder(embedding)
         encoding = self.transformer_encoder(embedding_with_pos)
         logits = self.policy_output(encoding[:, 0, :])
-        self.value = self.value_output(encoding[:, 0, :])
+        # squeeze because values are scalars, not !D array
+        self.value = self.value_output(encoding[:, 0, :]).squeeze(-1)
         # print(token_idxs.shape)
         # print(self.embedding.shape)
         # print(self.embedding_with_pos.shape)
