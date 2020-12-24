@@ -23,9 +23,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--run", type=str, default="PPO")
 parser.add_argument("--torch", action="store_true")
 parser.add_argument("--as-test", action="store_true")
-parser.add_argument("--stop-iters", type=int, default=50)
+parser.add_argument("--stop-iters", type=int, default=10000)
 parser.add_argument("--stop-timesteps", type=int, default=100000)
-parser.add_argument("--stop-reward", type=float, default=0.1)
+parser.add_argument("--stop-reward", type=float, default=0.5)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -58,7 +58,7 @@ if __name__ == "__main__":
                 "ntoken": 280,
                 "ninp": 250,
                 "nhead": 4,
-                "nhid": 256,
+                "nhid": 128,
                 "nlayers": 1,
             },
         },

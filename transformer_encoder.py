@@ -53,22 +53,25 @@ class TransformerModel(TorchModelV2, nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=nhid, nhead=nhead), nlayers
         )
-        self.policy_output = nn.Linear(nhid, 3)
-        self.value_output = nn.Linear(nhid, 1)
+        self.policy_output = nn.Linear(nhid*ninp, 3)
+        self.value_output = nn.Linear(nhid*ninp, 1)
 
     def forward(self, input_dict, state, seq_lens):
         token_idxs = input_dict["obs"].type(torch.LongTensor)
         embedding = self.token_embedding(token_idxs) * math.sqrt(self.ninp)
         embedding_with_pos = self.pos_encoder(embedding)
         encoding = self.transformer_encoder(embedding_with_pos)
-        logits = self.policy_output(encoding[:, 0, :])
+        flattened_encoding = torch.flatten(encoding, start_dim=1)
+        logits = self.policy_output(flattened_encoding)
         # squeeze because values are scalars, not !D array
-        self.value = self.value_output(encoding[:, 0, :]).squeeze(-1)
+        self.value = self.value_output(flattened_encoding).squeeze(-1)
         # print(token_idxs.shape)
-        # print(self.embedding.shape)
-        # print(self.embedding_with_pos.shape)
-        # print(self.encoding.shape)
-        # print(self.logits.shape)
+        # print(embedding.shape)
+        # print(embedding_with_pos.shape)
+        # print(encoding.shape)
+        # print(flattened_encoding.shape)
+        # print(logits.shape)
+        # print(self.value.shape)
         return logits, state
 
     def value_function(self) -> TensorType:
