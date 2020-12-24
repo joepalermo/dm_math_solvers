@@ -62,12 +62,19 @@ class TransformerModel(TorchModelV2, nn.Module):
         # self.value_output = nn.Linear(nhid*ninp, 1)
 
     def forward(self, input_dict, state, seq_lens):
+        # extract the observations
         token_idxs = input_dict["obs"].type(torch.LongTensor)
-        embedding = self.token_embedding(token_idxs) * math.sqrt(self.ninp)
-        embedding_with_pos = self.pos_encoder(embedding)
-        encoding = self.transformer_encoder(embedding_with_pos)
 
-        sliced_encoding = encoding[:, 0, :]
+        # embed the tokens
+        embedding = self.token_embedding(token_idxs) * math.sqrt(self.ninp)
+        # XXX: rllib expects batch dim first, nn.transformer wants seq dim first, batch dim second.
+        embedding_with_pos = self.pos_encoder(embedding).permute((1, 0, 2))
+        # apply the transformer encoder
+        padding_mask = torch.clip(token_idxs, max=1).type(torch.BoolTensor)
+        encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
+        # encoding = self.transformer_encoder(embedding_with_pos)
+        # produce outputs
+        sliced_encoding = encoding[0]
         # flattened_encoding = torch.flatten(encoding, start_dim=1)
 
         logits = self.policy_output(sliced_encoding)

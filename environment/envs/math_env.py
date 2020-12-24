@@ -19,7 +19,7 @@ from utils import write_pickle, read_pickle
 class MathEnv(gym.Env):
     def __init__(self, config):
         if not config.get("max_sequence_length", None):
-            config["max_sequence_length"] = 250
+            config["max_sequence_length"] = 75
         self.config = config
         self.operators = [
             lookup_value,
