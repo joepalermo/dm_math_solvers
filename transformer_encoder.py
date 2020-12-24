@@ -53,18 +53,26 @@ class TransformerModel(TorchModelV2, nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=nhid, nhead=nhead), nlayers
         )
-        self.policy_output = nn.Linear(nhid*ninp, 3)
-        self.value_output = nn.Linear(nhid*ninp, 1)
+        # if slicing a single element of the encoded sequence
+        self.policy_output = nn.Linear(nhid, 3)
+        self.value_output = nn.Linear(nhid, 1)
+
+        # if using all elements of the encoded sequence
+        # self.policy_output = nn.Linear(nhid*ninp, 3)
+        # self.value_output = nn.Linear(nhid*ninp, 1)
 
     def forward(self, input_dict, state, seq_lens):
         token_idxs = input_dict["obs"].type(torch.LongTensor)
         embedding = self.token_embedding(token_idxs) * math.sqrt(self.ninp)
         embedding_with_pos = self.pos_encoder(embedding)
         encoding = self.transformer_encoder(embedding_with_pos)
-        flattened_encoding = torch.flatten(encoding, start_dim=1)
-        logits = self.policy_output(flattened_encoding)
-        # squeeze because values are scalars, not !D array
-        self.value = self.value_output(flattened_encoding).squeeze(-1)
+
+        sliced_encoding = encoding[:, 0, :]
+        # flattened_encoding = torch.flatten(encoding, start_dim=1)
+
+        logits = self.policy_output(sliced_encoding)
+        # squeeze because values are scalars, not 1D array
+        self.value = self.value_output(sliced_encoding).squeeze(-1)
         # print(token_idxs.shape)
         # print(embedding.shape)
         # print(embedding_with_pos.shape)

@@ -59,7 +59,7 @@ if __name__ == "__main__":
                 "ninp": 250,
                 "nhead": 4,
                 "nhid": 128,
-                "nlayers": 1,
+                "nlayers": 2,
             },
         },
         "framework": "torch",
