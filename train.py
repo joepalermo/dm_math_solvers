@@ -91,7 +91,7 @@ if __name__ == "__main__":
         # Number of GPUs to allocate to the trainer process. Note that not all
         # algorithms can take advantage of trainer GPUs. This can be fractional
         # (e.g., 0.3 GPUs).
-        "num_gpus": torch.cuda.device_count(),
+        "num_gpus": int(os.environ.get("RLLIB_NUM_GPUS", "0")),
         # Training batch size, if applicable. Should be >= rollout_fragment_length.
         # Samples batches will be concatenated together to a batch of this size,
         # which is then passed to SGD.

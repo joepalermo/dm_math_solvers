@@ -80,16 +80,16 @@ class TransformerModel(TorchModelV2, nn.Module):
         logits = self.policy_output(sliced_encoding)
         # squeeze because values are scalars, not 1D array
         self.value = self.value_output(sliced_encoding).squeeze(-1)
-        print()
-        print('token_idxs', token_idxs.shape)
-        print(token_idxs)
-        print('embedding', embedding.shape)
-        print('embedding_with_pos', embedding_with_pos.shape)
-        print('sliced_encoding', sliced_encoding.shape)
-        print('encoding', encoding.shape)
-        # print(flattened_encoding.shape)
-        print('logits', logits.shape)
-        print('value', self.value.shape)
+        # print()
+        # print('token_idxs', token_idxs.shape)
+        # # print(token_idxs)
+        # print('embedding', embedding.shape)
+        # print('embedding_with_pos', embedding_with_pos.shape)
+        # print('sliced_encoding', sliced_encoding.shape)
+        # print('encoding', encoding.shape)
+        # # print(flattened_encoding.shape)
+        # print('logits', logits.shape)
+        # print('value', self.value.shape)
         return logits, state
 
     def value_function(self) -> TensorType:
