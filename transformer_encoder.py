@@ -66,27 +66,30 @@ class TransformerModel(TorchModelV2, nn.Module):
         token_idxs = input_dict["obs"].type(torch.LongTensor)
 
         # embed the tokens
-        embedding = self.token_embedding(token_idxs) * math.sqrt(self.ninp)
-        # XXX: rllib expects batch dim first, nn.transformer wants seq dim first, batch dim second.
-        embedding_with_pos = self.pos_encoder(embedding).permute((1, 0, 2))
-        # apply the transformer encoder
+        embedding = self.token_embedding(token_idxs)
+        embedding_with_pos = self.pos_encoder(embedding)
+        # create the padding mask
         padding_mask = torch.clip(token_idxs, max=1).type(torch.BoolTensor)
+        # nn.transformer requires shape (seq_len, batch_size, embedding_dim)
+        embedding_with_pos = embedding_with_pos.permute((1, 0, 2))
+        # apply the transformer encoder
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
-        # encoding = self.transformer_encoder(embedding_with_pos)
         # produce outputs
         sliced_encoding = encoding[0]
         # flattened_encoding = torch.flatten(encoding, start_dim=1)
-
         logits = self.policy_output(sliced_encoding)
         # squeeze because values are scalars, not 1D array
         self.value = self.value_output(sliced_encoding).squeeze(-1)
-        # print(token_idxs.shape)
-        # print(embedding.shape)
-        # print(embedding_with_pos.shape)
-        # print(encoding.shape)
+        print()
+        print('token_idxs', token_idxs.shape)
+        print(token_idxs)
+        print('embedding', embedding.shape)
+        print('embedding_with_pos', embedding_with_pos.shape)
+        print('sliced_encoding', sliced_encoding.shape)
+        print('encoding', encoding.shape)
         # print(flattened_encoding.shape)
-        # print(logits.shape)
-        # print(self.value.shape)
+        print('logits', logits.shape)
+        print('value', self.value.shape)
         return logits, state
 
     def value_function(self) -> TensorType:

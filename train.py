@@ -103,9 +103,9 @@ if __name__ == "__main__":
             "custom_model_config": {
                 "ntoken": 280,
                 "ninp": 75,
-                "nhead": 4,
-                "nhid": 128,
-                "nlayers": 1,
+                "nhead": 2,
+                "nhid": 64,
+                "nlayers": 2,
             },
         },
         # Arguments to pass to the policy optimizer. These vary by optimizer.
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         # Whether to use "rllib" or "deepmind" preprocessors by default
         "preprocessor_pref": "deepmind",
         # The default learning rate.
-        "lr": 0.0001,
+        "lr": 0.001,
 
         # === Debug Settings ===
         # Whether to write episode stats and videos to the agent log dir. This is
