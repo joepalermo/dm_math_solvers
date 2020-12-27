@@ -74,12 +74,12 @@ ntoken = vocab_size
 nhid = 128
 nhead = 4
 nlayers = 1
-dropout = 0.1
+dropout = 0.05
 slice_encoding = False
 
 n_epochs = 100
-batch_size = 128
-lr = 1e-4
+batch_size = 64
+lr = 1e-5
 
 # prep dataset
 xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
@@ -185,12 +185,11 @@ for epoch in range(n_epochs):
         loss = criterion(batch_preds, batch_ys)
         if i % 10 == 0:
             print(f'train_loss @ step #{batch_i}', loss.item())
-            batch_preds = model(valid_xs)
-            batch_preds = torch.argmax(batch_preds, axis=1)
-            print("valid preds", batch_preds)
-            targets = valid_ys.detach().numpy()
-            preds = batch_preds.detach().numpy()
-            valid_acc = accuracy_score(targets, preds)
+            valid_preds = model(valid_xs)
+            valid_preds = torch.argmax(valid_preds, axis=1)
+            valid_targets = valid_ys.detach().numpy()
+            valid_preds = valid_preds.detach().numpy()
+            valid_acc = accuracy_score(valid_targets, valid_preds)
             print(f'valid_acc', valid_acc)
 
         # Zero gradients, perform a backward pass, and update the weights.
