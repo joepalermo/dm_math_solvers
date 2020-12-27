@@ -79,7 +79,7 @@ slice_encoding = False
 
 n_epochs = 100
 batch_size = 128
-lr = 1e-6
+lr = 1e-4
 
 # prep dataset
 xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
@@ -185,9 +185,10 @@ for epoch in range(n_epochs):
         loss = criterion(batch_preds, batch_ys)
         if i % 10 == 0:
             print(f'train_loss @ step #{batch_i}', loss.item())
-            batch_preds = model(batch_xs)
+            batch_preds = model(valid_xs)
             batch_preds = torch.argmax(batch_preds, axis=1)
-            targets = batch_ys.detach().numpy()
+            print("valid preds", batch_preds)
+            targets = valid_ys.detach().numpy()
             preds = batch_preds.detach().numpy()
             valid_acc = accuracy_score(targets, preds)
             print(f'valid_acc', valid_acc)
