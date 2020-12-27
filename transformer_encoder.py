@@ -64,7 +64,6 @@ class TransformerModel(TorchModelV2, nn.Module):
     def forward(self, input_dict, state, seq_lens):
         # extract the observations
         token_idxs = input_dict["obs"].type(torch.LongTensor)
-
         # embed the tokens
         embedding = self.token_embedding(token_idxs)
         embedding_with_pos = self.pos_encoder(embedding)

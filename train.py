@@ -298,7 +298,7 @@ if __name__ == "__main__":
 
         # === Advanced Resource Settings ===
         # Number of CPUs to allocate per worker.
-        "num_cpus_per_worker": 1,
+        "num_cpus_per_worker": 2,
         # Number of GPUs to allocate per worker. This can be fractional. This is
         # usually needed only if your env itself requires a GPU (i.e., it is a
         # GPU-intensive video game), or model inference is unusually expensive.
