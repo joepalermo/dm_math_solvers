@@ -8,37 +8,7 @@ from sklearn.metrics import accuracy_score
 from utils import read_text_file
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
-from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.trainers import BpeTrainer
-
-# # create dummy dataset -----------------------------------------------------------------------------------------------
-# def inpt_to_boolean(ls):
-#     count_0 = ls.count(0)
-#     count_1 = ls.count(1)
-#     return 0 if count_0 > count_1 else 1
-#
-# num_examples = 5000
-# min_length = 10
-# max_length = 20
-#
-# # first element copy problem
-# xs = [[random.choice([0,1]) for _ in range(1)] for _ in range(num_examples)]
-# # counting problem
-# # xs = [[random.choice([0,1]) for _ in range(random.randint(min_length, max_length))] for _ in range(num_examples)]
-# # padding
-# xs = [xs_ + [2 for _ in range(max_length-len(xs_))] for xs_ in xs]
-# # filter to extract unique input strings
-# # unique_xs = set([str(xs_)[1:-1] for xs_ in xs])
-# # print(len(unique_xs))
-# # xs = [xs_.split(',') for xs_ in unique_xs]
-# # xs = [[int(x) for x in xs_] for xs_ in xs]
-# # get targets
-# ys = [inpt_to_boolean(x) for x in xs]
-# xs, ys = np.array(xs), np.array(ys)
-# train_xs, valid_xs, train_ys, valid_ys = train_test_split(xs, ys, test_size=int(num_examples * 0.1))
-# # for x,y in zip(xs, ys):
-# #     print(x,y)
-# # print(train_xs.shape, train_ys.shape, valid_xs.shape, valid_ys.shape)
 
 
 def load_data_from_corpus(filepath):
@@ -72,27 +42,27 @@ def decode(ids, tokenizer):
 
 
 # data params
-vocab_size = 100
+vocab_size = 200
 padding_token = vocab_size
-seq_len = 150
+seq_len = 100
 
 # architecture params
 ntoken = vocab_size + 1
-nhead = 2
-nhid = 64
+nhead = 4
+nhid = 128
 nlayers = 1
-dropout = 0.5
-slice_encoding = False
+dropout = 0.2
+slice_encoding = True
 
 # training params
 n_epochs = 100
 batch_size = 64
 lr = 1
+lr_decay_factor = 0.8
+max_grad_norm = 0.5
 
-# prep dataset
+# prep dataset ---------------------------------------------------------------------------------------------------------
 raw_xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
-# for x in xs:
-#     print(x)
 ys = [input_to_target(x) for x in raw_xs]
 tokenizer = Tokenizer(BPE())
 trainer = BpeTrainer(vocab_size=vocab_size)
@@ -189,7 +159,7 @@ model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=n
 # module which is members of the model.
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
 
 for epoch in range(n_epochs):
     permutation = torch.randperm(train_xs.size()[0])
@@ -203,7 +173,7 @@ for epoch in range(n_epochs):
         # Zero gradients, perform a backward pass, and update the weights.
         optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
         optimizer.step()
         if i % 10 == 0:
             print(f'train_loss @ step #{batch_i}', loss.item())
