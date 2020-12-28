@@ -82,7 +82,7 @@ nhead = 2
 nhid = 64
 nlayers = 1
 dropout = 0.5
-slice_encoding = True
+slice_encoding = False
 
 # training params
 n_epochs = 100
@@ -187,7 +187,7 @@ model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=n
 # Construct our loss function and an Optimizer. The call to model.parameters()
 # in the SGD constructor will contain the learnable parameters of the nn.Linear
 # module which is members of the model.
-criterion = torch.nn.NLLLoss()
+criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 for epoch in range(n_epochs):
     permutation = torch.randperm(train_xs.size()[0])
@@ -198,19 +198,18 @@ for epoch in range(n_epochs):
         batch_preds = model(batch_xs)
         # batch_ys = batch_ys.type_as(batch_preds)
         loss = criterion(batch_preds, batch_ys)
-        if i % 10 == 0:
-            print(f'train_loss @ step #{batch_i}', loss.item())
-            valid_preds = model(valid_xs)
-            valid_preds = torch.argmax(valid_preds, axis=1)
-            # print('valid preds', valid_preds[:20])
-            # print('valid targets', valid_ys[:20])
-            valid_targets = valid_ys.detach().numpy()
-            valid_preds = valid_preds.detach().numpy()
-            valid_acc = accuracy_score(valid_targets, valid_preds)
-            print(f'valid_acc', valid_acc)
-
         # Zero gradients, perform a backward pass, and update the weights.
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        if i % 10 == 0:
+            print(f'train_loss @ step #{batch_i}', loss.item())
+            valid_preds = model(valid_xs)
+            valid_preds = torch.argmax(valid_preds, axis=1)
+            print('mean valid pred:', valid_preds.type(torch.float).mean())
+            print('mean valid target:', valid_ys.type(torch.float).mean())
+            valid_targets = valid_ys.detach().numpy()
+            valid_preds = valid_preds.detach().numpy()
+            valid_acc = accuracy_score(valid_targets, valid_preds)
+            print(f'valid_acc', valid_acc)
 
