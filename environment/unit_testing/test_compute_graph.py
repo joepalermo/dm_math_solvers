@@ -11,11 +11,13 @@ class Test(unittest.TestCase):
         cg = ComputeGraph(problem_statement)
         lookup_value_node = Node(lookup_value)
         solve_system_node = Node(solve_system)
-        solve_system_node.set_arg(f[0])
-        lookup_value_node.set_args([solve_system_node, f[1]])
+        append_to_empty_list_node = Node(append_to_empty_list)
+        append_to_empty_list_node.set_arg(Node('f0'))
+        solve_system_node.set_arg(append_to_empty_list_node)
+        lookup_value_node.set_args([solve_system_node, Node('f1')])
         cg.root = lookup_value_node
-        assert str(cg) == "lookup_value(solve_system('0 = 4*b + b + 15'),'b')"
-        assert cg.eval() == -3
+        assert str(cg) == "lookup_value(solve_system(append_to_empty_list(Equation('0 = 4*b + b + 15'))),Variable('b'))"
+        assert cg.eval() == Value(-3)
 
     def test_incomplete_compute_graph(self):
         problem_statement = "Solve 0 = 4*b + b + 15 for b."
