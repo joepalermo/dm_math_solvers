@@ -1,5 +1,5 @@
 import glob
-from preprocessing import extract_formal_elements
+from environment.utils import extract_formal_elements
 from utils import write_json
 
 

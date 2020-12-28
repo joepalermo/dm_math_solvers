@@ -8,6 +8,7 @@ from datetime import datetime as dt
 from functools import reduce
 from operator import mul
 
+
 flatten = lambda l: [item for sublist in l for item in sublist]
 
 
@@ -88,9 +89,3 @@ def get_logger(name, experiment_dirpath):
         logger.addHandler(c_handler)
     return logger
 
-
-def get_parameter_count(model):
-    total_params = 0
-    for params_object in model.trainable_variables:
-        total_params += reduce(mul, params_object.shape)
-    return total_params
