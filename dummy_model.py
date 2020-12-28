@@ -52,7 +52,6 @@ nhead = 4
 nhid = 128
 nlayers = 1
 dropout = 0.2
-slice_encoding = True
 
 # training params
 n_epochs = 100
@@ -62,6 +61,7 @@ lr_decay_factor = 0.8
 max_grad_norm = 0.5
 
 # prep dataset ---------------------------------------------------------------------------------------------------------
+
 raw_xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
 ys = [input_to_target(x) for x in raw_xs]
 tokenizer = Tokenizer(BPE())
@@ -84,6 +84,8 @@ train_ys = torch.from_numpy(train_ys)
 valid_xs = torch.from_numpy(valid_xs)
 valid_ys = torch.from_numpy(valid_ys)
 
+
+# define model ---------------------------------------------------------------------------------------------------------
 
 class PositionalEncoding(torch.nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
@@ -114,49 +116,26 @@ class TransformerEncoderModel(torch.nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=nhid, nhead=nhead), nlayers
         )
-        # if slicing a single element of the encoded sequence
-        if slice_encoding:
-            self.policy_output = torch.nn.Linear(nhid, 4)
-        else:
-            self.policy_output = torch.nn.Linear(nhid*seq_len, 4)
-        # self.value_output = torch.nn.Linear(nhid, 1)
+        self.policy_output = torch.nn.Linear(nhid, 4)
 
     def forward(self, token_idxs):
         # embed the tokens
-        embedding = self.token_embedding(token_idxs).permute((1, 0, 2))
+        embedding = self.token_embedding(token_idxs)
+        # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
+        embedding = embedding.permute((1, 0, 2))
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
         # padding_mask = torch.where(token_idxs == padding_token, 0, 1).type(torch.BoolTensor)
-        # nn.transformer requires shape (seq_len, batch_size, embedding_dim)
         # apply the transformer encoder
         encoding = self.transformer_encoder(embedding_with_pos)  # , src_key_padding_mask=padding_mask)
-
-        # use sliced encoding
-        if slice_encoding:
-            sliced_encoding = encoding[0]
-            logits = self.policy_output(sliced_encoding)
-        # use flattened encoding
-        else:
-            encoding = encoding.permute((1, 0, 2))
-            flattened_encoding = torch.flatten(encoding, start_dim=1)
-            logits = self.policy_output(flattened_encoding)
-
-        # squeeze because values are scalars, not 1D array
-        # logit = self.value_output(sliced_encoding).squeeze(-1)
-        # print(embedding)
-        # print(embedding_with_pos)
-        # print(padding_mask)
-        # print(encoding)
-        # print(sliced_encoding)
-        # print(logit)
+        sliced_encoding = encoding[0]
+        logits = self.policy_output(sliced_encoding)
         return logits
 
 
-# Construct our model by instantiating the class defined above
+# train and validate model ---------------------------------------------------------------------------------------------
+
 model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, dropout=dropout)
-# Construct our loss function and an Optimizer. The call to model.parameters()
-# in the SGD constructor will contain the learnable parameters of the nn.Linear
-# module which is members of the model.
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
@@ -167,22 +146,18 @@ for epoch in range(n_epochs):
         optimizer.zero_grad()
         indices = permutation[i:i+batch_size]
         batch_xs, batch_ys = train_xs[indices], train_ys[indices]
-        batch_preds = model(batch_xs)
-        # batch_ys = batch_ys.type_as(batch_preds)
-        loss = criterion(batch_preds, batch_ys)
-        # Zero gradients, perform a backward pass, and update the weights.
+        batch_logits = model(batch_xs)
+        loss = criterion(batch_logits, batch_ys)
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
         optimizer.step()
         if i % 10 == 0:
             print(f'train_loss @ step #{batch_i}', loss.item())
-            valid_preds = model(valid_xs)
-            valid_preds = torch.argmax(valid_preds, axis=1)
-            print('mean valid pred:', valid_preds.type(torch.float).mean())
-            print('mean valid target:', valid_ys.type(torch.float).mean())
-            valid_targets = valid_ys.detach().numpy()
+            valid_logits = model(valid_xs)
+            valid_preds = torch.argmax(valid_logits, axis=1)
             valid_preds = valid_preds.detach().numpy()
+            valid_targets = valid_ys.detach().numpy()
             valid_acc = accuracy_score(valid_targets, valid_preds)
             print(f'valid_acc', valid_acc)
     scheduler.step()
