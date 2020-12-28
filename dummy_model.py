@@ -1,4 +1,3 @@
-import random
 import numpy as np
 import math
 import torch
@@ -72,6 +71,7 @@ xs = np.concatenate([np.expand_dims(encode(x, tokenizer), 0) for x in raw_xs], a
 ys = np.array(ys)
 num_examples = len(xs)
 
+# # inspect data
 # for i in range(100):
 #     print(raw_xs[i])
 #     print(xs[i])
@@ -141,11 +141,11 @@ optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
 
 for epoch in range(n_epochs):
+    # shuffle training set indices
     permutation = torch.randperm(train_xs.size()[0])
     for batch_i, i in enumerate(list(range(0, train_xs.size()[0], batch_size))):
-        optimizer.zero_grad()
-        indices = permutation[i:i+batch_size]
-        batch_xs, batch_ys = train_xs[indices], train_ys[indices]
+        batch_indices = permutation[i:i+batch_size]
+        batch_xs, batch_ys = train_xs[batch_indices], train_ys[batch_indices]
         batch_logits = model(batch_xs)
         loss = criterion(batch_logits, batch_ys)
         optimizer.zero_grad()
