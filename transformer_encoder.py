@@ -36,7 +36,6 @@ class TransformerModel(TorchModelV2, nn.Module):
         model_config,
         name,
         ntoken,
-        ninp,
         nhead,
         nhid,
         nlayers,
@@ -46,7 +45,6 @@ class TransformerModel(TorchModelV2, nn.Module):
             observation_space, action_space, num_outputs, model_config, name
         )
         nn.Module.__init__(self)
-        self.ninp = ninp
         self.model_type = "Transformer"
         self.token_embedding = nn.Embedding(ntoken, nhid)
         self.pos_encoder = PositionalEncoding(nhid, dropout)

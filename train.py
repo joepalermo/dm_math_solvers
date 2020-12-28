@@ -103,7 +103,6 @@ if __name__ == "__main__":
             "custom_model": TransformerModel,
             "custom_model_config": {
                 "ntoken": 280,
-                "ninp": 75,
                 "nhead": 4,
                 "nhid": 128,
                 "nlayers": 1,
