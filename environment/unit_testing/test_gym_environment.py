@@ -43,7 +43,9 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
         }
         env = MathEnv(env_config)
         # reset - then fail after 1st action
@@ -68,7 +70,9 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
         }
         env = MathEnv(env_config)
         # reset - then fail after 2nd action
@@ -104,7 +108,9 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
         }
         env = MathEnv(env_config)
         # reset - then fail after 1st action
@@ -125,7 +131,9 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
@@ -198,7 +206,9 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
@@ -244,7 +254,9 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
         }
         env = MathEnv(env_config)
         for i in range(4, 10):
@@ -255,7 +267,7 @@ class Test(unittest.TestCase):
     #         "problem_filepaths": ["artifacts/short_problems.txt"],
     #         "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
     #         "num_problems_per_module": 10 ** 7,
-    #         "p_val": 0,
+    #         "validation_percentage": 0,
     #         "gcd_test": False
     #     }
     #     env = MathEnv(env_config)

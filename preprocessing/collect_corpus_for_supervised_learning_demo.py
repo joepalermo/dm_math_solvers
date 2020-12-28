@@ -15,9 +15,10 @@ env_config = {
     ],  # TODO hardcode single path to make this easy to run
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
     "num_problems_per_module": 10 ** 7,
-    # data used for validation
-    "p_val": 0.2,
-    "gcd_test": True
+    "validation_percentage": 0.2,
+    "gcd_test": True,
+    "max_sequence_length": 100,
+    "vocab_size": 200
 }
 
 env = MathEnv(env_config)

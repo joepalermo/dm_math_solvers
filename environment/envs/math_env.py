@@ -18,8 +18,6 @@ from utils import write_pickle, read_pickle
 
 class MathEnv(gym.Env):
     def __init__(self, config):
-        if not config.get("max_sequence_length", None):
-            config["max_sequence_length"] = 100
         self.config = config
         self.operators = [
             lookup_value,
@@ -42,7 +40,7 @@ class MathEnv(gym.Env):
             lcm,
             prime_factors,
             function_application,
-        ]  # TODO: make into a hyperparameter
+        ]
         self.operator_output_types = [
             signature(operator).return_annotation for operator in self.operators
         ]
@@ -57,9 +55,9 @@ class MathEnv(gym.Env):
             ]
             self.max_n_nodes = 20
         self.action_space = spaces.Discrete(len(self.actions))
-        self.vocab_size = 200 + 1
+        self.vocab_size = config["vocab_size"]
         self.observation_space = spaces.MultiDiscrete(
-            [self.vocab_size for _ in range(self.config["max_sequence_length"])]
+            [self.vocab_size + 1 for _ in range(self.config["max_sequence_length"])]  # increment by 1 for padding_token
         )
         # load train data
         self.train = {}
@@ -72,9 +70,6 @@ class MathEnv(gym.Env):
             else:
                 compose = False
                 module_type = module_name
-            import os
-
-            print(os.getcwd())
             with open(filepath, "r") as f:
                 lines = f.readlines()
             num_pairs = min(len(lines) // 2, self.config["num_problems_per_module"])
@@ -99,7 +94,7 @@ class MathEnv(gym.Env):
             self.val[module_type] = {}
             for difficulty in self.train[module_type]:
                 num_examples = len(self.train[module_type][difficulty])
-                num_val = int(num_examples * self.config["p_val"])
+                num_val = int(num_examples * self.config["validation_percentage"])
                 self.val[module_type][difficulty] = self.train[module_type][difficulty][
                     :num_val
                 ]
@@ -114,9 +109,9 @@ class MathEnv(gym.Env):
         # TODO: load test data
         self.compute_graph = None
         # build or load encoder
-        self.padding_token = self.vocab_size - 1
+        self.padding_token = self.vocab_size
         self.tokenizer = Tokenizer(BPE())
-        trainer = BpeTrainer(vocab_size=self.vocab_size - 1)
+        trainer = BpeTrainer(vocab_size=self.vocab_size)
         self.tokenizer.train(trainer, [self.config["corpus_filepath"]])
 
     def get_action_index(self, action):
@@ -175,6 +170,8 @@ class MathEnv(gym.Env):
         return np.array(encoded_ids)
 
     def decode(self, ids):
+        # filter out padding tokens before decoding
+        ids = [id_ for id_ in ids if id_ != self.padding_token]
         return "".join([self.tokenizer.id_to_token(id_) for id_ in ids]).strip()
 
     def mask_invalid_types(self, policy_vector):

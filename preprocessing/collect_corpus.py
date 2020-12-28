@@ -11,7 +11,9 @@ env_config = {
     "problem_filepaths": filepaths[:1],  # TODO: increase
     "corpus_filepath": "environment/corpus/10k_corpus.txt",
     "num_problems_per_module": 10 ** 5,
-    "p_val": 0
+    "validation_percentage": 0,
+    "max_sequence_length": 100,
+    "vocab_size": 200
 }
 env = MathEnv(env_config)
 all_observations = []

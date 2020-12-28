@@ -34,17 +34,22 @@ class TransformerModel(TorchModelV2, nn.Module):
         action_space,
         num_outputs,
         model_config,
-        name,
-        ntoken,
-        nhead,
-        nhid,
-        nlayers,
-        dropout=0.2,
+        name
     ):
         super().__init__(
             observation_space, action_space, num_outputs, model_config, name
         )
         nn.Module.__init__(self)
+
+        # unpack model config
+        self.custom_model_config = model_config["custom_model_config"]
+        ntoken = self.custom_model_config["ntoken"]
+        nhead = self.custom_model_config["nhead"]
+        nhid = self.custom_model_config["nhid"]
+        nlayers = self.custom_model_config["nlayers"]
+        dropout = self.custom_model_config["dropout"]
+
+        # define layers
         self.model_type = "Transformer"
         self.token_embedding = nn.Embedding(ntoken, nhid)
         self.pos_encoder = PositionalEncoding(nhid, dropout)

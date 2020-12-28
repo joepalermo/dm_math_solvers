@@ -34,12 +34,13 @@ if __name__ == "__main__":
     env_config = {
         "problem_filepaths": [
             str(Path("mathematics_dataset-v1.0/train-easy/numbers__gcd.txt").resolve())
-        ],  # TODO hardcode single path to make this easy to run
+        ],
         "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
         "num_problems_per_module": 10 ** 7,
-        # data used for validation
-        "p_val": 0.2,
-        "gcd_test": True
+        "validation_percentage": 0.2,
+        "gcd_test": True,
+        "max_sequence_length": 100,
+        "vocab_size": 200
     }
 
     ray.init()
@@ -102,10 +103,11 @@ if __name__ == "__main__":
         "model": {
             "custom_model": TransformerModel,
             "custom_model_config": {
-                "ntoken": 280,
+                "ntoken": env_config["vocab_size"] + 1,  # add 1 for the padding_token
                 "nhead": 4,
                 "nhid": 128,
                 "nlayers": 1,
+                "dropout": 0.2,
             },
         },
         # Arguments to pass to the policy optimizer. These vary by optimizer.
