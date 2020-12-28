@@ -87,7 +87,7 @@ slice_encoding = False
 # training params
 n_epochs = 100
 batch_size = 64
-lr = 1e-5
+lr = 1
 
 # prep dataset
 raw_xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
@@ -188,7 +188,9 @@ model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=n
 # in the SGD constructor will contain the learnable parameters of the nn.Linear
 # module which is members of the model.
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
+
 for epoch in range(n_epochs):
     permutation = torch.randperm(train_xs.size()[0])
     for batch_i, i in enumerate(list(range(0, train_xs.size()[0], batch_size))):
@@ -201,6 +203,7 @@ for epoch in range(n_epochs):
         # Zero gradients, perform a backward pass, and update the weights.
         optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
         optimizer.step()
         if i % 10 == 0:
             print(f'train_loss @ step #{batch_i}', loss.item())
@@ -212,4 +215,5 @@ for epoch in range(n_epochs):
             valid_preds = valid_preds.detach().numpy()
             valid_acc = accuracy_score(valid_targets, valid_preds)
             print(f'valid_acc', valid_acc)
+    scheduler.step()
 
