@@ -19,7 +19,7 @@ from utils import write_pickle, read_pickle
 class MathEnv(gym.Env):
     def __init__(self, config):
         if not config.get("max_sequence_length", None):
-            config["max_sequence_length"] = 75
+            config["max_sequence_length"] = 100
         self.config = config
         self.operators = [
             lookup_value,
@@ -57,7 +57,7 @@ class MathEnv(gym.Env):
             ]
             self.max_n_nodes = 20
         self.action_space = spaces.Discrete(len(self.actions))
-        self.vocab_size = 280
+        self.vocab_size = 200 + 1
         self.observation_space = spaces.MultiDiscrete(
             [self.vocab_size for _ in range(self.config["max_sequence_length"])]
         )
@@ -114,9 +114,9 @@ class MathEnv(gym.Env):
         # TODO: load test data
         self.compute_graph = None
         # build or load encoder
-        self.vocab_size = 280
+        self.padding_token = self.vocab_size - 1
         self.tokenizer = Tokenizer(BPE())
-        trainer = BpeTrainer(vocab_size=self.vocab_size)
+        trainer = BpeTrainer(vocab_size=self.vocab_size - 1)
         self.tokenizer.train(trainer, [self.config["corpus_filepath"]])
 
     def get_action_index(self, action):
@@ -170,7 +170,7 @@ class MathEnv(gym.Env):
         encoded_ids = self.tokenizer.encode(raw_observation).ids
         # pad the encoded ids up to a maximum length
         encoded_ids.extend(
-            [0 for _ in range(self.config["max_sequence_length"] - len(encoded_ids))]
+            [self.padding_token for _ in range(self.config["max_sequence_length"] - len(encoded_ids))]
         )
         return np.array(encoded_ids)
 

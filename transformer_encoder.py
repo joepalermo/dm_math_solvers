@@ -8,7 +8,7 @@ from torch.nn import TransformerEncoder, TransformerEncoderLayer
 
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, dropout=0.1, max_len=5000):
+    def __init__(self, d_model, dropout=0.2, max_len=5000):
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(p=dropout)
 
@@ -40,7 +40,7 @@ class TransformerModel(TorchModelV2, nn.Module):
         nhead,
         nhid,
         nlayers,
-        dropout=0.5,
+        dropout=0.2,
     ):
         super().__init__(
             observation_space, action_space, num_outputs, model_config, name
@@ -53,29 +53,23 @@ class TransformerModel(TorchModelV2, nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=nhid, nhead=nhead), nlayers
         )
-        # if slicing a single element of the encoded sequence
         self.policy_output = nn.Linear(nhid, 3)
         self.value_output = nn.Linear(nhid, 1)
-
-        # if using all elements of the encoded sequence
-        # self.policy_output = nn.Linear(nhid*ninp, 3)
-        # self.value_output = nn.Linear(nhid*ninp, 1)
 
     def forward(self, input_dict, state, seq_lens):
         # extract the observations
         token_idxs = input_dict["obs"].type(torch.LongTensor)
         # embed the tokens
         embedding = self.token_embedding(token_idxs)
+        # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
+        embedding = embedding.permute((1, 0, 2))
+        # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
-        padding_mask = torch.clip(token_idxs, max=1).type(torch.BoolTensor)
-        # nn.transformer requires shape (seq_len, batch_size, embedding_dim)
-        embedding_with_pos = embedding_with_pos.permute((1, 0, 2))
+        # padding_mask = torch.where(token_idxs == padding_token, 0, 1).type(torch.BoolTensor)
         # apply the transformer encoder
-        encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
-        # produce outputs
+        encoding = self.transformer_encoder(embedding_with_pos)  # , src_key_padding_mask=padding_mask)
         sliced_encoding = encoding[0]
-        # flattened_encoding = torch.flatten(encoding, start_dim=1)
         logits = self.policy_output(sliced_encoding)
         # squeeze because values are scalars, not 1D array
         self.value = self.value_output(sliced_encoding).squeeze(-1)

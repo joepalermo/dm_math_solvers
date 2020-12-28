@@ -104,9 +104,9 @@ if __name__ == "__main__":
             "custom_model_config": {
                 "ntoken": 280,
                 "ninp": 75,
-                "nhead": 2,
-                "nhid": 64,
-                "nlayers": 2,
+                "nhead": 4,
+                "nhid": 128,
+                "nlayers": 1,
             },
         },
         # Arguments to pass to the policy optimizer. These vary by optimizer.
@@ -144,7 +144,8 @@ if __name__ == "__main__":
         # Whether to use "rllib" or "deepmind" preprocessors by default
         "preprocessor_pref": "deepmind",
         # The default learning rate.
-        "lr": 0.001,
+        "lr": 1,
+        "grad_clip": 0.5,
 
         # === Debug Settings ===
         # Whether to write episode stats and videos to the agent log dir. This is
@@ -299,7 +300,7 @@ if __name__ == "__main__":
 
         # === Advanced Resource Settings ===
         # Number of CPUs to allocate per worker.
-        "num_cpus_per_worker": 2,
+        "num_cpus_per_worker": 1,
         # Number of GPUs to allocate per worker. This can be fractional. This is
         # usually needed only if your env itself requires a GPU (i.e., it is a
         # GPU-intensive video game), or model inference is unusually expensive.

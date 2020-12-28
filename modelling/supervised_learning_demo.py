@@ -123,6 +123,7 @@ class TransformerEncoderModel(torch.nn.Module):
         embedding = self.token_embedding(token_idxs)
         # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
         embedding = embedding.permute((1, 0, 2))
+        # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
         # padding_mask = torch.where(token_idxs == padding_token, 0, 1).type(torch.BoolTensor)
