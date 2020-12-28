@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0,
+            "p_val": 0
         }
         env = MathEnv(env_config)
         # reset - then fail after 1st action
@@ -68,7 +68,7 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0,
+            "p_val": 0
         }
         env = MathEnv(env_config)
         # reset - then fail after 2nd action
@@ -104,7 +104,7 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0,
+            "p_val": 0
         }
         env = MathEnv(env_config)
         # reset - then fail after 1st action
@@ -125,7 +125,7 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0,
+            "p_val": 0
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
@@ -198,7 +198,7 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0,
+            "p_val": 0
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
@@ -244,22 +244,23 @@ class Test(unittest.TestCase):
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
-            "p_val": 0,
+            "p_val": 0
         }
         env = MathEnv(env_config)
         for i in range(4, 10):
             guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
 
-    def test(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "p_val": 0,
-        }
-        env = MathEnv(env_config)
-        print(env.observation_space)
-
+    # def test(self):
+    #     env_config = {
+    #         "problem_filepaths": ["artifacts/short_problems.txt"],
+    #         "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
+    #         "num_problems_per_module": 10 ** 7,
+    #         "p_val": 0,
+    #         "gcd_test": False
+    #     }
+    #     env = MathEnv(env_config)
+    #     print(env.observation_space)
+    #
     #
     # def test_load_all_problems(self):
     #     filenames = read_text_file('../module_lists/composed.txt').split('\n')

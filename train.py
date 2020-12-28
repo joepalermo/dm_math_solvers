@@ -39,6 +39,7 @@ if __name__ == "__main__":
         "num_problems_per_module": 10 ** 7,
         # data used for validation
         "p_val": 0.2,
+        "gcd_test": True
     }
 
     ray.init()

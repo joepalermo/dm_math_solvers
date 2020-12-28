@@ -46,15 +46,16 @@ class MathEnv(gym.Env):
         self.operator_output_types = [
             signature(operator).return_annotation for operator in self.operators
         ]
-        # self.max_formal_elements = 13  # TODO: make into a hyperparameter
-        # self.actions = self.operators + [
-        #     f"f{i}" for i in range(self.max_formal_elements)
-        # ]
-        # TODO: undo hack for testing
-        self.max_formal_elements = 2
-        self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
-        self.max_n_nodes = 3
-        # TODO: undo hack for testing
+        if config.get("gcd_test", False):
+            self.max_formal_elements = 2
+            self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
+            self.max_n_nodes = 3
+        else:
+            self.max_formal_elements = 13  # TODO: make into a hyperparameter
+            self.actions = self.operators + [
+                f"f{i}" for i in range(self.max_formal_elements)
+            ]
+            self.max_n_nodes = 20
         self.action_space = spaces.Discrete(len(self.actions))
         self.vocab_size = 280
         self.observation_space = spaces.MultiDiscrete(

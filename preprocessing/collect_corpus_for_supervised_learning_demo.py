@@ -8,12 +8,6 @@ filenames = read_text_file("environment/module_lists/composed.txt").split("\n")
 filepaths = [
     f"mathematics_dataset-v1.0/train-easy/{filename}" for filename in filenames
 ]
-# env_config = {
-#     "problem_filepaths": filepaths[:1],  # TODO: increase
-#     "corpus_filepath": "environment/corpus/10k_corpus.txt",
-#     "num_problems_per_module": 10 ** 5,
-#     "p_val": 0,
-# }
 
 env_config = {
     "problem_filepaths": [
@@ -23,6 +17,7 @@ env_config = {
     "num_problems_per_module": 10 ** 7,
     # data used for validation
     "p_val": 0.2,
+    "gcd_test": True
 }
 
 env = MathEnv(env_config)
