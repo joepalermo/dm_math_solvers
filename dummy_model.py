@@ -59,39 +59,55 @@ def input_to_target(x):
     return y
 
 
-def encode(raw_observation, tokenizer, max_sequence_length):
+def encode(raw_observation, tokenizer):
     encoded_ids = tokenizer.encode(raw_observation).ids
     # pad the encoded ids up to a maximum length
-    encoded_ids.extend([0 for _ in range(max_sequence_length - len(encoded_ids))])
+    encoded_ids.extend([padding_token for _ in range(seq_len - len(encoded_ids))])
     return np.array(encoded_ids)
 
 
-# set params
-padding_token = 0
-vocab_size = 280
+def decode(ids, tokenizer):
+    """call with: decode(encoded.ids, tokenizer)"""
+    return "".join([tokenizer.id_to_token(id_) for id_ in ids if id_ != padding_token])
 
-ntoken = vocab_size
-nhid = 128
-nhead = 4
+
+# data params
+vocab_size = 100
+padding_token = vocab_size
+seq_len = 150
+
+# architecture params
+ntoken = vocab_size + 1
+nhead = 2
+nhid = 64
 nlayers = 1
-dropout = 0.05
-slice_encoding = False
+dropout = 0.5
+slice_encoding = True
 
+# training params
 n_epochs = 100
 batch_size = 64
 lr = 1e-5
 
 # prep dataset
-xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
+raw_xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
 # for x in xs:
 #     print(x)
-ys = [input_to_target(x) for x in xs]
+ys = [input_to_target(x) for x in raw_xs]
 tokenizer = Tokenizer(BPE())
 trainer = BpeTrainer(vocab_size=vocab_size)
 tokenizer.train(trainer, ['environment/corpus/10k_corpus.txt'])
-xs = np.concatenate([np.expand_dims(encode(x, tokenizer, 75), 0) for x in xs], axis=0)
+tokenizer.save('tokenizer.json')
+xs = np.concatenate([np.expand_dims(encode(x, tokenizer), 0) for x in raw_xs], axis=0)
 ys = np.array(ys)
 num_examples = len(xs)
+
+# for i in range(100):
+#     print(raw_xs[i])
+#     print(xs[i])
+#     print(decode(xs[i], tokenizer), 'answer:', ys[i])
+#     print()
+
 train_xs, valid_xs, train_ys, valid_ys = train_test_split(xs, ys, test_size=int(num_examples * 0.1))
 train_xs = torch.from_numpy(train_xs)
 train_ys = torch.from_numpy(train_ys)
@@ -120,7 +136,7 @@ class PositionalEncoding(torch.nn.Module):
 
 
 class TransformerEncoderModel(torch.nn.Module):
-    def __init__(self, ntoken, nhid, nhead, nlayers, dropout):
+    def __init__(self, ntoken, nhead, nhid, nlayers, dropout):
         super().__init__()
         torch.nn.Module.__init__(self)
         self.token_embedding = torch.nn.Embedding(ntoken, nhid)
@@ -132,19 +148,18 @@ class TransformerEncoderModel(torch.nn.Module):
         if slice_encoding:
             self.policy_output = torch.nn.Linear(nhid, 4)
         else:
-            self.policy_output = torch.nn.Linear(nhid*75, 4)
+            self.policy_output = torch.nn.Linear(nhid*seq_len, 4)
         # self.value_output = torch.nn.Linear(nhid, 1)
 
     def forward(self, token_idxs):
         # embed the tokens
-        embedding = self.token_embedding(token_idxs)
+        embedding = self.token_embedding(token_idxs).permute((1, 0, 2))
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
-        padding_mask = torch.where(token_idxs == padding_token, 1, 0).type(torch.BoolTensor)
+        # padding_mask = torch.where(token_idxs == padding_token, 0, 1).type(torch.BoolTensor)
         # nn.transformer requires shape (seq_len, batch_size, embedding_dim)
-        embedding_with_pos = embedding_with_pos.permute((1, 0, 2))
         # apply the transformer encoder
-        encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
+        encoding = self.transformer_encoder(embedding_with_pos)  # , src_key_padding_mask=padding_mask)
 
         # use sliced encoding
         if slice_encoding:
@@ -168,7 +183,7 @@ class TransformerEncoderModel(torch.nn.Module):
 
 
 # Construct our model by instantiating the class defined above
-model = TransformerEncoderModel(ntoken=ntoken, nhid=nhid, nhead=nhead, nlayers=nlayers, dropout=dropout)
+model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, dropout=dropout)
 # Construct our loss function and an Optimizer. The call to model.parameters()
 # in the SGD constructor will contain the learnable parameters of the nn.Linear
 # module which is members of the model.
@@ -187,6 +202,8 @@ for epoch in range(n_epochs):
             print(f'train_loss @ step #{batch_i}', loss.item())
             valid_preds = model(valid_xs)
             valid_preds = torch.argmax(valid_preds, axis=1)
+            # print('valid preds', valid_preds[:20])
+            # print('valid targets', valid_ys[:20])
             valid_targets = valid_ys.detach().numpy()
             valid_preds = valid_preds.detach().numpy()
             valid_acc = accuracy_score(valid_targets, valid_preds)
