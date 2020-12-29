@@ -16,6 +16,8 @@ Is 15 a factor of 720?
 True
 Is 93163 a prime number?
 False
+Is 66574 a composite number?
+True
 Calculate the smallest common multiple of 351 and 141.
 16497
 What are the prime factors of 329?

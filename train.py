@@ -33,12 +33,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     env_config = {
         "problem_filepaths": [
-            str(Path("mathematics_dataset-v1.0/train-easy/numbers__gcd.txt").resolve())
+            str(Path("mathematics_dataset-v1.0/train-easy/numbers__is_prime.txt").resolve())
         ],
         "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
         "num_problems_per_module": 10 ** 7,
         "validation_percentage": 0.2,
-        "gcd_test": True,
+        "mode": "is_prime",
         "max_sequence_length": 100,
         "vocab_size": 200
     }

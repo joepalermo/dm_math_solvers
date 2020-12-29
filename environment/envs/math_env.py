@@ -40,13 +40,18 @@ class MathEnv(gym.Env):
             lcm,
             prime_factors,
             function_application,
+            not_op
         ]
         self.operator_output_types = [
             signature(operator).return_annotation for operator in self.operators
         ]
-        if config.get("gcd_test", False):
+        if config.get("mode", None) == "gcd":
             self.max_formal_elements = 2
             self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
+            self.max_n_nodes = 5
+        elif config.get("mode", None) == "is_prime":
+            self.max_formal_elements = 2
+            self.actions = [is_prime, not_op] + [f"f{i}" for i in range(self.max_formal_elements)]
             self.max_n_nodes = 5
         else:
             self.max_formal_elements = 13  # TODO: make into a hyperparameter

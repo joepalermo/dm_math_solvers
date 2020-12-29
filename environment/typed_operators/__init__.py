@@ -281,6 +281,10 @@ def function_application(
     return Value(eval(rhs_with_arg))
 
 
+def not_op(x: bool) -> bool:
+    return not x
+
+
 def common_denominator():
     pass
     # TODO
