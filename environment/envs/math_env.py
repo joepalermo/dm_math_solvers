@@ -47,7 +47,7 @@ class MathEnv(gym.Env):
         if config.get("gcd_test", False):
             self.max_formal_elements = 2
             self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
-            self.max_n_nodes = 3
+            self.max_n_nodes = 5
         else:
             self.max_formal_elements = 13  # TODO: make into a hyperparameter
             self.actions = self.operators + [

@@ -145,8 +145,7 @@ if __name__ == "__main__":
         # Whether to use "rllib" or "deepmind" preprocessors by default
         "preprocessor_pref": "deepmind",
         # The default learning rate.
-        "lr": 1,
-        "grad_clip": 0.5,
+        "lr": 0.1,
 
         # === Debug Settings ===
         # Whether to write episode stats and videos to the agent log dir. This is

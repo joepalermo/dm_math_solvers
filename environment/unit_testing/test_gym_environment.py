@@ -248,6 +248,54 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
+    def test_problem_6_success(self):
+        from pathlib import Path
+        env_config = {
+            "problem_filepaths": ["artifacts/short_problems.txt"],
+            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
+            "num_problems_per_module": 10 ** 7,
+            "validation_percentage": 0,
+            "gcd_test": True,
+            "max_sequence_length": 100,
+            "vocab_size": 200
+        }
+        env = MathEnv(env_config)
+        # reset - then succeed after 4th action
+        encoded_problem_statement = env.reset_with_specific_problem(
+            "short_problems", 1, 6
+        )
+        problem_statement = env.decode(encoded_problem_statement)
+        assert problem_statement == "Calculate the highest common divisor of 1300 and 300."
+        # first action
+        action = gcd
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"] == f"{problem_statement}; gcd('param_0','param_1')"
+        )
+        assert reward == 0
+        assert not done
+        # next action
+        action = "f0"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"]
+                == f"{problem_statement}; gcd(Value('1300'),'param_1')"
+        )
+        assert reward == 0
+        assert not done
+        # next action
+        action = "f1"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"]
+                == f"{problem_statement}; gcd(Value('1300'),Value('300'))"
+        )
+        assert reward == 1
+        assert done
+
     def test_guess_until_correct(self):
         """this test only terminates when the graph is correctly guessed or timeout is reached"""
         env_config = {
