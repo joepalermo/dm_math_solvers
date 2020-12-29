@@ -221,7 +221,6 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_6_success(self):
-        from pathlib import Path
         env_config = {
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
@@ -269,7 +268,6 @@ class Test(unittest.TestCase):
         assert done
 
     def test_mode_is_prime_success_1(self):
-        from pathlib import Path
         env_config = {
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
@@ -307,7 +305,6 @@ class Test(unittest.TestCase):
         assert done
 
     def test_mode_is_prime_success_2(self):
-        from pathlib import Path
         env_config = {
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
@@ -353,3 +350,39 @@ class Test(unittest.TestCase):
         )
         assert reward == 1
         assert done
+
+    def test_not_op(self):
+        env_config = {
+            "problem_filepaths": ["artifacts/short_problems.txt"],
+            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
+            "num_problems_per_module": 10 ** 7,
+            "validation_percentage": 0,
+            "mode": "is_prime",
+            "max_sequence_length": 100,
+            "vocab_size": 200
+        }
+        env = MathEnv(env_config)
+        # reset - then succeed after 4th action
+        encoded_problem_statement = env.reset_with_specific_problem(
+            "short_problems", 1, 9
+        )
+        problem_statement = env.decode(encoded_problem_statement)
+        assert problem_statement == "Is 66574 a composite number?"
+        # take action
+        action = not_op
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"] == f"{problem_statement}; not_op('param_0')"
+        )
+        assert reward == 0
+        assert not done
+        # take action
+        action = not_op
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"] == f"{problem_statement}; not_op(not_op('param_0'))"
+        )
+        assert reward == 0
+        assert not done

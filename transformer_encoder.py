@@ -48,6 +48,7 @@ class TransformerModel(TorchModelV2, nn.Module):
         nhid = self.custom_model_config["nhid"]
         nlayers = self.custom_model_config["nlayers"]
         dropout = self.custom_model_config["dropout"]
+        num_outputs = self.custom_model_config["num_outputs"]
 
         # define layers
         self.model_type = "Transformer"
@@ -56,7 +57,7 @@ class TransformerModel(TorchModelV2, nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=nhid, nhead=nhead), nlayers
         )
-        self.policy_output = nn.Linear(nhid, 3)
+        self.policy_output = nn.Linear(nhid, num_outputs)
         self.value_output = nn.Linear(nhid, 1)
 
     def forward(self, input_dict, state, seq_lens):

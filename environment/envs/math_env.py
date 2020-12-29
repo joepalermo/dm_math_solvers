@@ -48,11 +48,19 @@ class MathEnv(gym.Env):
         if config.get("mode", None) == "gcd":
             self.max_formal_elements = 2
             self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
-            self.max_n_nodes = 5
+            self.max_n_nodes = 3
         elif config.get("mode", None) == "is_prime":
-            self.max_formal_elements = 2
+            self.max_formal_elements = 1
             self.actions = [is_prime, not_op] + [f"f{i}" for i in range(self.max_formal_elements)]
-            self.max_n_nodes = 5
+            self.max_n_nodes = 3
+        elif config.get("mode", None) == "diff":
+            self.max_formal_elements = 1
+            self.actions = [diff] + [f"f{i}" for i in range(self.max_formal_elements)]
+            self.max_n_nodes = 2
+        elif config.get("mode", None) == "prime_factors":
+            self.max_formal_elements = 1
+            self.actions = [prime_factors] + [f"f{i}" for i in range(self.max_formal_elements)]
+            self.max_n_nodes = 2
         else:
             self.max_formal_elements = 13  # TODO: make into a hyperparameter
             self.actions = self.operators + [
@@ -161,7 +169,7 @@ class MathEnv(gym.Env):
         reward = 1 if str(output) == self.answer else 0
         done = (
             self.compute_graph.current_node is None
-            or self.compute_graph.n_nodes > self.max_n_nodes
+            or self.compute_graph.n_nodes >= self.max_n_nodes
         )
         info = {"raw_observation": raw_observation}
         return observation, reward, done, info

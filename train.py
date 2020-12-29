@@ -5,6 +5,7 @@ import argparse
 import os
 import ray
 from ray import tune
+from ray.tune import grid_search
 from ray.rllib.utils.test_utils import check_learning_achieved
 from environment.envs.math_env import MathEnv
 from ray.rllib.agents.callbacks import DefaultCallbacks
@@ -25,20 +26,19 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--run", type=str, default="PPO")
 parser.add_argument("--torch", action="store_true")
 parser.add_argument("--as-test", action="store_true")
-parser.add_argument("--stop-iters", type=int, default=10000)
-parser.add_argument("--stop-timesteps", type=int, default=100000)
-parser.add_argument("--stop-reward", type=float, default=0.5)
+parser.add_argument("--stop-iters", type=int, default=5000)
+parser.add_argument("--stop-reward", type=float, default=0.98)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     env_config = {
         "problem_filepaths": [
-            str(Path("mathematics_dataset-v1.0/train-easy/numbers__is_prime.txt").resolve())
-        ],
+            str(Path("mathematics_dataset-v1.0/train-easy/numbers__list_prime_factors.txt").resolve())
+        ],  # calculus__differentiate, numbers__is_prime, numbers__list_prime_factors.txt
         "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
         "num_problems_per_module": 10 ** 7,
         "validation_percentage": 0.2,
-        "mode": "is_prime",
+        "mode": "prime_factors",
         "max_sequence_length": 100,
         "vocab_size": 200
     }
@@ -108,6 +108,7 @@ if __name__ == "__main__":
                 "nhid": 128,
                 "nlayers": 1,
                 "dropout": 0.2,
+                "num_outputs": len(MathEnv(env_config).actions)
             },
         },
         # Arguments to pass to the policy optimizer. These vary by optimizer.
@@ -145,7 +146,7 @@ if __name__ == "__main__":
         # Whether to use "rllib" or "deepmind" preprocessors by default
         "preprocessor_pref": "deepmind",
         # The default learning rate.
-        "lr": 0.1,
+        "lr": grid_search([1, 0.1, 0.01, 0.001]),
 
         # === Debug Settings ===
         # Whether to write episode stats and videos to the agent log dir. This is
@@ -397,7 +398,6 @@ if __name__ == "__main__":
 
     stop = {
         "training_iteration": args.stop_iters,
-        "timesteps_total": args.stop_timesteps,
         "episode_reward_mean": args.stop_reward,
     }
 

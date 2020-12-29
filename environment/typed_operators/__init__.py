@@ -282,6 +282,7 @@ def function_application(
 
 
 def not_op(x: bool) -> bool:
+    assert type(x) == bool
     return not x
 
 
