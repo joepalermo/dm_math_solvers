@@ -121,11 +121,25 @@ class MathEnv(gym.Env):
                 )
         # TODO: load test data
         self.compute_graph = None
+        self.actions_taken = []
         # build or load encoder
         self.padding_token = self.vocab_size
         self.tokenizer = Tokenizer(BPE())
         trainer = BpeTrainer(vocab_size=self.vocab_size)
         self.tokenizer.train(trainer, [self.config["corpus_filepath"]])
+
+    def encode(self, raw_observation):
+        encoded_ids = self.tokenizer.encode(raw_observation).ids
+        # pad the encoded ids up to a maximum length
+        encoded_ids.extend(
+            [self.padding_token for _ in range(self.config["max_sequence_length"] - len(encoded_ids))]
+        )
+        return np.array(encoded_ids)
+
+    def decode(self, ids):
+        # filter out padding tokens before decoding
+        ids = [id_ for id_ in ids if id_ != self.padding_token]
+        return "".join([self.tokenizer.id_to_token(id_) for id_ in ids]).strip()
 
     def get_action_index(self, action):
         return self.actions.index(action)
@@ -145,73 +159,6 @@ class MathEnv(gym.Env):
             masked_policy_vector
         )
         return masked_normed_policy_vector
-
-    def step(self, action_index):
-        """an action fills the next element in the compute graph.
-
-        :param action_index: index into the action space
-        :return: observation, reward, done, info
-
-        -observation: problem statement + interim compute graph
-        -reward: 0 if the compute doesn't evaluate correctly, 1 if it does
-        -done: True if the graph is complete, False if it isn't
-        -info: None
-        """
-        # (alok): TODO obs space should be multidiscrete?
-        # (alok): TODO discrete (list of operators we're using)
-        action = self.actions[action_index]
-        self.compute_graph.n_nodes += 1
-        self.compute_graph.add(action)
-        output = self.compute_graph.eval()
-        compute_graph = str(self.compute_graph)
-        raw_observation = f"{self.problem_statement}; {compute_graph}"
-        observation = self.encode(raw_observation)
-        reward = 1 if str(output) == self.answer else 0
-        done = (
-            self.compute_graph.current_node is None
-            or self.compute_graph.n_nodes >= self.max_n_nodes
-        )
-        info = {"raw_observation": raw_observation}
-        return observation, reward, done, info
-
-    def encode(self, raw_observation):
-        encoded_ids = self.tokenizer.encode(raw_observation).ids
-        # pad the encoded ids up to a maximum length
-        encoded_ids.extend(
-            [self.padding_token for _ in range(self.config["max_sequence_length"] - len(encoded_ids))]
-        )
-        return np.array(encoded_ids)
-
-    def decode(self, ids):
-        # filter out padding tokens before decoding
-        ids = [id_ for id_ in ids if id_ != self.padding_token]
-        return "".join([self.tokenizer.id_to_token(id_) for id_ in ids]).strip()
-
-    def mask_invalid_types(self, policy_vector):
-        if not self.compute_graph.current_node:
-            # first action must be an operator
-            mask = np.concatenate(
-                [np.ones(len(self.operators)), np.zeros(self.max_formal_elements)]
-            )
-        else:
-            current_arg_index = len(self.compute_graph.current_node.args)
-            next_type = self.compute_graph.current_node.types[current_arg_index]
-            available_types = (
-                self.operator_output_types + self.compute_graph.formal_element_types
-            )
-            mask = np.array(
-                [1 if issubclass(next_type, type_) else 0 for type_ in available_types]
-            )
-            mask = np.concatenate(
-                [
-                    mask,
-                    np.zeros(
-                        self.max_formal_elements
-                        - len(self.compute_graph.formal_elements)
-                    ),
-                ]
-            )
-        return mask * policy_vector
 
     def reset(self, train=True):
         # randomly sample a module and difficulty level
@@ -238,6 +185,61 @@ class MathEnv(gym.Env):
         )[0]
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
+
+    def step(self, action_index):
+        """an action fills the next element in the compute graph.
+
+        :param action_index: index into the action space
+        :return: observation, reward, done, info
+
+        -observation: problem statement + interim compute graph
+        -reward: 0 if the compute doesn't evaluate correctly, 1 if it does
+        -done: True if the graph is complete, False if it isn't
+        -info: None
+        """
+        # (alok): TODO obs space should be multidiscrete?
+        # (alok): TODO discrete (list of operators we're using)
+        self.actions_taken.append(action_index)
+        action = self.actions[action_index]
+        self.compute_graph.n_nodes += 1
+        self.compute_graph.add(action)
+        output = self.compute_graph.eval()
+        compute_graph = str(self.compute_graph)
+        raw_observation = f"{self.problem_statement}; {compute_graph}"
+        observation = self.encode(raw_observation)
+        reward = 1 if str(output) == self.answer else 0
+        done = (
+            self.compute_graph.current_node is None
+            or self.compute_graph.n_nodes >= self.max_n_nodes
+        )
+        info = {"raw_observation": raw_observation}
+        return observation, reward, done, info
+
+    def mask_invalid_types(self, policy_vector):
+        if not self.compute_graph.current_node:
+            # first action must be an operator
+            mask = np.concatenate(
+                [np.ones(len(self.operators)), np.zeros(self.max_formal_elements)]
+            )
+        else:
+            current_arg_index = len(self.compute_graph.current_node.args)
+            next_type = self.compute_graph.current_node.types[current_arg_index]
+            available_types = (
+                self.operator_output_types + self.compute_graph.formal_element_types
+            )
+            mask = np.array(
+                [1 if issubclass(next_type, type_) else 0 for type_ in available_types]
+            )
+            mask = np.concatenate(
+                [
+                    mask,
+                    np.zeros(
+                        self.max_formal_elements
+                        - len(self.compute_graph.formal_elements)
+                    ),
+                ]
+            )
+        return mask * policy_vector
 
     def render(self):
         pass

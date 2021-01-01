@@ -4,24 +4,15 @@ ____
 
 Tasks
 
+- Write sampling script
+    - Serialize graphs as lists of actions
+- Setup generalized supervised learning script
+    - Load correct and incorrect graphs
+        - Merge them with a prescribed ratio of correct to incorrect 
+    - Sample batches
+- dropout only during training?
 - Provide access to a test set within the environment  
-- Model and optimization
-    1. Get Ray RLLIB working well
-        - Add an embedding layer (why does SL dissapear in the shape after embedding?)
-            - Try a radically simpler model such as a vanilla transformer?
-        - Add type-constraint masking
-        - Try scaling the environment
-    2. Implement a VPG training loop and connect it to vanilla Transformer model
-        - If this fails to do well, then here's a list of things to try:
-            - variants on VPG (see spinningup)
-            - gated transformer XL
-            - PPO
-- Strategy to alternate between training and running the policy
-    1. Gather train data
-    2. Train the policy on the most recent data
-    3. Eval the policy
-    4. (optional) Determine curriculum for the next round based on eval performance across modules
-- Evaluate on test set
+
 
 Optional future work:
     - Extend the dataset by composing all problem types more fully, then systematically study generalization of different sorts
