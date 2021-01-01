@@ -4,11 +4,16 @@ ____
 
 Tasks
 
+
 - Write sampling script
-    - Serialize graphs as lists of actions
+    - Serialize rewarded trajectories
+    - Run many environments in parallel and batch queries to the model
 - Setup generalized supervised learning script
-    - Load correct and incorrect graphs
-        - Merge them with a prescribed ratio of correct to incorrect 
+    - Build train/val sets 
+        - Load serialized rewarded trajectories
+        - Convert them into train examples
+        - Merge them with a prescribed ratio of correct to incorrect
+        - split train/val 
     - Sample batches
 - dropout only during training?
 - Provide access to a test set within the environment  

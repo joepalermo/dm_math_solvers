@@ -81,9 +81,9 @@ model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=n
 sample_new_problem = True
 for i in tqdm(range(n_iterations)):
     if sample_new_problem:
-        next_module, next_difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-        _, info = env.reset_by_module_and_difficulty(next_module, next_difficulty)
-        print(info['raw_observation'])
+        module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
+        _, info = env.reset_by_module_and_difficulty(module_name, difficulty)
+        # print(info['raw_observation'])
         sample_new_problem = False
         attempts_to_guess_graph = 0
     trajectory = run_iteration(env, model)
