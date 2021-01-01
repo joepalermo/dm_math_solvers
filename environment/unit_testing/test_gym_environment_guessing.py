@@ -1,33 +1,6 @@
 from environment.envs.math_env import MathEnv
+from environment.utils import guess_until_problem_solved
 import unittest
-
-
-def guess_until_problem_solved(
-    env, problem_index, verbose=False, max_episode_index=1000
-):
-    episode_i = 0
-    graph_guessed_correctly = False
-    encoded_problem_statement = env.reset_with_specific_problem(
-        "short_problems", 1, problem_index
-    )
-    print(f"problem statement: {env.decode(encoded_problem_statement)}")
-    while not graph_guessed_correctly and episode_i < max_episode_index:
-        _ = env.reset_with_specific_problem("short_problems", 1, problem_index)
-        done = False
-        step_i = 0
-        if verbose:
-            print(f"episode: {episode_i}")
-        while not done:
-            action_index = env.sample_masked_action_index()
-            observation, reward, done, info = env.step(action_index)
-            # if verbose:
-            #     print(f"\t\tS': {observation}, R: {reward}, done: {done}")
-            if reward == 1:
-                graph_guessed_correctly = True
-            step_i += 1
-        episode_i += 1
-    print(f'graph: {info["raw_observation"].split(";")[1]}')
-    print(f"trials taken to guess problem #{problem_index}: {episode_i}")
 
 
 class Test(unittest.TestCase):

@@ -21,7 +21,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then fail after 1st action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then fail after 2nd action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -86,7 +86,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then fail after 1st action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -109,7 +109,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -184,7 +184,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 5
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -232,7 +232,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 6
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -279,7 +279,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 8
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -316,7 +316,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 9
         )
         problem_statement = env.decode(encoded_problem_statement)
@@ -363,7 +363,7 @@ class Test(unittest.TestCase):
         }
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
-        encoded_problem_statement = env.reset_with_specific_problem(
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 1, 9
         )
         problem_statement = env.decode(encoded_problem_statement)

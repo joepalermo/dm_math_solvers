@@ -6,6 +6,7 @@ import os
 import ray
 from ray import tune
 from ray.tune import grid_search
+from ray.rllib.models import ModelCatalog
 from ray.rllib.utils.test_utils import check_learning_achieved
 from environment.envs.math_env import MathEnv
 from ray.rllib.agents.callbacks import DefaultCallbacks
@@ -26,7 +27,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--run", type=str, default="PPO")
 parser.add_argument("--torch", action="store_true")
 parser.add_argument("--as-test", action="store_true")
-parser.add_argument("--stop-iters", type=int, default=5000)
+parser.add_argument("--stop-iters", type=int, default=50000)
 parser.add_argument("--stop-reward", type=float, default=0.98)
 
 if __name__ == "__main__":
@@ -45,6 +46,7 @@ if __name__ == "__main__":
 
     ray.init()
 
+    ModelCatalog.register_custom_model("my_model", TransformerModel)
     config = {
         # === Settings for Rollout Worker processes ===
         # Number of rollout worker actors to create for parallel sampling. Setting
@@ -101,7 +103,7 @@ if __name__ == "__main__":
         # Arguments to pass to the policy model. See models/catalog.py for a full
         # list of the available model options.
         "model": {
-            "custom_model": TransformerModel,
+            "custom_model": "my_model",
             "custom_model_config": {
                 "ntoken": env_config["vocab_size"] + 1,  # add 1 for the padding_token
                 "nhead": 4,
@@ -146,7 +148,8 @@ if __name__ == "__main__":
         # Whether to use "rllib" or "deepmind" preprocessors by default
         "preprocessor_pref": "deepmind",
         # The default learning rate.
-        "lr": grid_search([1, 0.1, 0.01, 0.001]),
+        # "lr": grid_search([10**-1, 10**-2, 10**-3, 10**-4, 10**-5, 10**-6]),
+        "lr": grid_search([10 ** -4]),
 
         # === Debug Settings ===
         # Whether to write episode stats and videos to the agent log dir. This is

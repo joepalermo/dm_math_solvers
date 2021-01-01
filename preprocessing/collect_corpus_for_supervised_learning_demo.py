@@ -26,7 +26,7 @@ all_observations = []
 # TODO: why does it get stuck
 for _ in tqdm(range(int(10 ** 4))):
     done = False
-    _ = env.reset()
+    _, _ = env.reset()
     episode_observations = [env.problem_statement + '; ']
     while not done:
         # action = env.sample_masked_action_index()

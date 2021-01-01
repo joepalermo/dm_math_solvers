@@ -53,7 +53,7 @@ class MathEnv(gym.Env):
             self.max_formal_elements = 1
             self.actions = [is_prime, not_op] + [f"f{i}" for i in range(self.max_formal_elements)]
             self.max_n_nodes = 3
-        elif config.get("mode", None) == "diff":
+        elif config.get("mode", None) == "diff": # TODO: fix
             self.max_formal_elements = 1
             self.actions = [diff] + [f"f{i}" for i in range(self.max_formal_elements)]
             self.max_n_nodes = 2
@@ -217,7 +217,11 @@ class MathEnv(gym.Env):
         # randomly sample a module and difficulty level
         module_type = sample(list(self.train.keys()), 1)[0]
         difficulty = sample(list(self.train[module_type].keys()), 1)[0]
-        return self.reset_by_module_and_difficulty(module_type, difficulty)
+        return self.reset_by_module_and_difficulty(module_type, difficulty), {'raw_observation': self.problem_statement}
+
+    def reset_with_same_problem(self):
+        self.compute_graph = ComputeGraph(self.problem_statement)
+        return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
 
     def reset_with_specific_problem(
         self, module_type, difficulty, problem_index, train=True
@@ -226,14 +230,14 @@ class MathEnv(gym.Env):
             problem_index
         ]
         self.compute_graph = ComputeGraph(self.problem_statement)
-        return self.encode(self.problem_statement)  # TODO: Fix tests which this breaks
+        return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
 
     def reset_by_module_and_difficulty(self, module_type, difficulty, train=True):
         self.problem_statement, self.answer = sample(
             self.train[module_type][difficulty], 1
         )[0]
         self.compute_graph = ComputeGraph(self.problem_statement)
-        return self.encode(self.problem_statement)  # TODO: Fix tests which this breaks
+        return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
 
     def render(self):
         pass

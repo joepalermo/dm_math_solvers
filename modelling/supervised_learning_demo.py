@@ -161,5 +161,8 @@ for epoch in range(n_epochs):
             valid_targets = valid_ys.detach().numpy()
             valid_acc = accuracy_score(valid_targets, valid_preds)
             print(f'valid_acc', valid_acc)
+            if valid_acc == 1:
+                torch.save(model, 'modelling/models/gcd.pt')
+                break
     scheduler.step()
 
