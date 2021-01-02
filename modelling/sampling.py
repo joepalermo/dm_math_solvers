@@ -84,11 +84,9 @@ env_config = {
 }
 
 # define search parameters
-n_iterations = 10 ** 5
-max_attemps_per_problem = 5*10 ** 3
-max_difficulty_level = 1
-num_steps = 100000
+num_steps = 1000000
 num_environments = 32
+max_difficulty_level = 1
 
 # initialize all environments
 envs = init_envs(env_config, num_environments)
