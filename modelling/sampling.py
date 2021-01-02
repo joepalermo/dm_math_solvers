@@ -1,6 +1,7 @@
 import copy
 import torch
 import numpy as np
+from tqdm import tqdm
 from pathlib import Path
 from utils import read_text_file
 from scipy.special import softmax
@@ -42,7 +43,11 @@ def reset_all(envs):
 
 
 def get_obs_batch(envs, action_batch):
-    return [env.step(action) for env, action in zip(envs, action_batch)]
+    steps = list()
+    for env, action in zip(envs, action_batch):
+        step = env.step(action)
+        steps.append(step)
+    return steps
 
 
 def get_action_batch(model, obs_batch, envs):
@@ -65,6 +70,10 @@ filenames = read_text_file("environment/module_lists/most_natural_composed_for_p
 filepaths = [
     f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
 ]
+# TODO: undo hack to speedup experiments
+filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
+filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
+filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
 env_config = {
     "problem_filepaths": filepaths,
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
@@ -73,44 +82,53 @@ env_config = {
     "max_sequence_length": 100,
     "vocab_size": 200
 }
-env = MathEnv(env_config)
 
 # define search parameters
 n_iterations = 10 ** 5
 max_attemps_per_problem = 5*10 ** 3
 max_difficulty_level = 1
-rewarded_trajectories, rewarded_trajectory_statistics = init_rewarded_trajectories_data_structures(env)
+num_steps = 100000
+num_environments = 32
 
+# initialize all environments
+envs = init_envs(env_config, num_environments)
+rewarded_trajectories, rewarded_trajectory_statistics = init_rewarded_trajectories_data_structures(envs[0])
 
 # architecture params
 ntoken = env_config['vocab_size'] + 1
 nhead = 4
 nhid = 128
 nlayers = 1
-num_outputs = len(env.actions)
+num_outputs = len(envs[0].actions)
 dropout = 0.2
 
 # load model
-model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
+# TODO: set load_model as param
+load_model = False
+if load_model:
+    model = torch.load('modelling/models/model.pt')
+else:
+    model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
                                 dropout=dropout)
 
-num_steps = 100
-num_environments = 10
-# initialize and reset all environments
-envs = init_envs(env_config, num_environments)
+# reset all environments
 obs_batch, envs_info = reset_all(envs)
 # take steps in all environments num_parallel_steps times
 num_parallel_steps = num_steps // num_environments
-for _ in range(num_parallel_steps):
+for _ in tqdm(range(num_parallel_steps)):
     # take a step in each environment in "parallel"
     action_batch = get_action_batch(model, obs_batch, envs)
     step_batch = get_obs_batch(envs, action_batch)
     # for each environment process the most recent step
     for i, (obs, reward, done, info) in enumerate(step_batch):
-        if done and reward == 1:
-            # save the trajectory and reset the environment
-            rewarded_trajectories[module_name][difficulty] = envs_info[i]['trajectory']
-            rewarded_trajectory_statistics[(module_name, difficulty)] += 1
+        envs_info[i]['trajectory'].append((obs, reward, done, info))
+        if done:
+            if reward == 1:
+                # save the rewarded trajectory
+                rewarded_trajectories[module_name][difficulty] = envs_info[i]['trajectory']
+                rewarded_trajectory_statistics[(module_name, difficulty)] += 1
+                print(envs_info[i]['trajectory'][-1][3]['raw_observation'])
+            # reset the environment
             module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
             obs, _ = envs[i].reset_by_module_and_difficulty(module_name, difficulty)
             envs_info[i]['trajectory'] = []

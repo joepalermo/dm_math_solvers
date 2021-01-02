@@ -67,7 +67,7 @@ class MathEnv(gym.Env):
             self.actions = self.operators + [
                 f"f{i}" for i in range(self.max_formal_elements)
             ]
-            self.max_n_nodes = 20
+            self.max_n_nodes = 10  # TODO: change
         self.action_space = spaces.Discrete(len(self.actions))
         self.action_indices = np.arange(len(self.actions))
         self.vocab_size = config["vocab_size"]
