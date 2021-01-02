@@ -6,7 +6,7 @@ import numpy as np
 from gym import error, spaces, utils
 from gym.utils import seeding
 from tqdm import tqdm
-
+from scipy.special import softmax
 from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
 from tokenizers import Tokenizer
@@ -69,6 +69,7 @@ class MathEnv(gym.Env):
             ]
             self.max_n_nodes = 20
         self.action_space = spaces.Discrete(len(self.actions))
+        self.action_indices = np.arange(len(self.actions))
         self.vocab_size = config["vocab_size"]
         self.observation_space = spaces.MultiDiscrete(
             [self.vocab_size + 1 for _ in range(self.config["max_sequence_length"])]  # increment by 1 for padding_token
@@ -122,7 +123,6 @@ class MathEnv(gym.Env):
                 )
         # TODO: load test data
         self.compute_graph = None
-        self.actions_taken = []
         # build or load encoder
         self.padding_token = self.vocab_size
         self.tokenizer = Tokenizer(BPE())
@@ -160,6 +160,16 @@ class MathEnv(gym.Env):
             masked_policy_vector
         )
         return masked_normed_policy_vector
+
+    def sample_masked_action_from_model(self, model, obs):
+        policy_vector = softmax(model(obs).detach().numpy()[0])
+        masked_policy_vector = self.mask_invalid_types(policy_vector)
+        masked_normed_policy_vector = masked_policy_vector / np.sum(
+            masked_policy_vector
+        )
+        choices = np.arange(len(self.actions))
+        action_index = np.random.choice(choices, p=masked_normed_policy_vector)
+        return action_index
 
     def reset(self, train=True):
         # randomly sample a module and difficulty level
@@ -200,7 +210,6 @@ class MathEnv(gym.Env):
         """
         # (alok): TODO obs space should be multidiscrete?
         # (alok): TODO discrete (list of operators we're using)
-        self.actions_taken.append(action_index)
         action = self.actions[action_index]
         self.compute_graph.n_nodes += 1
         self.compute_graph.add(action)

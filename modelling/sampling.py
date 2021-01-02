@@ -1,36 +1,63 @@
+import copy
 import torch
-from environment.envs import MathEnv
 import numpy as np
 from pathlib import Path
 from utils import read_text_file
 from scipy.special import softmax
+from environment.envs import MathEnv
 from modelling.transformer_encoder import TransformerEncoderModel
-from tqdm import tqdm
-
-def sample_masked_action_from_model(env, model, obs):
-    policy_vector = softmax(model(obs).detach().numpy()[0])
-    masked_policy_vector = env.mask_invalid_types(policy_vector)
-    masked_normed_policy_vector = masked_policy_vector / np.sum(
-        masked_policy_vector
-    )
-    choices = np.arange(len(env.actions))
-    action_index = np.random.choice(choices, p=masked_normed_policy_vector)
-    return action_index
 
 
-def run_iteration(env, model, verbose=False):
-    obs, _ = env.reset_with_same_problem()
-    trajectory = [(obs, None, None, None)]
-    done = False
-    while not done:
-        obs = np.expand_dims(obs, 0)
-        obs = torch.from_numpy(obs)
-        # TEMP: commented out model inference to run this faster
-        # action_index = sample_masked_action_from_model(env, model, obs)
-        action_index = env.sample_masked_action_index()
-        obs, reward, done, info = env.step(action_index)
-        trajectory.append((obs, reward, done, info))
-    return trajectory
+def init_rewarded_trajectories_data_structures(env):
+    '''define data structures to track correct graphs'''
+    rewarded_trajectories = {}
+    rewarded_trajectory_statistics = {}
+    for module_name in env.train.keys():
+        if module_name not in rewarded_trajectories:
+            rewarded_trajectories[module_name] = {}
+        for difficulty in env.train[module_name].keys():
+            if difficulty not in rewarded_trajectories[module_name]:
+                rewarded_trajectories[module_name][difficulty] = []
+            if (module_name, difficulty) not in rewarded_trajectory_statistics and difficulty <= max_difficulty_level:
+                rewarded_trajectory_statistics[(module_name, difficulty)] = 0
+    return rewarded_trajectories, rewarded_trajectory_statistics
+
+
+def init_envs(env_config, num_environments=10):
+    env = MathEnv(env_config)
+    envs = [env]
+    envs.extend([copy.copy(env) for _ in range(1, num_environments)])
+    return envs
+
+
+def reset_all(envs):
+    envs_info = []
+    obs_batch = []
+    for env in envs:
+        module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
+        obs, _ = env.reset_by_module_and_difficulty(module_name, difficulty)
+        envs_info.append({'trajectory': list(), 'module_name': module_name, 'difficulty': difficulty})
+        obs_batch.append(obs)
+    return obs_batch, envs_info
+
+
+def get_obs_batch(envs, action_batch):
+    return [env.step(action) for env, action in zip(envs, action_batch)]
+
+
+def get_action_batch(model, obs_batch, envs):
+    obs_batch = torch.from_numpy(np.array(obs_batch))
+    logits_batch = model(obs_batch).detach().numpy()
+    policy_batch = softmax(logits_batch, axis=1)
+    actions = []
+    for i, env in enumerate(envs):
+        masked_policy_vector = env.mask_invalid_types(policy_batch[i])
+        masked_normed_policy_vector = masked_policy_vector / np.sum(
+            masked_policy_vector
+        )
+        action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
+        actions.append(action_index)
+    return actions
 
 
 # define and init environment
@@ -52,18 +79,7 @@ env = MathEnv(env_config)
 n_iterations = 10 ** 5
 max_attemps_per_problem = 5*10 ** 3
 max_difficulty_level = 1
-
-# define data structures to track correct graphs
-rewarded_trajectories = {}
-rewarded_trajectory_statistics = {}
-for module_name in env.train.keys():
-    if module_name not in rewarded_trajectories:
-        rewarded_trajectories[module_name] = {}
-    for difficulty in env.train[module_name].keys():
-        if difficulty not in rewarded_trajectories[module_name]:
-            rewarded_trajectories[module_name][difficulty] = []
-        if (module_name, difficulty) not in rewarded_trajectory_statistics and difficulty <= max_difficulty_level:
-            rewarded_trajectory_statistics[(module_name, difficulty)] = 0
+rewarded_trajectories, rewarded_trajectory_statistics = init_rewarded_trajectories_data_structures(env)
 
 
 # architecture params
@@ -78,23 +94,25 @@ dropout = 0.2
 model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
                                 dropout=dropout)
 
-# sample graphs
-sample_new_problem = True
-for i in tqdm(range(n_iterations)):
-    if sample_new_problem:
-        module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-        _, info = env.reset_by_module_and_difficulty(module_name, difficulty)
-        sample_new_problem = False
-        attempts_to_guess_graph = 0
-    trajectory = run_iteration(env, model)
-    final_reward = trajectory[-1][1]
-    if final_reward == 1:
-        print(trajectory[-1][3]['raw_observation'])
-        sample_new_problem = True
-        rewarded_trajectories[module_name][difficulty] = trajectory
-        rewarded_trajectory_statistics[(module_name,difficulty)] += 1
-    else:
-        attempts_to_guess_graph += 1
-        if attempts_to_guess_graph > max_attemps_per_problem:
-            sample_new_problem = True
-
+num_steps = 100
+num_environments = 10
+# initialize and reset all environments
+envs = init_envs(env_config, num_environments)
+obs_batch, envs_info = reset_all(envs)
+# take steps in all environments num_parallel_steps times
+num_parallel_steps = num_steps // num_environments
+for _ in range(num_parallel_steps):
+    # take a step in each environment in "parallel"
+    action_batch = get_action_batch(model, obs_batch, envs)
+    step_batch = get_obs_batch(envs, action_batch)
+    # for each environment process the most recent step
+    for i, (obs, reward, done, info) in enumerate(step_batch):
+        if done and reward == 1:
+            # save the trajectory and reset the environment
+            rewarded_trajectories[module_name][difficulty] = envs_info[i]['trajectory']
+            rewarded_trajectory_statistics[(module_name, difficulty)] += 1
+            module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
+            obs, _ = envs[i].reset_by_module_and_difficulty(module_name, difficulty)
+            envs_info[i]['trajectory'] = []
+            envs_info[i]['module_name'] = module_name
+            envs_info[i]['difficulty'] = difficulty
