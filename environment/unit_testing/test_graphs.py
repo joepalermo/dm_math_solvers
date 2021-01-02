@@ -110,6 +110,12 @@ class Test(unittest.TestCase):
             Value(1),
         }
 
+    def test_calculus__differentiate(self):
+        problem_statement = "What is the second derivative of 2*c*n**2*z**3 + 30*c*n**2 + 2*c*n*z**2 - 2*c + n**2*z**2 - 3*n*z**3 - 2*n*z wrt n?"
+        f = extract_formal_elements(problem_statement)
+        assert f == [Expression('2*c*n**2*z**3 + 30*c*n**2 + 2*c*n*z**2 - 2*c + n**2*z**2 - 3*n*z**3 - 2*n*z'), Variable('n')]
+        assert diff_wrt(diff_wrt(f[0], f[1]), f[1]) == Expression('4*c*z**3 + 60*c + 2*z**2')
+
     def test_numbers__div_remainder(self):
         problem_statement = "Calculate the remainder when 93 is divided by 59."
         f = extract_formal_elements(problem_statement)

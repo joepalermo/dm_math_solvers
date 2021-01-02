@@ -25,6 +25,7 @@ def run_iteration(env, model, verbose=False):
     while not done:
         obs = np.expand_dims(obs, 0)
         obs = torch.from_numpy(obs)
+        # TEMP: commented out model inference to run this faster
         # action_index = sample_masked_action_from_model(env, model, obs)
         action_index = env.sample_masked_action_index()
         obs, reward, done, info = env.step(action_index)
@@ -83,12 +84,12 @@ for i in tqdm(range(n_iterations)):
     if sample_new_problem:
         module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
         _, info = env.reset_by_module_and_difficulty(module_name, difficulty)
-        # print(info['raw_observation'])
         sample_new_problem = False
         attempts_to_guess_graph = 0
     trajectory = run_iteration(env, model)
     final_reward = trajectory[-1][1]
     if final_reward == 1:
+        print(trajectory[-1][3]['raw_observation'])
         sample_new_problem = True
         rewarded_trajectories[module_name][difficulty] = trajectory
         rewarded_trajectory_statistics[(module_name,difficulty)] += 1

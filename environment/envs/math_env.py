@@ -30,6 +30,7 @@ class MathEnv(gym.Env):
             substitution_left_to_right,
             factor,
             diff,
+            diff_wrt,
             simplify,
             make_function,
             replace_arg,

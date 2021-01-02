@@ -212,6 +212,10 @@ def diff(expression: Expression) -> Expression:
     return Expression(str(sym.diff(sym.sympify(str(expression)))))
 
 
+def diff_wrt(expression: Expression, variable: Variable) -> Expression:
+    return Expression(str(sym.diff(sym.sympify(str(expression)), sym.sympify(str(variable)))))
+
+
 def replace_arg(function: Function, var: Variable) -> Function:
     # TODO: make robust to longer names (e.g. max(x), y -> may(y) which is wrong)
     return Function(str(function).replace(str(function.parameter), str(var)))
