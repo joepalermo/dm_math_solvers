@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from pathlib import Path
-from utils import read_text_file
+from utils import read_text_file, write_pickle
 from scipy.special import softmax
 from environment.envs import MathEnv
 from modelling.transformer_encoder import TransformerEncoderModel
@@ -120,7 +120,7 @@ env_config = {
 
 # define search parameters
 verbose = True
-num_steps = 1000000
+num_steps = 100000
 num_environments = 32
 max_difficulty_level = 1
 
@@ -165,3 +165,5 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
             obs_batch[i], envs_info[i] = reset_environment(envs[i], rewarded_trajectory_statistics)
     if parallel_step_i % 1000 == 0:
         inspect_performance(trajectories, rewarded_trajectory_statistics)
+
+write_pickle('mathematics_dataset-v1.0/trajectories/trajectories.pkl', trajectories)

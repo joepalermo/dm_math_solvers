@@ -5,9 +5,9 @@ ____
 Tasks
 
 
+- Make the graphs more compact (to reduce sequence length)?
 - Write sampling script
-    - Serialize rewarded trajectories
-    - Run many environments in parallel and batch queries to the model
+    - Serialize rewarded trajectories compactly
 - Setup generalized supervised learning script
     - Build train/val sets 
         - Load serialized rewarded trajectories
