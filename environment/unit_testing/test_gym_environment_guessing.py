@@ -16,7 +16,7 @@ class Test(unittest.TestCase):
             "vocab_size": 200
         }
         env = MathEnv(env_config)
-        for i in range(4,12):
+        for i in range(8,12):
             guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
 
     # def test(self):

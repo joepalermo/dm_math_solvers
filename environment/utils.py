@@ -60,7 +60,7 @@ def guess_until_problem_solved(
     encoded_problem_statement, _ = env.reset_with_specific_problem(
         "short_problems", 1, problem_index
     )
-    print(f"problem statement: {env.decode(encoded_problem_statement)}")
+    print(f"\nproblem statement: {env.decode(encoded_problem_statement)}")
     while not graph_guessed_correctly and episode_i < max_episode_index:
         _, _ = env.reset_with_specific_problem("short_problems", 1, problem_index)
         done = False
