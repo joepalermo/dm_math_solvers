@@ -36,23 +36,34 @@ def reset_all(envs):
     obs_batch = []
     for env in envs:
         module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-        obs, _ = env.reset_by_module_and_difficulty(module_name, difficulty)
-        envs_info.append({'trajectory': list(), 'module_name': module_name, 'difficulty': difficulty})
-        obs_batch.append(obs)
+        obs, info = env.reset_by_module_and_difficulty(module_name, difficulty)
+        envs_info.append({'problem_statement': info['raw_observation'],
+                          'trajectory': list(), 
+                          'module_name': module_name, 
+                          'difficulty': difficulty})
+        obs_batch.append(np.expand_dims(obs, 0))
+    obs_batch = np.concatenate(obs_batch)
     return obs_batch, envs_info
 
 
-def get_obs_batch(envs, action_batch):
-    steps = list()
+def step_all(envs, action_batch):
+    step_batch = list()
+    obs_batch = list()
     for env, action in zip(envs, action_batch):
         step = env.step(action)
-        steps.append(step)
-    return steps
+        (obs, reward, done, info) = step
+        step_batch.append(step)
+        obs_batch.append(np.expand_dims(obs, 0))
+    obs_batch = np.concatenate(obs_batch)
+    return obs_batch, step_batch
 
 
-def get_action_batch(model, obs_batch, envs):
-    obs_batch = torch.from_numpy(np.array(obs_batch))
-    logits_batch = model(obs_batch).detach().numpy()
+def get_action_batch(obs_batch, envs, model=None):
+    if model:
+        obs_batch = torch.from_numpy(obs_batch)
+        logits_batch = model(obs_batch).detach().numpy()
+    else:
+        logits_batch = np.random.uniform(size=(32,35))
     policy_batch = softmax(logits_batch, axis=1)
     actions = []
     for i, env in enumerate(envs):
@@ -63,6 +74,24 @@ def get_action_batch(model, obs_batch, envs):
         action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         actions.append(action_index)
     return actions
+
+
+def save_rewarded_trajectory(env_info, rewarded_trajectories, rewarded_trajectory_statistics):
+    module_name = env_info['module_name']
+    difficulty = env_info['difficulty']
+    trajectory = env_info['trajectory']
+    rewarded_trajectories[module_name][difficulty] = trajectory
+    rewarded_trajectory_statistics[(module_name, difficulty)] += 1
+    print(env_info['trajectory'][-1][3]['raw_observation'])
+
+
+def reset_environment(env, rewarded_trajectory_statistics):
+    module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
+    obs, info = env.reset_by_module_and_difficulty(module_name, difficulty)
+    return obs, {'problem_statement': info['raw_observation'],
+                 'trajectory': [(obs, None, None, None)],
+                 'module_name': module_name,
+                 'difficulty': difficulty}
 
 
 # define and init environment
@@ -79,7 +108,7 @@ env_config = {
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
     "num_problems_per_module": 10 ** 3,
     "validation_percentage": 0.2,
-    "max_sequence_length": 100,
+    "max_sequence_length": 300,
     "vocab_size": 200
 }
 
@@ -106,8 +135,9 @@ load_model = False
 if load_model:
     model = torch.load('modelling/models/model.pt')
 else:
-    model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
-                                dropout=dropout)
+    model = None
+    # model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
+    #                             dropout=dropout)
 
 # reset all environments
 obs_batch, envs_info = reset_all(envs)
@@ -115,20 +145,12 @@ obs_batch, envs_info = reset_all(envs)
 num_parallel_steps = num_steps // num_environments
 for _ in tqdm(range(num_parallel_steps)):
     # take a step in each environment in "parallel"
-    action_batch = get_action_batch(model, obs_batch, envs)
-    step_batch = get_obs_batch(envs, action_batch)
+    action_batch = get_action_batch(obs_batch, envs, model=model)
+    obs_batch, step_batch = step_all(envs, action_batch)
     # for each environment process the most recent step
     for i, (obs, reward, done, info) in enumerate(step_batch):
         envs_info[i]['trajectory'].append((obs, reward, done, info))
         if done:
             if reward == 1:
-                # save the rewarded trajectory
-                rewarded_trajectories[module_name][difficulty] = envs_info[i]['trajectory']
-                rewarded_trajectory_statistics[(module_name, difficulty)] += 1
-                print(envs_info[i]['trajectory'][-1][3]['raw_observation'])
-            # reset the environment
-            module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-            obs, _ = envs[i].reset_by_module_and_difficulty(module_name, difficulty)
-            envs_info[i]['trajectory'] = []
-            envs_info[i]['module_name'] = module_name
-            envs_info[i]['difficulty'] = difficulty
+                save_rewarded_trajectory(envs_info[i], rewarded_trajectories, rewarded_trajectory_statistics)
+            obs_batch[i], envs_info[i] = reset_environment(envs[i], rewarded_trajectory_statistics)
