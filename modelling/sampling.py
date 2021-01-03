@@ -9,19 +9,17 @@ from environment.envs import MathEnv
 from modelling.transformer_encoder import TransformerEncoderModel
 
 
-def init_rewarded_trajectories_data_structures(env):
+def init_trajectory_data_structures(env):
     '''define data structures to track correct graphs'''
-    rewarded_trajectories = {}
+    trajectories = {}
     rewarded_trajectory_statistics = {}
     for module_name in env.train.keys():
-        if module_name not in rewarded_trajectories:
-            rewarded_trajectories[module_name] = {}
         for difficulty in env.train[module_name].keys():
-            if difficulty not in rewarded_trajectories[module_name]:
-                rewarded_trajectories[module_name][difficulty] = []
+            if (module_name, difficulty) not in trajectories and difficulty <= max_difficulty_level:
+                trajectories[(module_name,difficulty)] = []
             if (module_name, difficulty) not in rewarded_trajectory_statistics and difficulty <= max_difficulty_level:
                 rewarded_trajectory_statistics[(module_name, difficulty)] = 0
-    return rewarded_trajectories, rewarded_trajectory_statistics
+    return trajectories, rewarded_trajectory_statistics
 
 
 def init_envs(env_config, num_environments=10):
@@ -76,12 +74,14 @@ def get_action_batch(obs_batch, envs, model=None):
     return actions
 
 
-def save_rewarded_trajectory(env_info, rewarded_trajectories, rewarded_trajectory_statistics):
+def save_trajectory(env_info, trajectories, rewarded_trajectory_statistics):
     module_name = env_info['module_name']
     difficulty = env_info['difficulty']
     trajectory = env_info['trajectory']
-    rewarded_trajectories[module_name][difficulty] = trajectory
-    rewarded_trajectory_statistics[(module_name, difficulty)] += 1
+    trajectories[(module_name,difficulty)].append(trajectory)
+    reward = trajectory[-1][1]
+    if reward == 1:
+        rewarded_trajectory_statistics[(module_name, difficulty)] += 1
 
 
 def reset_environment(env, rewarded_trajectory_statistics):
@@ -91,6 +91,13 @@ def reset_environment(env, rewarded_trajectory_statistics):
                  'trajectory': [(obs, None, None, None)],
                  'module_name': module_name,
                  'difficulty': difficulty}
+
+
+def inspect_performance(trajectories, rewarded_trajectory_statistics):
+    for module_name, difficulty in trajectories.keys():
+        if len(trajectories[(module_name,difficulty)]) > 0:
+            percentage_correct = rewarded_trajectory_statistics[(module_name,difficulty)] / len(trajectories[(module_name,difficulty)]) * 100
+            print(f"{module_name}@{difficulty}: {rewarded_trajectory_statistics[(module_name,difficulty)]} / {len(trajectories[(module_name,difficulty)])} = {round(percentage_correct, 5)}%")
 
 
 # define and init environment
@@ -112,13 +119,14 @@ env_config = {
 }
 
 # define search parameters
+verbose = True
 num_steps = 1000000
 num_environments = 32
 max_difficulty_level = 1
 
 # initialize all environments
 envs = init_envs(env_config, num_environments)
-rewarded_trajectories, rewarded_trajectory_statistics = init_rewarded_trajectories_data_structures(envs[0])
+trajectories, rewarded_trajectory_statistics = init_trajectory_data_structures(envs[0])
 
 # architecture params
 ntoken = env_config['vocab_size'] + 1
@@ -142,7 +150,7 @@ else:
 obs_batch, envs_info = reset_all(envs)
 # take steps in all environments num_parallel_steps times
 num_parallel_steps = num_steps // num_environments
-for _ in tqdm(range(num_parallel_steps)):
+for parallel_step_i in tqdm(range(num_parallel_steps)):
     # take a step in each environment in "parallel"
     action_batch = get_action_batch(obs_batch, envs, model=model)
     obs_batch, step_batch = step_all(envs, action_batch)
@@ -150,7 +158,10 @@ for _ in tqdm(range(num_parallel_steps)):
     for i, (obs, reward, done, info) in enumerate(step_batch):
         envs_info[i]['trajectory'].append((obs, reward, done, info))
         if done:
-            if reward == 1:
-                save_rewarded_trajectory(envs_info[i], rewarded_trajectories, rewarded_trajectory_statistics)
-                print(envs_info[i]['trajectory'][-1][3]['raw_observation'], envs[i].compute_graph.eval())
+            # if episode is complete, save trajectory and reset environment
+            save_trajectory(envs_info[i], trajectories, rewarded_trajectory_statistics)
+            if reward == 1 and verbose:
+                print(f"{envs_info[i]['trajectory'][-1][3]['raw_observation']} = {envs[i].compute_graph.eval()}")
             obs_batch[i], envs_info[i] = reset_environment(envs[i], rewarded_trajectory_statistics)
+    if parallel_step_i % 1000 == 0:
+        inspect_performance(trajectories, rewarded_trajectory_statistics)
