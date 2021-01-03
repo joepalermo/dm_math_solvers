@@ -236,7 +236,7 @@ def gcd(x: Value, y: Value) -> Value:
 
 
 def is_prime(x: Value) -> bool:
-    return sym.isprime(x.value)
+    return sym.isprime(int(x.value))
 
 
 def lcm(x: Value, y: Value) -> Value:

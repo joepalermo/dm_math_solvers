@@ -46,3 +46,7 @@ class Test(unittest.TestCase):
         # quadratic equation
         system = [Equation("-3*h**2/2 - 24*h - 45/2 = 0")]
         assert solve_system(system) == {Variable("h"): {Value(-15.0), Value(-1.0)}}
+
+    def test_is_prime(self):
+        assert is_prime(Value('19373'))
+        assert not_op(is_prime(Value('19374')))

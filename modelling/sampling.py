@@ -82,7 +82,6 @@ def save_rewarded_trajectory(env_info, rewarded_trajectories, rewarded_trajector
     trajectory = env_info['trajectory']
     rewarded_trajectories[module_name][difficulty] = trajectory
     rewarded_trajectory_statistics[(module_name, difficulty)] += 1
-    print(env_info['trajectory'][-1][3]['raw_observation'])
 
 
 def reset_environment(env, rewarded_trajectory_statistics):
@@ -108,7 +107,7 @@ env_config = {
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
     "num_problems_per_module": 10 ** 3,
     "validation_percentage": 0.2,
-    "max_sequence_length": 300,
+    "max_sequence_length": 400,
     "vocab_size": 200
 }
 
@@ -153,4 +152,5 @@ for _ in tqdm(range(num_parallel_steps)):
         if done:
             if reward == 1:
                 save_rewarded_trajectory(envs_info[i], rewarded_trajectories, rewarded_trajectory_statistics)
+                print(envs_info[i]['trajectory'][-1][3]['raw_observation'], envs[i].compute_graph.eval())
             obs_batch[i], envs_info[i] = reset_environment(envs[i], rewarded_trajectory_statistics)

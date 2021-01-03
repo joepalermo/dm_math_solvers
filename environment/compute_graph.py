@@ -85,7 +85,10 @@ class ComputeGraph:
         :return: the output of the compute graph
         """
         try:
-            output = eval(str(self))
+            string_to_eval = str(self)
+            if "\'param" in string_to_eval:
+                raise Exception("unreplaced params are in arb, e.g. 'param_0'")
+            output = eval(string_to_eval)
             if type(output) == set:
                 return ", ".join(sorted(list([str(x) for x in output]), reverse=True))
             else:
