@@ -155,13 +155,13 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
     action_batch = get_action_batch(obs_batch, envs, model=model)
     obs_batch, step_batch = step_all(envs, action_batch)
     # for each environment process the most recent step
-    for i, (obs, reward, done, info) in enumerate(step_batch):
-        envs_info[i]['trajectory'].append((obs.astype(np.int16), reward, done, info))
+    for i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
+        envs_info[i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
         if done:
             # if episode is complete, save trajectory and reset environment
             save_trajectory(envs_info[i], trajectories, rewarded_trajectory_statistics)
             if reward == 1 and verbose:
-                print(f"{envs_info[i]['trajectory'][-1][3]['raw_observation']} = {envs[i].compute_graph.eval()}")
+                print(f"{envs_info[i]['trajectory'][-1][4]['raw_observation']} = {envs[i].compute_graph.eval()}")
             obs_batch[i], envs_info[i] = reset_environment(envs[i], rewarded_trajectory_statistics)
     if parallel_step_i % 1000 == 0:
         inspect_performance(trajectories, rewarded_trajectory_statistics)

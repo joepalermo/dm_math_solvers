@@ -217,7 +217,7 @@ class MathEnv(gym.Env):
         compute_graph = str(self.compute_graph)
         raw_observation = f"{self.problem_statement}; {compute_graph}"
         observation = self.encode(raw_observation)
-        reward = 1 if str(output) == self.answer else 0
+        reward = 1 if str(output) == self.answer else -1
         done = (
             self.compute_graph.current_node is None
             or self.compute_graph.n_nodes >= self.max_n_nodes
