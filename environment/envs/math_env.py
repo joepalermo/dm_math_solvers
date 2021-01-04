@@ -175,7 +175,7 @@ class MathEnv(gym.Env):
         # randomly sample a module and difficulty level
         module_type = sample(list(self.train.keys()), 1)[0]
         difficulty = sample(list(self.train[module_type].keys()), 1)[0]
-        return self.reset_by_module_and_difficulty(module_type, difficulty), {'raw_observation': self.problem_statement}
+        return self.reset_by_module_and_difficulty(module_type, difficulty, train=train), {'raw_observation': self.problem_statement}
 
     def reset_with_same_problem(self):
         self.compute_graph = ComputeGraph(self.problem_statement)
@@ -184,16 +184,26 @@ class MathEnv(gym.Env):
     def reset_with_specific_problem(
         self, module_type, difficulty, problem_index, train=True
     ):
-        self.problem_statement, self.answer = self.train[module_type][difficulty][
-            problem_index
-        ]
+        if train:
+            self.problem_statement, self.answer = self.train[module_type][difficulty][
+                problem_index
+            ]
+        else:
+            self.problem_statement, self.answer = self.val[module_type][difficulty][
+                problem_index
+            ]
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
 
     def reset_by_module_and_difficulty(self, module_type, difficulty, train=True):
-        self.problem_statement, self.answer = sample(
-            self.train[module_type][difficulty], 1
-        )[0]
+        if train:
+            self.problem_statement, self.answer = sample(
+                self.train[module_type][difficulty], 1
+            )[0]
+        else:
+            self.problem_statement, self.answer = sample(
+                self.val[module_type][difficulty], 1
+            )[0]
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
 

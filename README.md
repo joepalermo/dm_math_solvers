@@ -4,17 +4,20 @@ ____
 
 Tasks
 
-
+- Put this on the cluster
+    - Multi-gpu
+    - Parallel environment steps? (only if this becomes a bottleneck)
+- Model/Optimization experiments
+    - Hyperparam search
+    - Use advantage functions?
+    - Actor/Critic?
+    - PPO?
+- Optimizing exploration
+- Scale up to whole dataset
+- Add curriculum learning
 - Make the graphs more compact (to reduce sequence length)?
-- Setup learning script
-    - Build train/val sets 
-        - Load serialized rewarded trajectories
-        - Convert them into train examples
-        - Merge them with a prescribed ratio of correct to incorrect
-        - split train/val 
-    - Sample batches
 - dropout only during training?
-- Provide access to a test set within the environment  
+- Provide access to a test set within the environment
 
 
 Optional future work:

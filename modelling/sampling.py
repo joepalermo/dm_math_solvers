@@ -30,12 +30,12 @@ def init_envs(env_config, num_environments=10):
     return envs
 
 
-def reset_all(envs):
+def reset_all(envs, train=True):
     envs_info = []
     obs_batch = []
     for env in envs:
         module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-        obs, info = env.reset_by_module_and_difficulty(module_name, difficulty)
+        obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
         envs_info.append({'problem_statement': info['raw_observation'],
                           'trajectory': list(), 
                           'module_name': module_name, 
@@ -109,13 +109,14 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
 
 # define and init environment
 filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
-filepaths = [
-    f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
-]
 # TODO: undo hack to speedup experiments
-filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
-filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
-filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
+filepaths = [f"mathematics_dataset-v1.0/train-easy/numbers__list_prime_factors.txt"]
+# filepaths = [
+#     f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
+# ]
+# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
+# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
+# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
 env_config = {
     "problem_filepaths": filepaths,
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
@@ -127,7 +128,7 @@ env_config = {
 
 # define search parameters
 verbose = True
-num_steps = 100000
+num_steps = 5000000
 num_environments = 32
 max_difficulty_level = 1
 
@@ -144,26 +145,12 @@ num_outputs = len(envs[0].actions)
 dropout = 0.2
 
 # training params
-batch_size = 32
+batch_size = 16
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
 lr = 0.1
-
-
-def compute_loss_pi(data):
-    obs, act, adv, logp_old = data['obs'], data['act'], data['adv'], data['logp']
-
-    # Policy loss
-    pi, logp = ac.pi(obs, act)
-    loss_pi = -(logp * adv).mean()
-
-    # Useful extra info
-    approx_kl = (logp_old - logp).mean().item()
-    ent = pi.entropy().mean().item()
-    pi_info = dict(kl=approx_kl, ent=ent)
-
-    return loss_pi, pi_info
-
+max_grad_norm = 0.5
+n_required_validation_episodes = 100
 
 # load model
 # TODO: set load_model as param
@@ -180,64 +167,72 @@ optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 buffer = []
 buffer_positives = 1
 buffer_negatives = 1  # init to 1 to prevent division by zero
+total_batches = 0
 obs_batch, envs_info = reset_all(envs)
 # take steps in all environments num_parallel_steps times
 num_parallel_steps = num_steps // num_environments
 for parallel_step_i in tqdm(range(num_parallel_steps)):
     # take a step in each environment in "parallel"
-    action_batch = get_action_batch(obs_batch, envs, model=dummy_model)
+    action_batch = get_action_batch(obs_batch, envs, model=model)
     obs_batch, step_batch = step_all(envs, action_batch)
     # for each environment process the most recent step
     for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
         envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
         # if episode is complete, check if trajectory should be kept in buffer and reset environment
         if done:
-
             update_rewarded_trajectory_statistics(envs_info[env_i], rewarded_trajectory_statistics)
-
             if reward == 1 and verbose:
                 print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
-
             if buffer_positives/buffer_negatives <= positive_to_negative_ratio and reward == 1:
                 buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
                 buffer.extend(buffer_trajectory)
                 buffer_positives += 1
-
             elif buffer_positives/buffer_negatives > positive_to_negative_ratio and reward == -1:
                 buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
                 buffer.extend(buffer_trajectory)
                 buffer_negatives += 1
-
             obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], rewarded_trajectory_statistics)
-
-
+    # when enough steps have been put into buffer, construct training batches and fit
     if len(buffer) > buffer_threshold:
-
         n_batches = math.floor(len(buffer) / batch_size)
+        total_batches += n_batches
         random.shuffle(buffer)
-
         for batch_i in range(n_batches):
             batch = buffer[batch_i * batch_size : (batch_i + 1) * batch_size]
-
             state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]))
             action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch]))
             reward_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[2], 0) for step in batch]))
-
             batch_logits = model(state_batch)
-            batch_probs = torch.softmax(batch_logits, axis=1)  # TODO: fix
-
+            batch_probs = torch.softmax(batch_logits, axis=1)
+            # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
             loss = -torch.mean(torch.log(batch_probs[:, action_batch]) * reward_batch)
             optimizer.zero_grad()
             loss.backward()
-            # torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
             optimizer.step()
-
-        # batch size is 32 => each batch includes 32 steps
-        # average episode len is 10, 32 episodes, 320 steps = 10 batches
-        # convert buffer into 1 or more training batches
-        # fit on those batches
-        # for state, action, trajectory_reward for ...:
-
-        # -log model(a_t|s_t)) * R(episode)
-    # if parallel_step_i % 1000 == 0:
+        # reset buffer
+        buffer = []
         # inspect validation performance
+        print(f'total_batches: {total_batches}')
+        if total_batches % 1 == 0:
+            total_reward = 0
+            n_completed_validation_episodes = 0
+            obs_batch, envs_info = reset_all(envs, train=False)
+            # take steps in all environments num_parallel_steps times
+            num_parallel_steps = num_steps // num_environments
+            for parallel_step_i in range(num_parallel_steps):
+                # take a step in each environment in "parallel"
+                action_batch = get_action_batch(obs_batch, envs, model=model)
+                obs_batch, step_batch = step_all(envs, action_batch)
+                # for each environment process the most recent step
+                for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
+                    envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
+                    # if episode is complete, check if trajectory should be kept in buffer and reset environment
+                    if done:
+                        n_completed_validation_episodes += 1
+                        total_reward += reward
+                        obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i],
+                                                                               rewarded_trajectory_statistics)
+                if n_completed_validation_episodes > n_required_validation_episodes:
+                    break
+            print(f'{total_batches} batches completed, mean validation reward: {total_reward/n_completed_validation_episodes}')
