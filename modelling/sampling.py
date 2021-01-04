@@ -79,7 +79,7 @@ def save_trajectory(env_info, trajectories, rewarded_trajectory_statistics):
     difficulty = env_info['difficulty']
     trajectory = env_info['trajectory']
     trajectories[(module_name,difficulty)].append(trajectory)
-    reward = trajectory[-1][1]
+    reward = trajectory[-1][2]
     if reward == 1:
         rewarded_trajectory_statistics[(module_name, difficulty)] += 1
 
@@ -120,7 +120,7 @@ env_config = {
 
 # define search parameters
 verbose = True
-num_steps = 10000
+num_steps = 100000
 num_environments = 32
 max_difficulty_level = 1
 
@@ -155,15 +155,13 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
     action_batch = get_action_batch(obs_batch, envs, model=model)
     obs_batch, step_batch = step_all(envs, action_batch)
     # for each environment process the most recent step
-    for i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
-        envs_info[i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
+    for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
+        envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
         if done:
             # if episode is complete, save trajectory and reset environment
-            save_trajectory(envs_info[i], trajectories, rewarded_trajectory_statistics)
+            save_trajectory(envs_info[env_i], trajectories, rewarded_trajectory_statistics)
             if reward == 1 and verbose:
-                print(f"{envs_info[i]['trajectory'][-1][4]['raw_observation']} = {envs[i].compute_graph.eval()}")
-            obs_batch[i], envs_info[i] = reset_environment(envs[i], rewarded_trajectory_statistics)
+                print(f"{envs_info[env_i]['trajectory'][-1][4]['raw_observation']} = {envs[env_i].compute_graph.eval()}")
+            obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], rewarded_trajectory_statistics)
     if parallel_step_i % 1000 == 0:
         inspect_performance(trajectories, rewarded_trajectory_statistics)
-
-write_pickle('mathematics_dataset-v1.0/trajectories/trajectories.pkl', trajectories)
