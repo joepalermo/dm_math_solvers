@@ -75,50 +75,55 @@ class MathEnv(gym.Env):
             [self.vocab_size + 1 for _ in range(self.config["max_sequence_length"])]  # increment by 1 for padding_token
         )
         # load train data
+        self.max_difficulty = self.config.get("max_difficulty", 99)  # by default set max_difficulty very high
         self.train = {}
         print("loading problems")
         for filepath in tqdm(self.config["problem_filepaths"]):
             module_name = filepath.split("/")[-1].split(".txt")[0]
             if "compose" in module_name:
                 compose = True
-                module_type = module_name.split("_compose")[0]
+                module_name = module_name.split("_compose")[0]
             else:
                 compose = False
-                module_type = module_name
+                module_name = module_name
             with open(filepath, "r") as f:
                 lines = f.readlines()
             num_pairs = min(len(lines) // 2, self.config["num_problems_per_module"])
             for i in range(0, 2 * num_pairs, 2):
                 question = lines[i].strip()
                 answer = lines[i + 1].strip()
+                # for uncomposed problems set difficulty to 0 to distinguish them
                 difficulty = (
                     len(re.split("(?<![0-9])[.,;:?]|[.,;:?](?![0-9])", question)) - 1
                     if compose
-                    else 1
+                    else 0
                 )
-                if module_type in self.train:
-                    if difficulty in self.train[module_type]:
-                        self.train[module_type][difficulty].append((question, answer))
+                # don't load problems with difficulty above the maximum
+                if difficulty > self.max_difficulty:
+                    continue
+                if module_name in self.train:
+                    if difficulty in self.train[module_name]:
+                        self.train[module_name][difficulty].append((question, answer))
                     else:
-                        self.train[module_type][difficulty] = [(question, answer)]
+                        self.train[module_name][difficulty] = [(question, answer)]
                 else:
-                    self.train[module_type] = {difficulty: [(question, answer)]}
+                    self.train[module_name] = {difficulty: [(question, answer)]}
         # split out val data
         self.val = {}
-        for module_type in self.train:
-            self.val[module_type] = {}
-            for difficulty in self.train[module_type]:
-                num_examples = len(self.train[module_type][difficulty])
+        for module_name in self.train:
+            self.val[module_name] = {}
+            for difficulty in self.train[module_name]:
+                num_examples = len(self.train[module_name][difficulty])
                 num_val = int(num_examples * self.config["validation_percentage"])
-                self.val[module_type][difficulty] = self.train[module_type][difficulty][
+                self.val[module_name][difficulty] = self.train[module_name][difficulty][
                     :num_val
                 ]
-                self.train[module_type][difficulty] = self.train[module_type][
+                self.train[module_name][difficulty] = self.train[module_name][
                     difficulty
                 ][num_val:]
                 assert (
-                    len(self.train[module_type][difficulty])
-                    + len(self.val[module_type][difficulty])
+                    len(self.train[module_name][difficulty])
+                    + len(self.val[module_name][difficulty])
                     == num_examples
                 )
         # TODO: load test data
@@ -173,36 +178,40 @@ class MathEnv(gym.Env):
 
     def reset(self, train=True):
         # randomly sample a module and difficulty level
-        module_type = sample(list(self.train.keys()), 1)[0]
-        difficulty = sample(list(self.train[module_type].keys()), 1)[0]
-        return self.reset_by_module_and_difficulty(module_type, difficulty, train=train), {'raw_observation': self.problem_statement}
+        self.module_name = sample(list(self.train.keys()), 1)[0]
+        self.difficulty = sample(list(self.train[self.module_name].keys()), 1)[0]
+        return self.reset_by_module_and_difficulty(self.module_name, self.difficulty, train=train)
 
     def reset_with_same_problem(self):
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
 
     def reset_with_specific_problem(
-        self, module_type, difficulty, problem_index, train=True
+        self, module_name, difficulty, problem_index, train=True
     ):
+        self.module_name = module_name
+        self.difficulty = difficulty
         if train:
-            self.problem_statement, self.answer = self.train[module_type][difficulty][
+            self.problem_statement, self.answer = self.train[module_name][difficulty][
                 problem_index
             ]
         else:
-            self.problem_statement, self.answer = self.val[module_type][difficulty][
+            self.problem_statement, self.answer = self.val[module_name][difficulty][
                 problem_index
             ]
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
 
-    def reset_by_module_and_difficulty(self, module_type, difficulty, train=True):
+    def reset_by_module_and_difficulty(self, module_name, difficulty, train=True):
+        self.module_name = module_name
+        self.difficulty = difficulty
         if train:
             self.problem_statement, self.answer = sample(
-                self.train[module_type][difficulty], 1
+                self.train[module_name][difficulty], 1
             )[0]
         else:
             self.problem_statement, self.answer = sample(
-                self.val[module_type][difficulty], 1
+                self.val[module_name][difficulty], 1
             )[0]
         self.compute_graph = ComputeGraph(self.problem_statement)
         return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}

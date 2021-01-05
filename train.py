@@ -17,15 +17,12 @@ if torch.cuda.is_available():
 
 def init_trajectory_data_structures(env):
     '''define data structures to track correct graphs'''
-    trajectories = {}
     rewarded_trajectory_statistics = {}
     for module_name in env.train.keys():
         for difficulty in env.train[module_name].keys():
-            if (module_name, difficulty) not in trajectories and difficulty <= max_difficulty_level:
-                trajectories[(module_name,difficulty)] = []
-            if (module_name, difficulty) not in rewarded_trajectory_statistics and difficulty <= max_difficulty_level:
+            if (module_name, difficulty) not in rewarded_trajectory_statistics:
                 rewarded_trajectory_statistics[(module_name, difficulty)] = 0
-    return trajectories, rewarded_trajectory_statistics
+    return rewarded_trajectory_statistics
 
 
 def init_envs(env_config, num_environments=10):
@@ -89,9 +86,17 @@ def update_rewarded_trajectory_statistics(env_info, rewarded_trajectory_statisti
         rewarded_trajectory_statistics[(module_name, difficulty)] += 1
 
 
-def reset_environment(env, rewarded_trajectory_statistics):
+def reset_environment(env, train=True):
+    obs, info = env.reset(train=train)
+    return obs, {'problem_statement': info['raw_observation'],
+                 'trajectory': [(obs, None, None, None, None)],
+                 'module_name': env.module_name,
+                 'difficulty': env.difficulty}
+
+
+def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_statistics, train=True):
     module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-    obs, info = env.reset_by_module_and_difficulty(module_name, difficulty)
+    obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
     return obs, {'problem_statement': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
@@ -116,30 +121,31 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
 filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
 # TODO: undo hack to speedup experiments
 # filepaths = [f"mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt"]
-filepaths = [
-    f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
-]
-filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
-filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
-filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
+filepaths = [f"mathematics_dataset-v1.0/train-easy/numbers__list_prime_factors.txt"]
+# filepaths = [
+#     f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
+# ]
+# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
+# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
+# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
 env_config = {
     "problem_filepaths": filepaths,
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
     "num_problems_per_module": 10 ** 3,
     "validation_percentage": 0.2,
     "max_sequence_length": 500,
-    "vocab_size": 200
+    "vocab_size": 200,
+    "max_difficulty": 0  # i.e. uncomposed only
 }
 
 # define search parameters
 verbose = False
 num_steps = 5000000
 num_environments = 32
-max_difficulty_level = 1
 
 # initialize all environments
 envs = init_envs(env_config, num_environments)
-_, rewarded_trajectory_statistics = init_trajectory_data_structures(envs[0])
+rewarded_trajectory_statistics = init_trajectory_data_structures(envs[0])
 
 # architecture params
 ntoken = env_config['vocab_size'] + 1
@@ -156,7 +162,7 @@ positive_to_negative_ratio = 1
 lr = 1
 lr_decay_factor = 0.8
 max_grad_norm = 0.5
-n_required_validation_episodes = 100
+n_required_validation_episodes = 500
 
 # load model
 # TODO: set load_model as param
@@ -184,7 +190,7 @@ obs_batch, envs_info = reset_all(envs)
 num_parallel_steps = num_steps // num_environments
 for parallel_step_i in tqdm(range(num_parallel_steps)):
     # take a step in each environment in "parallel"
-    action_batch = get_action_batch(obs_batch, envs, model=model)
+    action_batch = get_action_batch(obs_batch, envs, model=dummy_model)
     obs_batch, step_batch = step_all(envs, action_batch)
     # for each environment process the most recent step
     for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
@@ -230,7 +236,6 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         print(f'total_batches: {total_batches}')
         if total_batches % 10 == 0:
             scheduler.step()
-
         if total_batches % 1 == 0:
             total_reward = 0
             n_completed_validation_episodes = 0
@@ -247,11 +252,10 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
                     # if episode is complete, check if trajectory should be kept in buffer and reset environment
                     if done:
                         with open('modelling/validation_graphs.txt', 'a') as f:
-                            f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
+                            f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                         n_completed_validation_episodes += 1
                         total_reward += reward
-                        obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i],
-                                                                               rewarded_trajectory_statistics)
+                        obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
                 if n_completed_validation_episodes > n_required_validation_episodes:
                     break
             print(f'{total_batches} batches completed, mean validation reward: {total_reward/n_completed_validation_episodes}')
