@@ -50,3 +50,8 @@ class Test(unittest.TestCase):
     def test_is_prime(self):
         assert is_prime(Value('19373'))
         assert not_op(is_prime(Value('19374')))
+
+    def test_prime_factors(self):
+        result = prime_factors(Value('7380'))
+        assert ", ".join([str(x) for x in sorted(list(result))]) == '2, 3, 5, 41'
+

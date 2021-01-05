@@ -95,6 +95,12 @@ class Value(Expression):
     def __hash__(self):
         return hash(str(self.value))
 
+    def __lt__(self, other):
+        return self.value < other.value
+
+    def __gt__(self, other):
+        return self.value > other.value
+
 
 # operator definitions --------------------------------------
 
@@ -250,8 +256,13 @@ def lcm(x: Value, y: Value) -> Value:
 def prime_factors(n: Value) -> set:
     # https://stackoverflow.com/questions/16996217/prime-factorization-list
     assert int(n.value) == n.value
+
+    if is_prime(n):
+        return n
+
     n = int(n.value)
     divisors = [d for d in range(2, n // 2 + 1) if n % d == 0]
+
     return set(
         [Value(d) for d in divisors if all(d % od != 0 for od in divisors if od != d)]
     )

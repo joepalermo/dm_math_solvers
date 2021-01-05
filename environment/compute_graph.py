@@ -90,7 +90,7 @@ class ComputeGraph:
                 raise Exception("unreplaced params are in arb, e.g. 'param_0'")
             output = eval(string_to_eval)
             if type(output) == set:
-                return ", ".join(sorted(list([str(x) for x in output]), reverse=True))
+                return ", ".join([str(x) for x in sorted(list(output))])
             else:
                 return output
         except:

@@ -10,6 +10,8 @@ from modelling.transformer_encoder import TransformerEncoderModel
 import math
 import random
 
+torch.cuda.set_device(0)
+
 def init_trajectory_data_structures(env):
     '''define data structures to track correct graphs'''
     trajectories = {}
@@ -60,7 +62,7 @@ def step_all(envs, action_batch):
 def get_action_batch(obs_batch, envs, model=None):
     if model:
         obs_batch = torch.from_numpy(obs_batch)
-        logits_batch = model(obs_batch).detach().numpy()
+        logits_batch = model(obs_batch.cuda()).detach().cpu().numpy()
     else:
         logits_batch = np.random.uniform(size=(32,35))
     policy_batch = softmax(logits_batch, axis=1)
@@ -161,6 +163,9 @@ else:
     dummy_model = None
     model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
                                 dropout=dropout)
+
+model.cuda()
+
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 
 # reset all environments
@@ -201,9 +206,9 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         random.shuffle(buffer)
         for batch_i in range(n_batches):
             batch = buffer[batch_i * batch_size : (batch_i + 1) * batch_size]
-            state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]))
-            action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch]))
-            reward_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[2], 0) for step in batch]))
+            state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch])).cuda()
+            action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch])).cuda()
+            reward_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[2], 0) for step in batch])).cuda()
             batch_logits = model(state_batch)
             batch_probs = torch.softmax(batch_logits, axis=1)
             # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
