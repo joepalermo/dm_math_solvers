@@ -112,19 +112,19 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
 # define and init environment
 filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
 # TODO: undo hack to speedup experiments
-filepaths = [f"mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt"]
-# filepaths = [
-#     f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
-# ]
-# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
-# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
-# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
+# filepaths = [f"mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt"]
+filepaths = [
+    f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
+]
+filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
+filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
+filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
 env_config = {
     "problem_filepaths": filepaths,
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
     "num_problems_per_module": 10 ** 3,
     "validation_percentage": 0.2,
-    "max_sequence_length": 400,
+    "max_sequence_length": 500,
     "vocab_size": 200
 }
 
