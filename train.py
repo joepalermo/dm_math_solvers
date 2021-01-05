@@ -148,9 +148,9 @@ dropout = 0.1
 batch_size = 16
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
-lr = 0.01
-max_grad_norm = 0.1
-n_required_validation_episodes = 500
+lr = 0.1
+max_grad_norm = 0.5
+n_required_validation_episodes = 100
 
 # load model
 # TODO: set load_model as param
@@ -181,7 +181,7 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         # if episode is complete, check if trajectory should be kept in buffer and reset environment
         if done:
             update_rewarded_trajectory_statistics(envs_info[env_i], rewarded_trajectory_statistics)
-            with open('modelling/generated_graphs.txt', 'a') as f:
+            with open('modelling/training_graphs.txt', 'a') as f:
                 f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
             if reward == 1 and verbose:
                 print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
@@ -231,6 +231,8 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
                     envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
                     # if episode is complete, check if trajectory should be kept in buffer and reset environment
                     if done:
+                        with open('modelling/validation_graphs.txt', 'a') as f:
+                            f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                         n_completed_validation_episodes += 1
                         total_reward += reward
                         obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i],
