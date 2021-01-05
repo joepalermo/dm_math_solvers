@@ -51,7 +51,7 @@ nhead = 4
 nhid = 128
 nlayers = 1
 num_outputs = 4
-dropout = 0.2
+dropout = 0
 
 # training params
 n_epochs = 100

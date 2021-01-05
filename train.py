@@ -127,7 +127,7 @@ env_config = {
 }
 
 # define search parameters
-verbose = True
+verbose = False
 num_steps = 5000000
 num_environments = 32
 max_difficulty_level = 1
@@ -142,15 +142,15 @@ nhead = 4
 nhid = 128
 nlayers = 1
 num_outputs = len(envs[0].actions)
-dropout = 0.2
+dropout = 0.1
 
 # training params
 batch_size = 16
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
-lr = 0.1
-max_grad_norm = 0.5
-n_required_validation_episodes = 100
+lr = 0.01
+max_grad_norm = 0.1
+n_required_validation_episodes = 500
 
 # load model
 # TODO: set load_model as param
@@ -181,6 +181,8 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         # if episode is complete, check if trajectory should be kept in buffer and reset environment
         if done:
             update_rewarded_trajectory_statistics(envs_info[env_i], rewarded_trajectory_statistics)
+            with open('modelling/generated_graphs.txt', 'a') as f:
+                f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
             if reward == 1 and verbose:
                 print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
             if buffer_positives/buffer_negatives <= positive_to_negative_ratio and reward == 1:
