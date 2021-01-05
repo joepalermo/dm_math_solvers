@@ -61,7 +61,7 @@ def step_all(envs, action_batch):
 
 def get_action_batch(obs_batch, envs, model=None):
     if model:
-        obs_batch = torch.from_numpy(obs_batch)
+        obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
         logits_batch = model(obs_batch.cuda()).detach().cpu().numpy()
     else:
         logits_batch = np.random.uniform(size=(32,35))
@@ -112,7 +112,7 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
 # define and init environment
 filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
 # TODO: undo hack to speedup experiments
-filepaths = [f"mathematics_dataset-v1.0/train-easy/numbers__list_prime_factors.txt"]
+filepaths = [f"mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt"]
 # filepaths = [
 #     f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
 # ]
@@ -150,7 +150,8 @@ dropout = 0.1
 batch_size = 16
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
-lr = 0.1
+lr = 1
+lr_decay_factor = 0.8
 max_grad_norm = 0.5
 n_required_validation_episodes = 100
 
@@ -167,6 +168,7 @@ else:
 model.cuda()
 
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
 
 # reset all environments
 buffer = []
@@ -201,14 +203,15 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
             obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], rewarded_trajectory_statistics)
     # when enough steps have been put into buffer, construct training batches and fit
     if len(buffer) > buffer_threshold:
-        n_batches = math.floor(len(buffer) / batch_size)
+        # n_batches = math.floor(len(buffer) / batch_size)
+        n_batches = 1
         total_batches += n_batches
         random.shuffle(buffer)
         for batch_i in range(n_batches):
             batch = buffer[batch_i * batch_size : (batch_i + 1) * batch_size]
-            state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch])).cuda()
-            action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch])).cuda()
-            reward_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[2], 0) for step in batch])).cuda()
+            state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).cuda()
+            action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch]).astype(np.int64)).cuda()
+            reward_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[2], 0) for step in batch]).astype(np.int64)).cuda()
             batch_logits = model(state_batch)
             batch_probs = torch.softmax(batch_logits, axis=1)
             # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
@@ -221,6 +224,9 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         buffer = []
         # inspect validation performance
         print(f'total_batches: {total_batches}')
+        if total_batches % 10 == 0:
+            scheduler.step()
+
         if total_batches % 1 == 0:
             total_reward = 0
             n_completed_validation_episodes = 0
