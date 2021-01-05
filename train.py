@@ -8,9 +8,12 @@ from scipy.special import softmax
 from environment.envs import MathEnv
 from modelling.transformer_encoder import TransformerEncoderModel
 import math
+import torch
 import random
 
-torch.cuda.set_device(0)
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+if torch.cuda.is_available():
+    torch.cuda.set_device(0)
 
 def init_trajectory_data_structures(env):
     '''define data structures to track correct graphs'''
@@ -62,7 +65,7 @@ def step_all(envs, action_batch):
 def get_action_batch(obs_batch, envs, model=None):
     if model:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
-        logits_batch = model(obs_batch.cuda()).detach().cpu().numpy()
+        logits_batch = model(obs_batch.to(device)).detach().cpu().numpy()
     else:
         logits_batch = np.random.uniform(size=(32,35))
     policy_batch = softmax(logits_batch, axis=1)
@@ -165,7 +168,8 @@ else:
     model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
                                 dropout=dropout)
 
-model.cuda()
+
+model.to(device)
 
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
@@ -209,9 +213,9 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         random.shuffle(buffer)
         for batch_i in range(n_batches):
             batch = buffer[batch_i * batch_size : (batch_i + 1) * batch_size]
-            state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).cuda()
-            action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch]).astype(np.int64)).cuda()
-            reward_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[2], 0) for step in batch]).astype(np.int64)).cuda()
+            state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).to(device)
+            action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch]).astype(np.int64)).to(device)
+            reward_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[2], 0) for step in batch]).astype(np.int64)).to(device)
             batch_logits = model(state_batch)
             batch_probs = torch.softmax(batch_logits, axis=1)
             # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
