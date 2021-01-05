@@ -10,6 +10,7 @@ from modelling.transformer_encoder import TransformerEncoderModel
 import math
 import torch
 import random
+from torch.utils.tensorboard import SummaryWriter
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
@@ -159,8 +160,8 @@ dropout = 0.1
 batch_size = 16
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
-lr = 1
-lr_decay_factor = 0.8
+lr = 0.1
+lr_decay_factor = 1
 max_grad_norm = 0.5
 n_required_validation_episodes = 500
 
@@ -179,6 +180,7 @@ model.to(device)
 
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
+writer = SummaryWriter()
 
 # reset all environments
 buffer = []
@@ -217,7 +219,7 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         n_batches = 1
         total_batches += n_batches
         random.shuffle(buffer)
-        for batch_i in range(n_batches):
+        for batch_i in range(n_batches):  # Train
             batch = buffer[batch_i * batch_size : (batch_i + 1) * batch_size]
             state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).to(device)
             action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch]).astype(np.int64)).to(device)
@@ -226,10 +228,14 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
             batch_probs = torch.softmax(batch_logits, axis=1)
             # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
             loss = -torch.mean(torch.log(batch_probs[:, action_batch]) * reward_batch)
+
             optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
             optimizer.step()
+
+            writer.add_scalar('Loss/train', loss, total_batches)
+            writer.add_scalar('Gradients/train', grad_norm, total_batches)
         # reset buffer
         buffer = []
         # inspect validation performance
@@ -258,4 +264,7 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
                         obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
                 if n_completed_validation_episodes > n_required_validation_episodes:
                     break
-            print(f'{total_batches} batches completed, mean validation reward: {total_reward/n_completed_validation_episodes}')
+            mean_val_reward = total_reward/n_completed_validation_episodes
+            print(f'{total_batches} batches completed, mean validation reward: {mean_val_reward}')
+            writer.add_scalar('Val/reward', mean_val_reward, total_batches)
+            writer.close()
