@@ -4,21 +4,31 @@ ____
 
 Tasks
 
-- Put this on the cluster
-    - Multi-gpu
-    - Parallel environment steps? (only if this becomes a bottleneck)
-- Model/Optimization experiments
-    - Hyperparam search
-    - Use advantage functions?
+Clear Tasks
+- Breakdown validation performance by module_name and difficulty
+    
+Clear Benefit to Performance
+- dropout only during training?
+- Add padding mask
+- Make the graphs more compact?
+    - Reducing the length of the description
+
+Experiments
+- Scale up to whole dataset
+    - Any module type that doesn't converge easily, train them in isolation to figure out why 
+    
+Open Ended Improvements
+- Add curriculum learning
+- Hyperparam search
+- Optimizing exploration
+- Use advantage functions?
     - Actor/Critic?
     - PPO?
-- Optimizing exploration
-- Scale up to whole dataset
-- Add curriculum learning
-- Make the graphs more compact (to reduce sequence length)?
-- dropout only during training?
 - Provide access to a test set within the environment
 
+Less Important for now
+- Multi-gpu
+- Parallel environment steps? (only if this becomes a bottleneck)
 
 Optional future work:
     - Extend the dataset by composing all problem types more fully, then systematically study generalization of different sorts

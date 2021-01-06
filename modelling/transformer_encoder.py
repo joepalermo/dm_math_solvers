@@ -42,7 +42,7 @@ class TransformerEncoderModel(torch.nn.Module):
         # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
-        # padding_mask = torch.where(token_idxs == padding_token, 0, 1).type(torch.BoolTensor)
+        # padding_mask = torch.where(token_idxs == 200, 0, 1).type(torch.BoolTensor)
         # apply the transformer encoder
         encoding = self.transformer_encoder(embedding_with_pos)  # , src_key_padding_mask=padding_mask)
         sliced_encoding = encoding[0]

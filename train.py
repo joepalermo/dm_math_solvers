@@ -1,16 +1,16 @@
 import copy
-import torch
+import random
+
 import numpy as np
-from tqdm import tqdm
+import torch
 from pathlib import Path
-from utils import read_text_file, write_pickle
 from scipy.special import softmax
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+
 from environment.envs import MathEnv
 from modelling.transformer_encoder import TransformerEncoderModel
-import math
-import torch
-import random
-from torch.utils.tensorboard import SummaryWriter
+from utils import read_text_file
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
@@ -40,8 +40,8 @@ def reset_all(envs, train=True):
         module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
         obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
         envs_info.append({'problem_statement': info['raw_observation'],
-                          'trajectory': list(), 
-                          'module_name': module_name, 
+                          'trajectory': list(),
+                          'module_name': module_name,
                           'difficulty': difficulty})
         obs_batch.append(np.expand_dims(obs, 0))
     obs_batch = np.concatenate(obs_batch)
@@ -116,16 +116,14 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
         if len(trajectories[(module_name,difficulty)]) > 0:
             percentage_correct = rewarded_trajectory_statistics[(module_name,difficulty)] / len(trajectories[(module_name,difficulty)]) * 100
             print(f"{module_name}@{difficulty}: {rewarded_trajectory_statistics[(module_name,difficulty)]} / {len(trajectories[(module_name,difficulty)])} = {round(percentage_correct, 5)}%")
-
-
 # define and init environment
 filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
 # TODO: undo hack to speedup experiments
 # filepaths = [f"mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt"]
-filepaths = [f"mathematics_dataset-v1.0/train-easy/numbers__list_prime_factors.txt"]
-# filepaths = [
-#     f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
-# ]
+# filepaths = [f"mathematics_dataset-v1.0/train-easy/numbers__list_prime_factors.txt"]
+filepaths = [
+    f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
+]
 # filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
 # filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
 # filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
@@ -134,7 +132,7 @@ env_config = {
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
     "num_problems_per_module": 10 ** 3,
     "validation_percentage": 0.2,
-    "max_sequence_length": 500,
+    "max_sequence_length": 1500,
     "vocab_size": 200,
     "max_difficulty": 0  # i.e. uncomposed only
 }
@@ -162,7 +160,7 @@ buffer_threshold = batch_size
 positive_to_negative_ratio = 1
 lr = 0.1
 lr_decay_factor = 1
-max_grad_norm = 0.5
+max_grad_norm = 0.05
 n_required_validation_episodes = 500
 
 # load model
@@ -174,10 +172,7 @@ else:
     dummy_model = None
     model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
                                 dropout=dropout)
-
-
 model.to(device)
-
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
 writer = SummaryWriter()
@@ -219,6 +214,7 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         n_batches = 1
         total_batches += n_batches
         random.shuffle(buffer)
+        model.train()
         for batch_i in range(n_batches):  # Train
             batch = buffer[batch_i * batch_size : (batch_i + 1) * batch_size]
             state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).to(device)
@@ -242,15 +238,18 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         print(f'total_batches: {total_batches}')
         if total_batches % 10 == 0:
             scheduler.step()
+
         if total_batches % 1 == 0:
-            total_reward = 0
+            model.eval()
+            total_reward = {} # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
             n_completed_validation_episodes = 0
             obs_batch, envs_info = reset_all(envs, train=False)
             # take steps in all environments num_parallel_steps times
             num_parallel_steps = num_steps // num_environments
             for parallel_step_i in range(num_parallel_steps):
                 # take a step in each environment in "parallel"
-                action_batch = get_action_batch(obs_batch, envs, model=model)
+                with torch.no_grad():
+                    action_batch = get_action_batch(obs_batch, envs, model=model)
                 obs_batch, step_batch = step_all(envs, action_batch)
                 # for each environment process the most recent step
                 for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
@@ -259,12 +258,26 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
                     if done:
                         with open('modelling/validation_graphs.txt', 'a') as f:
                             f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
+                        k = (envs[env_i].module_name, envs[env_i].difficulty)
+                        if k in total_reward:
+                            total_reward[k]["n_completed_validation_episodes"] += 1
+                            total_reward[k]["tot_reward"] += reward
+                        else:
+                            total_reward[k] = {}
+                            total_reward[k]["n_completed_validation_episodes"] = 1
+                            total_reward[k]["tot_reward"] = reward
                         n_completed_validation_episodes += 1
-                        total_reward += reward
+
                         obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
                 if n_completed_validation_episodes > n_required_validation_episodes:
                     break
-            mean_val_reward = total_reward/n_completed_validation_episodes
+            all_modules_reward = 0
+            for k in total_reward.keys():
+                mean_val_reward = total_reward[k]["tot_reward"] / total_reward[k]["n_completed_validation_episodes"]
+                all_modules_reward += total_reward[k]["tot_reward"]
+                writer.add_scalar(f'Val/{k[0]}_{k[1]}_reward', mean_val_reward, total_batches)
+
+            mean_val_reward = all_modules_reward / n_completed_validation_episodes
+            writer.add_scalar('Val/tot_reward', mean_val_reward, total_batches)
             print(f'{total_batches} batches completed, mean validation reward: {mean_val_reward}')
-            writer.add_scalar('Val/reward', mean_val_reward, total_batches)
             writer.close()
