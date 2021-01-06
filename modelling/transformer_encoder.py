@@ -24,9 +24,12 @@ class PositionalEncoding(torch.nn.Module):
 
 
 class TransformerEncoderModel(torch.nn.Module):
-    def __init__(self, ntoken, nhead, nhid, nlayers, num_outputs, dropout):
+    def __init__(self, ntoken, nhead, nhid, nlayers, num_outputs, dropout, device):
         super().__init__()
         torch.nn.Module.__init__(self)
+        # ntoken is vocab_size + 1 and vocab_size is index of padding_token, thus need to decrement ntoken by 1
+        self.padding_token = ntoken - 1
+        self.device = device
         self.token_embedding = torch.nn.Embedding(ntoken, nhid)
         self.pos_encoder = PositionalEncoding(nhid, dropout)
         self.transformer_encoder = TransformerEncoder(
@@ -42,9 +45,10 @@ class TransformerEncoderModel(torch.nn.Module):
         # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
-        # padding_mask = torch.where(token_idxs == 200, 0, 1).type(torch.BoolTensor)
+        padding_mask = torch.where(token_idxs == self.padding_token, 1, 0).type(torch.BoolTensor).to(self.device)
         # apply the transformer encoder
-        encoding = self.transformer_encoder(embedding_with_pos)  # , src_key_padding_mask=padding_mask)
+        # encoding = self.transformer_encoder(embedding_with_pos)
+        encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         sliced_encoding = encoding[0]
         logits = self.policy_output(sliced_encoding)
         return logits

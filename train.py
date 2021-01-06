@@ -171,7 +171,7 @@ if load_model:
 else:
     dummy_model = None
     model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
-                                dropout=dropout)
+                                dropout=dropout, device=device)
 model.to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)

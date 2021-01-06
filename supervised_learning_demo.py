@@ -8,7 +8,14 @@ from utils import read_text_file
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
+from torch.utils.tensorboard import SummaryWriter
 
+torch.manual_seed(42)
+np.random.seed(seed=42)
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+if torch.cuda.is_available():
+    torch.cuda.set_device(0)
 
 def load_data_from_corpus(filepath):
     examples = read_text_file(filepath).split('\n')
@@ -54,7 +61,7 @@ num_outputs = 4
 dropout = 0
 
 # training params
-n_epochs = 100
+n_epochs = 8
 batch_size = 64
 lr = 1
 lr_decay_factor = 0.8
@@ -88,33 +95,36 @@ valid_ys = torch.from_numpy(valid_ys)
 # train and validate model ---------------------------------------------------------------------------------------------
 
 model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
-                                dropout=dropout)
+                                dropout=dropout, device=device).cuda()
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
+writer = SummaryWriter(comment="_seed_42_yes_padding")
 
+total_batches = 0
 for epoch in range(n_epochs):
     # shuffle training set indices
     permutation = torch.randperm(train_xs.size()[0])
     for batch_i, i in enumerate(list(range(0, train_xs.size()[0], batch_size))):
         batch_indices = permutation[i:i+batch_size]
         batch_xs, batch_ys = train_xs[batch_indices], train_ys[batch_indices]
-        batch_logits = model(batch_xs)
-        loss = criterion(batch_logits, batch_ys)
+        batch_logits = model(batch_xs.cuda())
+        loss = criterion(batch_logits, batch_ys.cuda())
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
         optimizer.step()
-        if i % 10 == 0:
-            print(f'train_loss @ step #{batch_i}', loss.item())
-            valid_logits = model(valid_xs)
+        total_batches += 1
+        if total_batches % 10 == 0:
+            print(f'train_loss @ step #{total_batches}', loss.item())
+            valid_logits = model(valid_xs.cuda())
             valid_preds = torch.argmax(valid_logits, axis=1)
-            valid_preds = valid_preds.detach().numpy()
-            valid_targets = valid_ys.detach().numpy()
+            valid_preds = valid_preds.detach().cpu().numpy()
+            valid_targets = valid_ys.detach().cpu().numpy()
             valid_acc = accuracy_score(valid_targets, valid_preds)
             print(f'valid_acc', valid_acc)
-            if valid_acc == 1:
-                torch.save(model, 'modelling/models/gcd.pt')
-                break
+            writer.add_scalar('Val/acc', valid_acc, total_batches)
+            writer.add_scalar('Train/loss', loss.item(), total_batches)
+            writer.close()
     scheduler.step()
 
