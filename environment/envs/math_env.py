@@ -20,28 +20,28 @@ class MathEnv(gym.Env):
     def __init__(self, config):
         self.config = config
         self.operators = [
-            lookup_value,
-            solve_system,
-            append,
-            append_to_empty_list,
-            make_equality,
-            lookup_value_eq,
-            extract_isolated_variable,
-            substitution_left_to_right,
-            factor,
-            diff,
-            diff_wrt,
-            simplify,
-            make_function,
-            replace_arg,
+            l_v,
+            ss,
+            ap,
+            ape,
+            meq,
+            lve,
+            eiv,
+            slr,
+            fac,
+            df,
+            dfw,
+            sy,
+            mfn,
+            ra,
             mod,
             gcd,
-            mod_eq_0,
-            is_prime,
+            md0,
+            ip,
             lcm,
-            prime_factors,
-            function_application,
-            not_op
+            pf,
+            fa,
+            nt
         ]
         self.operator_output_types = [
             signature(operator).return_annotation for operator in self.operators
@@ -50,17 +50,17 @@ class MathEnv(gym.Env):
             self.max_formal_elements = 2
             self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
             self.max_n_nodes = 3
-        elif config.get("mode", None) == "is_prime":
+        elif config.get("mode", None) == "ip":
             self.max_formal_elements = 1
-            self.actions = [is_prime, not_op] + [f"f{i}" for i in range(self.max_formal_elements)]
+            self.actions = [ip, nt] + [f"f{i}" for i in range(self.max_formal_elements)]
             self.max_n_nodes = 3
-        elif config.get("mode", None) == "diff": # TODO: fix
+        elif config.get("mode", None) == "df": # TODO: fix
             self.max_formal_elements = 1
-            self.actions = [diff] + [f"f{i}" for i in range(self.max_formal_elements)]
+            self.actions = [df] + [f"f{i}" for i in range(self.max_formal_elements)]
             self.max_n_nodes = 2
-        elif config.get("mode", None) == "prime_factors":
+        elif config.get("mode", None) == "pf":
             self.max_formal_elements = 1
-            self.actions = [prime_factors] + [f"f{i}" for i in range(self.max_formal_elements)]
+            self.actions = [pf] + [f"f{i}" for i in range(self.max_formal_elements)]
             self.max_n_nodes = 2
         else:
             self.max_formal_elements = 13  # TODO: make into a hyperparameter

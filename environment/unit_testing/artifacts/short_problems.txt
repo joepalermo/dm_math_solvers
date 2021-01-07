@@ -12,7 +12,7 @@ Calculate the remainder when 93 is divided by 59.
 34
 Calculate the highest common divisor of 1300 and 300.
 100
-Is 15 a factor of 720?
+Is 15 a fac of 720?
 True
 Is 93163 a prime number?
 False

@@ -1,9 +1,9 @@
 core_set:
-    -lookup_value
-    -solve_system
-    -make_equality
-    -function_application
-    -substitution_left_to_right
+    -l_v
+    -ss
+    -meq
+    -fa
+    -slr
     -differentiate
 
 algebra__linear_1d_composed.txt
@@ -12,8 +12,8 @@ algebra__linear_2d_composed.txt
     -core_set
 algebra__polynomial_roots_composed.txt
     -core_set
-    -replace_arg
-    -factor
+    -ra
+    -fac
 calculus__differentiate_composed.txt
     -core_set
 polynomials__evaluate_composed.txt
@@ -40,11 +40,11 @@ numbers__div_remainder_composed.txt
 numbers__gcd_composed.txt
     -core_set + gcd
 numbers__is_factor_composed.txt
-    -core_set + mod_eq_0
+    -core_set + md0
 numbers__is_prime_composed.txt
-    -core_set + is_prime
+    -core_set + ip
 numbers__lcm_composed.txt
     -core_set + lcm
 numbers__list_prime_factors_composed.txt
-    -core_set + prime_factors
+    -core_set + pf
 

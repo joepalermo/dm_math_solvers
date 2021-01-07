@@ -19,7 +19,7 @@ if torch.cuda.is_available():
 
 def load_data_from_corpus(filepath):
     examples = read_text_file(filepath).split('\n')
-    examples = [e for e in examples if e.count('gcd') < 2 and e.count('; Value') < 1]
+    examples = [e for e in examples if e.count('gcd') < 2 and e.count('; Val') < 1]
     return examples
 
 

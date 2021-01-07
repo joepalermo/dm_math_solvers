@@ -1,5 +1,5 @@
 import re
-from environment.typed_operators import Equation, Function, Expression, Variable, Value
+from environment.typed_operators import Eq, Fn, Ex, Var, Val
 
 
 def is_numeric(string):
@@ -41,15 +41,15 @@ def extract_formal_elements(question):
 def cast_formal_element(f):
     if "=" in f:
         try:
-            return Function(f)
+            return Fn(f)
         except:
-            return Equation(f)
+            return Eq(f)
     elif len(f) == 1 and f.isalpha():
-        return Variable(f)
+        return Var(f)
     elif f.isnumeric():
-        return Value(f)
+        return Val(f)
     else:
-        return Expression(f)
+        return Ex(f)
 
 
 def guess_until_problem_solved(

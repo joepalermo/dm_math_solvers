@@ -17,7 +17,7 @@ differentiable:
 
   requires linear interpolation:
     round
-    is_prime
+    ip
     is_composite
     repeated_function_application
 
@@ -43,7 +43,7 @@ non-differentiable:
 base
 hcd
 lcm
-prime_factors
+pf
 differentiate
 
 polynomial_simplify
@@ -51,7 +51,7 @@ function_simplify
 
 function_inverse
 
-append
+ap
 add_keypair
 
 frequency_count

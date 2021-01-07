@@ -55,7 +55,7 @@ class ComputeGraph:
             assert current_node.action[0] == "f"
             formal_element = self.lookup_formal_element(current_node.action)
             return f"{type(formal_element).__name__}('{formal_element}')"
-        elif current_node.action is None:  # case: None (i.e. for an append)
+        elif current_node.action is None:  # case: None (i.e. for an ap)
             return "None"
         else:
             arg_strings = []
@@ -63,7 +63,7 @@ class ComputeGraph:
                 num_params = current_node.num_parameters
                 num_args = len(current_node.args)
                 args = current_node.args + [
-                    f"param_{i}" for i in range(num_args, num_params)
+                    f"p_{i}" for i in range(num_args, num_params)
                 ]
             else:
                 args = current_node.args
@@ -86,8 +86,8 @@ class ComputeGraph:
         """
         try:
             string_to_eval = str(self)
-            if "\'param" in string_to_eval:
-                raise Exception("unreplaced params are in arb, e.g. 'param_0'")
+            if "\'p_" in string_to_eval:
+                raise Exception("unreplaced params are in arb, e.g. 'p_0'")
             output = eval(string_to_eval)
             if type(output) == set:
                 return ", ".join([str(x) for x in sorted(list(output))])

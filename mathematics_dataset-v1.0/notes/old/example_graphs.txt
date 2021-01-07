@@ -5,16 +5,16 @@ arg2 <- 300
 
 Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f.
 lin_sys(arg1, arg2)
-arg1 <- append(arg3, 0 = 4*f - 0*t - 4*t - 4)
+arg1 <- ap(arg3, 0 = 4*f - 0*t - 4*t - 4)
 arg2 <- f
-arg3 <- append(arg4, -4*f + t = -13)
+arg3 <- ap(arg4, -4*f + t = -13)
 arg4 <- nil
 
 Suppose -3*z + 133 = 4*n - 10, 5*n = 25. Let l = -21 + z. Let r = l + -11. Calculate the least common multiple of 7 and r.
 lcm(arg1, arg2)
 arg1 <- 7
 arg2 <- lin_sys(arg3, arg4)
-arg3 <- append(arg5, arg6)
+arg3 <- ap(arg5, arg6)
 arg4 <- r
 arg5 <-
 
@@ -40,10 +40,10 @@ arg1 <- (0 + (sqrt(1008) + sqrt(1008) + 1)*-4)**2
 Let q = -54.3 + 54. Suppose 0 = -5*z - 8 - 7. Which is the nearest to -1/5?  (a) 5  (b) z  (c) q
 closest_to(arg1, arg2)
 arg1 <- -1/5
-arg2 <- append(arg3, arg4)
-arg3 <- append(arg5, arg6)
+arg2 <- ap(arg3, arg4)
+arg3 <- ap(arg5, arg6)
 arg4 <- 5
-arg5 <- append(arg7, arg8)
+arg5 <- ap(arg7, arg8)
 arg6 <- lin_sys(arg9, arg10) # z
 arg7 <- nil
 arg8 <- lin_sys(arg11, arg12) # q
@@ -115,14 +115,14 @@ arg3 <- 3
 arg4 <- 11
 
 Let w(b) = -2*b - 3. Suppose 0*j + 16 = -3*j - o, j + 3*o = 8. Let u = j - -5. What is w(u)?
-function_application(arg1, arg2)
+fa(arg1, arg2)
 arg1 <- w(b) = -2*b - 3
 arg2 <- sub(arg3, arg4)
 arg3 <- lin_sys(arg5, arg6)
 arg4 <- -5
-arg5 <- append(arg7, arg8)
+arg5 <- ap(arg7, arg8)
 arg6 <- j
-arg7 <- append(arg9, arg10)
+arg7 <- ap(arg9, arg10)
 arg8 <- 0*j + 16 = -3*j - o
 arg9 <- nil
 arg10 <- j + 3*o = 8
@@ -230,15 +230,15 @@ Let f be 4/22 - 20/(-11). Suppose s = -0*s + 4*n + 12, 0 = -n - f. Which is the 
 easy
 
 Is 93163 a prime number?
-is_prime(arg1)
+ip(arg1)
 ...
 
 Suppose 3*n = -0*x - 3*x + 93, -2*n - 2 = 0. Does 12 divide x?
 divides(arg1, arg2)
 arg1 <- 12
 arg2 <- lin_sys(arglist1, arg3)
-arglist1 <- append...(arglist1, 3*n = -0*x - 3*x + 93)
-arglist1 <- append...(arglist1, -2*n - 2 = 0)
+arglist1 <- ap...(arglist1, 3*n = -0*x - 3*x + 93)
+arglist1 <- ap...(arglist1, -2*n - 2 = 0)
 arglist1 <- end
 arg3 <- x
 
@@ -249,7 +249,7 @@ arg2 <- 59
 
 Solve 0 = 4*b + b + 15 for b.
 lin_sys(arglist1, arg1)
-arglist1 <- append...(arglist1, 0 = 4*b + b + 15)
+arglist1 <- ap...(arglist1, 0 = 4*b + b + 15)
 arg1 <- b
 
 Suppose 2*y + 12 = 6*y. Suppose y = f - 15. Solve -8 = -4*w, -3*d - 4*w + f = -8*d for d.
@@ -265,11 +265,11 @@ easy
 What are the prime factors of 329?
 easy
 
-Is 15 a factor of 720?
+Is 15 a fac of 720?
 easy
 
 Let k(w) = -w**2 + 13*w - 4. What are the prime factors of k(6)?
-prime_factors(arg1)
-arg1 <- function_application(arg2, arg3)
+pf(arg1)
+arg1 <- fa(arg2, arg3)
 arg2 <- k(w) = -w**2 + 13*w - 4
 arg3 <- 6

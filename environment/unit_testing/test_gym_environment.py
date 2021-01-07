@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
         observation_, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; Equation('0 = 4*b + b + 15')"
+            == f"{problem_statement}; Eq('0 = 4*b + b + 15')"
         )
         assert reward == 0
         assert done
@@ -53,15 +53,15 @@ class Test(unittest.TestCase):
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Solve 0 = 4*b + b + 15 for b."
-        action = solve_system
+        action = ss
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-            info["raw_observation"] == f"{problem_statement}; solve_system('param_0')"
+            info["raw_observation"] == f"{problem_statement}; ss('param_0')"
         )
         assert reward == 0
         assert not done
-        # assert that lookup_value & append are the only actions not masked
+        # assert that l_v & ap are the only actions not masked
         # policy_vector = env.sample_masked_policy_vector()
         # np.testing.assert_equal(np.ceil(policy_vector), np.array([1,0,1,1,0,0]))
         # next action
@@ -70,7 +70,7 @@ class Test(unittest.TestCase):
         observation_, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; solve_system(Equation('0 = 4*b + b + 15'))"
+            == f"{problem_statement}; ss(Eq('0 = 4*b + b + 15'))"
         )
         assert reward == 0
         assert done
@@ -114,27 +114,27 @@ class Test(unittest.TestCase):
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Solve 0 = 4*b + b + 15 for b."
-        action = lookup_value
+        action = l_v
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lookup_value('param_0','param_1')"
+            == f"{problem_statement}; l_v('param_0','param_1')"
         )
         assert reward == 0
         assert not done
         assert env.compute_graph.current_node == env.compute_graph.root
-        # assert that lookup_value & solve_system are the only actions not masked
-        # because dict: is object, is dict, is not list, is not Equation, is not Variable
+        # assert that l_v & ss are the only actions not masked
+        # because dict: is object, is dict, is not list, is not Eq, is not Var
         # policy_vector = env.sample_masked_policy_vector()
         # np.testing.assert_equal(np.ceil(policy_vector), np.array([1, 1, 0, 0, 0, 0]))
         # next action
-        action = solve_system
+        action = ss
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lookup_value(solve_system('param_0'),'param_1')"
+            == f"{problem_statement}; l_v(ss('param_0'),'param_1')"
         )
         assert reward == 0
         assert not done
@@ -146,19 +146,19 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lookup_value(solve_system('param_0'),Variable('b'))"
+            == f"{problem_statement}; l_v(ss('param_0'),Var('b'))"
         )
         assert reward == 0
         assert not done
-        # current node is now the solve_system node because the lookup_value node has its args set
+        # current node is now the ss node because the l_v node has its args set
         assert env.compute_graph.current_node == env.compute_graph.root.args[0]
         # next action
-        action = append_to_empty_list
+        action = ape
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lookup_value(solve_system(append_to_empty_list('param_0')),Variable('b'))"
+            == f"{problem_statement}; l_v(ss(ape('param_0')),Var('b'))"
         )
         assert reward == 0
         assert not done
@@ -168,7 +168,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lookup_value(solve_system(append_to_empty_list(Equation('0 = 4*b + b + 15'))),Variable('b'))"
+            == f"{problem_statement}; l_v(ss(ape(Eq('0 = 4*b + b + 15'))),Var('b'))"
         )
         assert reward == 1
         assert done
@@ -189,7 +189,7 @@ class Test(unittest.TestCase):
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Calculate the remainder when 93 is divided by 59."
-        assert env.compute_graph.formal_elements == [Value("93"), Value("59")]
+        assert env.compute_graph.formal_elements == [Val("93"), Val("59")]
         # first action
         action = mod
         action_index = env.get_action_index(action)
@@ -205,7 +205,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; mod(Value('93'),'param_1')"
+            == f"{problem_statement}; mod(Val('93'),'param_1')"
         )
         assert reward == 0
         assert not done
@@ -215,7 +215,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; mod(Value('93'),Value('59'))"
+            == f"{problem_statement}; mod(Val('93'),Val('59'))"
         )
         assert reward == 1
         assert done
@@ -252,7 +252,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{problem_statement}; gcd(Value('1300'),'param_1')"
+                == f"{problem_statement}; gcd(Val('1300'),'param_1')"
         )
         assert reward == 0
         assert not done
@@ -262,7 +262,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{problem_statement}; gcd(Value('1300'),Value('300'))"
+                == f"{problem_statement}; gcd(Val('1300'),Val('300'))"
         )
         assert reward == 1
         assert done
@@ -273,7 +273,7 @@ class Test(unittest.TestCase):
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
             "validation_percentage": 0,
-            "mode": "is_prime",
+            "mode": "ip",
             "max_sequence_length": 100,
             "vocab_size": 200
         }
@@ -285,11 +285,11 @@ class Test(unittest.TestCase):
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Is 93163 a prime number?"
         # first action
-        action = is_prime
+        action = ip
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; is_prime('param_0')"
+                info["raw_observation"] == f"{problem_statement}; ip('param_0')"
         )
         assert reward == 0
         assert not done
@@ -299,7 +299,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{problem_statement}; is_prime(Value('93163'))"
+                == f"{problem_statement}; ip(Val('93163'))"
         )
         assert reward == 1
         assert done
@@ -310,7 +310,7 @@ class Test(unittest.TestCase):
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
             "validation_percentage": 0,
-            "mode": "is_prime",
+            "mode": "ip",
             "max_sequence_length": 100,
             "vocab_size": 200
         }
@@ -322,21 +322,21 @@ class Test(unittest.TestCase):
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Is 66574 a composite number?"
         # first action
-        action = not_op
+        action = nt
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; not_op('param_0')"
+                info["raw_observation"] == f"{problem_statement}; nt('param_0')"
         )
         assert reward == 0
         assert not done
         # next action
-        action = is_prime
+        action = ip
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{problem_statement}; not_op(is_prime('param_0'))"
+                == f"{problem_statement}; nt(ip('param_0'))"
         )
         assert reward == 0
         assert not done
@@ -346,7 +346,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{problem_statement}; not_op(is_prime(Value('66574')))"
+                == f"{problem_statement}; nt(ip(Val('66574')))"
         )
         assert reward == 1
         assert done
@@ -357,7 +357,7 @@ class Test(unittest.TestCase):
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
             "validation_percentage": 0,
-            "mode": "is_prime",
+            "mode": "ip",
             "max_sequence_length": 100,
             "vocab_size": 200
         }
@@ -369,20 +369,20 @@ class Test(unittest.TestCase):
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Is 66574 a composite number?"
         # take action
-        action = not_op
+        action = nt
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; not_op('param_0')"
+                info["raw_observation"] == f"{problem_statement}; nt('param_0')"
         )
         assert reward == 0
         assert not done
         # take action
-        action = not_op
+        action = nt
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; not_op(not_op('param_0'))"
+                info["raw_observation"] == f"{problem_statement}; nt(nt('param_0'))"
         )
         assert reward == 0
         assert not done

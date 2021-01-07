@@ -7,7 +7,7 @@ def append(ls, value):
     if not ls:
         return [value]
     else:
-        ls.append(value)
+        ls.ap(value)
         return ls
 
 

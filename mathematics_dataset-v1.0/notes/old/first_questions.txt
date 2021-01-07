@@ -161,17 +161,17 @@ What is the remainder when 164 is divided by 85?
 
 numbers__gcd: 
 Calculate the highest common divisor of 1300 and 300.
-Calculate the greatest common factor of 11130 and 6.
+Calculate the greatest common fac of 11130 and 6.
 What is the greatest common divisor of 352 and 3454?
 Calculate the greatest common divisor of 17 and 272.
 Calculate the highest common divisor of 11711 and 49.
 
 numbers__is_factor: 
-Is 15 a factor of 720?
+Is 15 a fac of 720?
 Does 11 divide 1973?
 Is 347 a multiple of 3?
 Does 28 divide 1204?
-Is 17 a factor of 3594?
+Is 17 a fac of 3594?
 
 numbers__is_prime: 
 Is 93163 a prime number?

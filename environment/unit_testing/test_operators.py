@@ -5,53 +5,53 @@ from environment.typed_operators import *
 
 class Test(unittest.TestCase):
     def test_value(self):
-        assert Value(1) == Value(1.0)
-        assert {Value(1)} == {Value(1)}
-        assert {Value(1)} == {Value(1.0)}
+        assert Val(1) == Val(1.0)
+        assert {Val(1)} == {Val(1)}
+        assert {Val(1)} == {Val(1.0)}
 
     def test_solve_system(self):
-        system = [Equation("x = 1")]
-        assert solve_system(system) == {Variable("x"): {Value(1)}}
+        system = [Eq("x = 1")]
+        assert ss(system) == {Var("x"): {Val(1)}}
 
-        system = [Equation("x = 1"), Equation("y = 1")]
-        assert solve_system(system) == {
-            Variable("x"): {Value(1)},
-            Variable("y"): {Value(1)},
+        system = [Eq("x = 1"), Eq("y = 1")]
+        assert ss(system) == {
+            Var("x"): {Val(1)},
+            Var("y"): {Val(1)},
         }
 
-        system = [Equation("x + y = 1"), Equation("x - y = 1")]
-        assert solve_system(system) == {
-            Variable("x"): {Value(1)},
-            Variable("y"): {Value(0)},
+        system = [Eq("x + y = 1"), Eq("x - y = 1")]
+        assert ss(system) == {
+            Var("x"): {Val(1)},
+            Var("y"): {Val(0)},
         }
 
-        system = [Equation("3*x + y = 9"), Equation("x + 2*y = 8")]
-        assert solve_system(system) == {
-            Variable("x"): {Value(2)},
-            Variable("y"): {Value(3)},
+        system = [Eq("3*x + y = 9"), Eq("x + 2*y = 8")]
+        assert ss(system) == {
+            Var("x"): {Val(2)},
+            Var("y"): {Val(3)},
         }
 
         # # fails on singular matrix
         system = [
-            Equation("x + 2*y - 3*z = 1"),
-            Equation("3*x - 2*y + z = 2"),
-            Equation("-x + 2*y - 2*z = 3"),
+            Eq("x + 2*y - 3*z = 1"),
+            Eq("3*x - 2*y + z = 2"),
+            Eq("-x + 2*y - 2*z = 3"),
         ]
-        self.assertRaises(Exception, solve_system, system)
+        self.assertRaises(Exception, ss, system)
 
         # system with floating point coefficients
-        system = [Equation("-15 = 3*c + 2.0*c")]
-        assert solve_system(system) == {Variable("c"): {Value(-3)}}
+        system = [Eq("-15 = 3*c + 2.0*c")]
+        assert ss(system) == {Var("c"): {Val(-3)}}
 
         # quadratic equation
-        system = [Equation("-3*h**2/2 - 24*h - 45/2 = 0")]
-        assert solve_system(system) == {Variable("h"): {Value(-15.0), Value(-1.0)}}
+        system = [Eq("-3*h**2/2 - 24*h - 45/2 = 0")]
+        assert ss(system) == {Var("h"): {Val(-15.0), Val(-1.0)}}
 
     def test_is_prime(self):
-        assert is_prime(Value('19373'))
-        assert not_op(is_prime(Value('19374')))
+        assert ip(Val('19373'))
+        assert nt(ip(Val('19374')))
 
     def test_prime_factors(self):
-        result = prime_factors(Value('7380'))
+        result = pf(Val('7380'))
         assert ", ".join([str(x) for x in sorted(list(result))]) == '2, 3, 5, 41'
 

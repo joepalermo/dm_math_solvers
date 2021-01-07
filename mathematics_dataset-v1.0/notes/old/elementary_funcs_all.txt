@@ -19,14 +19,14 @@ predicates:
 
 is_equal
 is_composite
-is_prime
+ip
 divides
 
 numeric output:
 
 hcd
 lcm
-prime_factors
+pf
 
 algebra++:
 
@@ -44,7 +44,7 @@ inverse
 
 data structures:
 
-append
+ap
 add_keypair
 
 other:
