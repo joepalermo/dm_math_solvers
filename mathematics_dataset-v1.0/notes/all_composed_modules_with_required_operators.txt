@@ -1,5 +1,5 @@
 core_set:
-    -l_v
+    -lv
     -ss
     -meq
     -fa

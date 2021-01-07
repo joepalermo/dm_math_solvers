@@ -12,7 +12,7 @@ class Test(unittest.TestCase):
         assert fs == [Eq("0 = 4*b + b + 15"), Var("b")]
         system = ap([], fs[0])
         solution = ss(system)
-        value = l_v(solution, fs[1])
+        value = lv(solution, fs[1])
         assert value == Val(-3)
 
     def test_easy_algebra__linear_1d_composed(self):
@@ -31,7 +31,7 @@ class Test(unittest.TestCase):
         soln = ss(system)
         i_eq = lve(soln, eiv(f[3]))
         lin_eq = slr(f[4], i_eq)
-        assert l_v(ss(ap([], lin_eq)), f[5]) == Val(-3)
+        assert lv(ss(ap([], lin_eq)), f[5]) == Val(-3)
 
     def test_easy_algebra__linear_2d(self):
         problem_statement = "Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f."
@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
             Var("f"),
         ]
 
-        assert l_v(
+        assert lv(
             ss(ap(ap([], f[0]), f[1])), f[2]
         ) == Val(4)
 
@@ -57,13 +57,13 @@ class Test(unittest.TestCase):
             Var("d"),
         ]
         system = ap(ap(ap(ap(None, f[0]), f[1]), f[2]), f[3])
-        assert l_v(ss(system), f[4]) == Val(-2)
+        assert lv(ss(system), f[4]) == Val(-2)
 
     def test_algebra__polynomial_roots_1(self):
         problem_statement = "Solve -3*h**2/2 - 24*h - 45/2 = 0 for h."
         f = extract_formal_elements(problem_statement)
         assert f == [Eq("-3*h**2/2 - 24*h - 45/2 = 0"), Var("h")]
-        soln = l_v(ss(ap([], f[0])), f[1])
+        soln = lv(ss(ap([], f[0])), f[1])
         assert soln == {Val(-1), Val(-15)}
 
     def test_algebra__polynomial_roots_2(self):
@@ -81,7 +81,7 @@ class Test(unittest.TestCase):
             Var("s"),
             Eq("9*s**4 - 8958*s**3 - 14952*s**2 - 2994*s + 2991 = 0"),
         ]
-        assert l_v(ss(ap([], f[1])), f[0]) == {
+        assert lv(ss(ap([], f[1])), f[0]) == {
             Val(-1),
             Val(1 / 3),
             Val(997),
@@ -105,7 +105,7 @@ class Test(unittest.TestCase):
         equation = slr(
             f[3], v_eq_o
         )  # e.g. x.subs(sym.sympify('f(x)'), sym.sympify('v'))
-        assert l_v(ss(ap([], equation)), f[4]) == {
+        assert lv(ss(ap([], equation)), f[4]) == {
             Val(-1 / 3),
             Val(1),
         }
@@ -178,7 +178,7 @@ class Test(unittest.TestCase):
     # def test_comparison__sort_composed(self):
     #     problem_statement = 'Suppose $f[0 = -4*x + 8*x - 40]. Let $f[h(i) = i**2 - 9*i - 14]. Let $f[n] be $f[h(x)]. Sort $f[-1], $f[4], $f[n].'
     #     f = extract_formal_elements(problem_statement)
-    #     x = l_v(ss(f[0]), get
+    #     x = lv(ss(f[0]), get
 
     # def test_arithmetic__add_or_sub_in_base(self):
     #     problem_statement = 'In base 13, what is 7a79 - -5?'

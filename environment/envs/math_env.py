@@ -20,7 +20,7 @@ class MathEnv(gym.Env):
     def __init__(self, config):
         self.config = config
         self.operators = [
-            l_v,
+            lv,
             ss,
             ap,
             ape,

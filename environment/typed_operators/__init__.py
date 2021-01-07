@@ -156,8 +156,8 @@ def ape(equation: Eq) -> list:
     return [equation]
 
 
-# l_v(mapping: Dict[Var, Set[Val]], key: Var)
-def l_v(mapping: dict, key: Var) -> object:
+# lv(mapping: Dict[Var, Set[Val]], key: Var)
+def lv(mapping: dict, key: Var) -> object:
     """lookup_value"""
     # TODO: figure out how to constrain output type in this case (multiple output types)
     assert key in mapping

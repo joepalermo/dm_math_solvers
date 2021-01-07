@@ -1,138 +1,55 @@
-import copy
 import random
-
 import numpy as np
 import torch
 from pathlib import Path
-from scipy.special import softmax
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-
-from environment.envs import MathEnv
+from modelling.train_utils import init_trajectory_data_structures, init_envs, reset_all, step_all, get_action_batch, \
+    update_rewarded_trajectory_statistics, reset_environment, reset_environment_with_least_rewarded_problem_type, \
+    extract_buffer_trajectory
 from modelling.transformer_encoder import TransformerEncoderModel
-from utils import read_text_file
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
 
-def init_trajectory_data_structures(env):
-    '''define data structures to track correct graphs'''
-    rewarded_trajectory_statistics = {}
-    for module_name in env.train.keys():
-        for difficulty in env.train[module_name].keys():
-            if (module_name, difficulty) not in rewarded_trajectory_statistics:
-                rewarded_trajectory_statistics[(module_name, difficulty)] = 0
-    return rewarded_trajectory_statistics
-
-
-def init_envs(env_config, num_environments=10):
-    env = MathEnv(env_config)
-    envs = [env]
-    envs.extend([copy.copy(env) for _ in range(1, num_environments)])
-    return envs
-
-
-def reset_all(envs, train=True):
-    envs_info = []
-    obs_batch = []
-    for env in envs:
-        module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-        obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
-        envs_info.append({'problem_statement': info['raw_observation'],
-                          'trajectory': list(),
-                          'module_name': module_name,
-                          'difficulty': difficulty})
-        obs_batch.append(np.expand_dims(obs, 0))
-    obs_batch = np.concatenate(obs_batch)
-    return obs_batch, envs_info
-
-
-def step_all(envs, action_batch):
-    step_batch = list()
-    obs_batch = list()
-    for env, action in zip(envs, action_batch):
-        step = env.step(action)
-        (obs, reward, done, info) = step
-        step_batch.append(step)
-        obs_batch.append(np.expand_dims(obs, 0))
-    obs_batch = np.concatenate(obs_batch)
-    return obs_batch, step_batch
-
-
-def get_action_batch(obs_batch, envs, model=None):
-    if model:
-        obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
-        logits_batch = model(obs_batch.to(device)).detach().cpu().numpy()
-    else:
-        logits_batch = np.random.uniform(size=(32,35))
-    policy_batch = softmax(logits_batch, axis=1)
-    actions = []
-    for i, env in enumerate(envs):
-        masked_policy_vector = env.mask_invalid_types(policy_batch[i])
-        masked_normed_policy_vector = masked_policy_vector / np.sum(
-            masked_policy_vector
-        )
-        action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
-        actions.append(action_index)
-    return actions
-
-
-def update_rewarded_trajectory_statistics(env_info, rewarded_trajectory_statistics):
-    module_name = env_info['module_name']
-    difficulty = env_info['difficulty']
-    trajectory = env_info['trajectory']
-    reward = trajectory[-1][2]
-    if reward == 1:
-        rewarded_trajectory_statistics[(module_name, difficulty)] += 1
-
-
-def reset_environment(env, train=True):
-    obs, info = env.reset(train=train)
-    return obs, {'problem_statement': info['raw_observation'],
-                 'trajectory': [(obs, None, None, None, None)],
-                 'module_name': env.module_name,
-                 'difficulty': env.difficulty}
-
-
-def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_statistics, train=True):
-    module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-    obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
-    return obs, {'problem_statement': info['raw_observation'],
-                 'trajectory': [(obs, None, None, None, None)],
-                 'module_name': module_name,
-                 'difficulty': difficulty}
-
-
-def extract_buffer_trajectory(raw_trajectory, reward):
-    states = [state for state, _, _, _, _ in raw_trajectory[0:-1]]
-    action_reward = [(action, reward) for _, action, _, _, _ in raw_trajectory[1:]]
-    buffer_trajectory = [(state, action, reward) for state, (action, reward) in zip(states, action_reward)]
-    return buffer_trajectory
-
-
-def inspect_performance(trajectories, rewarded_trajectory_statistics):
-    for module_name, difficulty in trajectories.keys():
-        if len(trajectories[(module_name,difficulty)]) > 0:
-            percentage_correct = rewarded_trajectory_statistics[(module_name,difficulty)] / len(trajectories[(module_name,difficulty)]) * 100
-            print(f"{module_name}@{difficulty}: {rewarded_trajectory_statistics[(module_name,difficulty)]} / {len(trajectories[(module_name,difficulty)])} = {round(percentage_correct, 5)}%")
-# define and init environment
-filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
-# TODO: undo hack to speedup experiments
-# filepaths = [f"mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt"]
-# filepaths = [f"mathematics_dataset-v1.0/train-easy/numbers__list_prime_factors.txt"]
-filepaths = [
-    f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in filenames if 'composed' not in fn
+selected_filenames = [
+    'numbers__is_factor.txt',
+    # 'numbers__is_prime.txt',
+    # 'numbers__list_prime_factors.txt',
+    # 'calculus__differentiate.txt',
+    # 'polynomials__evaluate.txt',
+    # 'numbers__div_remainder.txt',
+    # 'numbers__gcd.txt',
+    # 'numbers__lcm.txt',
+    # 'algebra__linear_1d.txt',
+    # 'algebra__polynomial_roots.txt',
+    # 'algebra__linear_2d.txt',
+    # 'algebra__linear_1d_composed.txt',
+    # 'algebra__linear_2d_composed.txt',
+    # 'algebra__polynomial_roots_composed.txt',
+    # 'calculus__differentiate_composed.txt',
+    # 'numbers__div_remainder_composed.txt',
+    # 'numbers__gcd_composed.txt',
+    # 'numbers__is_factor_composed.txt',
+    # 'numbers__is_prime_composed.txt',
+    # 'numbers__lcm_composed.txt',
+    # 'numbers__list_prime_factors_composed.txt',
+    # 'polynomials__evaluate_compose.txt'
+    # 'polynomials__compose.txt',
 ]
-# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_1d.txt')
-# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__linear_2d.txt')
-# filepaths.remove('mathematics_dataset-v1.0/train-easy/algebra__polynomial_roots.txt')
+
+# define and init environment
+filepaths = [
+    f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in selected_filenames if 'composed' not in fn
+]
+
 env_config = {
     "problem_filepaths": filepaths,
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
-    "num_problems_per_module": 10 ** 3,
+    "num_problems_per_module": 10 ** 6,
     "validation_percentage": 0.2,
-    "max_sequence_length": 1500,
+    "max_sequence_length": 200,
     "vocab_size": 200,
     "max_difficulty": 0  # i.e. uncomposed only
 }
@@ -182,12 +99,12 @@ buffer = []
 buffer_positives = 1
 buffer_negatives = 1  # init to 1 to prevent division by zero
 total_batches = 0
-obs_batch, envs_info = reset_all(envs)
+obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
 # take steps in all environments num_parallel_steps times
 num_parallel_steps = num_steps // num_environments
 for parallel_step_i in tqdm(range(num_parallel_steps)):
     # take a step in each environment in "parallel"
-    action_batch = get_action_batch(obs_batch, envs, model=dummy_model)
+    action_batch = get_action_batch(obs_batch, envs, device=device, model=dummy_model)
     obs_batch, step_batch = step_all(envs, action_batch)
     # for each environment process the most recent step
     for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
@@ -207,7 +124,9 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
                 buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
                 buffer.extend(buffer_trajectory)
                 buffer_negatives += 1
-            obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], rewarded_trajectory_statistics)
+            obs_batch[env_i], envs_info[env_i] = \
+                reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
+                                                                   train=True)
     # when enough steps have been put into buffer, construct training batches and fit
     if len(buffer) > buffer_threshold:
         # n_batches = math.floor(len(buffer) / batch_size)
@@ -249,7 +168,7 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
             for parallel_step_i in range(num_parallel_steps):
                 # take a step in each environment in "parallel"
                 with torch.no_grad():
-                    action_batch = get_action_batch(obs_batch, envs, model=model)
+                    action_batch = get_action_batch(obs_batch, envs, device=device, model=model)
                 obs_batch, step_batch = step_all(envs, action_batch)
                 # for each environment process the most recent step
                 for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):

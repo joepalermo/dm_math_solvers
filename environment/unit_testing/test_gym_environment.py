@@ -61,7 +61,7 @@ class Test(unittest.TestCase):
         )
         assert reward == 0
         assert not done
-        # assert that l_v & ap are the only actions not masked
+        # assert that lv & ap are the only actions not masked
         # policy_vector = env.sample_masked_policy_vector()
         # np.testing.assert_equal(np.ceil(policy_vector), np.array([1,0,1,1,0,0]))
         # next action
@@ -114,17 +114,17 @@ class Test(unittest.TestCase):
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Solve 0 = 4*b + b + 15 for b."
-        action = l_v
+        action = lv
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; l_v('param_0','param_1')"
+            == f"{problem_statement}; lv('param_0','param_1')"
         )
         assert reward == 0
         assert not done
         assert env.compute_graph.current_node == env.compute_graph.root
-        # assert that l_v & ss are the only actions not masked
+        # assert that lv & ss are the only actions not masked
         # because dict: is object, is dict, is not list, is not Eq, is not Var
         # policy_vector = env.sample_masked_policy_vector()
         # np.testing.assert_equal(np.ceil(policy_vector), np.array([1, 1, 0, 0, 0, 0]))
@@ -134,7 +134,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; l_v(ss('param_0'),'param_1')"
+            == f"{problem_statement}; lv(ss('param_0'),'param_1')"
         )
         assert reward == 0
         assert not done
@@ -146,11 +146,11 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; l_v(ss('param_0'),Var('b'))"
+            == f"{problem_statement}; lv(ss('param_0'),Var('b'))"
         )
         assert reward == 0
         assert not done
-        # current node is now the ss node because the l_v node has its args set
+        # current node is now the ss node because the lv node has its args set
         assert env.compute_graph.current_node == env.compute_graph.root.args[0]
         # next action
         action = ape
@@ -158,7 +158,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; l_v(ss(ape('param_0')),Var('b'))"
+            == f"{problem_statement}; lv(ss(ape('param_0')),Var('b'))"
         )
         assert reward == 0
         assert not done
@@ -168,7 +168,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; l_v(ss(ape(Eq('0 = 4*b + b + 15'))),Var('b'))"
+            == f"{problem_statement}; lv(ss(ape(Eq('0 = 4*b + b + 15'))),Var('b'))"
         )
         assert reward == 1
         assert done

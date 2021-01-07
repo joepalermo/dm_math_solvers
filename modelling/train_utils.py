@@ -1,11 +1,8 @@
 import copy
-
 import numpy as np
 import torch
 from scipy.special import softmax
-
 from environment.envs import MathEnv
-from train import rewarded_trajectory_statistics, device
 
 
 def init_trajectory_data_structures(env):
@@ -25,12 +22,18 @@ def init_envs(env_config, num_environments=10):
     return envs
 
 
-def reset_all(envs, train=True):
+def reset_all(envs, rewarded_trajectory_statistics=None, train=True):
+    '''if rewarded_trajectory_statistics is not None then select the module_name and difficulty which has been
+    least rewarded thus far, else select module_name and difficulty randomly.'''
     envs_info = []
     obs_batch = []
     for env in envs:
-        module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
-        obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
+        if rewarded_trajectory_statistics is not None:
+            module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
+            obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
+        else:
+            obs, info = env.reset(train=train)
+            module_name, difficulty = env.module_name, env.difficulty
         envs_info.append({'problem_statement': info['raw_observation'],
                           'trajectory': list(),
                           'module_name': module_name,
@@ -52,7 +55,7 @@ def step_all(envs, action_batch):
     return obs_batch, step_batch
 
 
-def get_action_batch(obs_batch, envs, model=None):
+def get_action_batch(obs_batch, envs, device=None, model=None):
     if model:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
         logits_batch = model(obs_batch.to(device)).detach().cpu().numpy()
