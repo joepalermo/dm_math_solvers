@@ -72,16 +72,14 @@ num_outputs = len(envs[0].actions)
 dropout = 0.1
 
 # training params
-batch_size = 16
+batch_size = 32
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
-lr = 0.1
-lr_decay_factor = 1
-max_grad_norm = 0.05
-n_required_validation_episodes = 500
+lr = 0.05
+n_required_validation_episodes = 1000
+max_grad_norm = 0.5
 
 # load model
-# TODO: set load_model as param
 load_model = False
 if load_model:
     model = torch.load('modelling/models/model.pt')
@@ -91,7 +89,10 @@ else:
                                 dropout=dropout, device=device)
 model.to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
+# scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=1)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.2, patience=20,
+                                                       threshold=0.001, threshold_mode='rel', cooldown=0,
+                                                       min_lr=0, eps=1e-08, verbose=False)
 writer = SummaryWriter()
 
 # reset all environments
@@ -104,7 +105,7 @@ obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_t
 num_parallel_steps = num_steps // num_environments
 for parallel_step_i in tqdm(range(num_parallel_steps)):
     # take a step in each environment in "parallel"
-    action_batch = get_action_batch(obs_batch, envs, device=device, model=dummy_model)
+    action_batch = get_action_batch(obs_batch, envs, device=device, model=model)
     obs_batch, step_batch = step_all(envs, action_batch)
     # for each environment process the most recent step
     for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
@@ -134,7 +135,7 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
         total_batches += n_batches
         random.shuffle(buffer)
         model.train()
-        for batch_i in range(n_batches):  # Train
+        for batch_i in range(n_batches):
             batch = buffer[batch_i * batch_size : (batch_i + 1) * batch_size]
             state_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).to(device)
             action_batch = torch.from_numpy(np.concatenate([np.expand_dims(step[1], 0) for step in batch]).astype(np.int64)).to(device)
@@ -153,14 +154,14 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
             writer.add_scalar('Gradients/train', grad_norm, total_batches)
         # reset buffer
         buffer = []
-        # inspect validation performance
-        print(f'total_batches: {total_batches}')
-        if total_batches % 10 == 0:
-            scheduler.step()
+
+        # for annealing LR via StepLR
+        # if total_batches % 10 == 0:
+        #     scheduler.step()
 
         if total_batches % 1 == 0:
             model.eval()
-            total_reward = {} # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
+            total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
             n_completed_validation_episodes = 0
             obs_batch, envs_info = reset_all(envs, train=False)
             # take steps in all environments num_parallel_steps times
@@ -195,6 +196,8 @@ for parallel_step_i in tqdm(range(num_parallel_steps)):
                 mean_val_reward = total_reward[k]["tot_reward"] / total_reward[k]["n_completed_validation_episodes"]
                 all_modules_reward += total_reward[k]["tot_reward"]
                 writer.add_scalar(f'Val/{k[0]}_{k[1]}_reward', mean_val_reward, total_batches)
+                # check whether LR should be annealed via ReduceLROnPlateau
+                scheduler.step(mean_val_reward)
 
             mean_val_reward = all_modules_reward / n_completed_validation_episodes
             writer.add_scalar('Val/tot_reward', mean_val_reward, total_batches)
