@@ -146,6 +146,7 @@ def train_on_buffer(model, buffer, writer, current_batch_i):
         current_batch_i += 1
         writer.add_scalar('Loss/train', loss, current_batch_i)
         writer.add_scalar('Gradients/train', grad_norm, current_batch_i)
+    return n_batches
 
 
 def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
@@ -190,3 +191,54 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()
+
+
+def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
+                rewarded_trajectory_statistics, verbose=False):
+    # reset all environments
+    buffer = []
+    buffer_positives = 1
+    buffer_negatives = 1  # init to 1 to prevent division by zero
+    obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
+    # take steps in all environments num_parallel_steps times
+    while True:
+        # take a step in each environment in "parallel"
+        action_batch = get_action_batch(obs_batch, envs, model=model)
+        obs_batch, step_batch = step_all(envs, action_batch)
+        # for each environment process the most recent step
+        for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
+            envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
+            # if episode is complete, check if trajectory should be kept in buffer and reset environment
+            if done:
+                update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
+                with open('modelling/training_graphs.txt', 'a') as f:
+                    f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
+                if reward == 1 and verbose:
+                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
+                if buffer_positives / buffer_negatives <= positive_to_negative_ratio and reward == 1:
+                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
+                    buffer.extend(buffer_trajectory)
+                    buffer_positives += 1
+                elif buffer_positives / buffer_negatives > positive_to_negative_ratio and reward == -1:
+                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
+                    buffer.extend(buffer_trajectory)
+                    buffer_negatives += 1
+                obs_batch[env_i], envs_info[env_i] = \
+                    reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
+                                                                       train=True)
+        if len(buffer) > buffer_threshold:
+            break
+    return buffer
+
+
+def load_buffer(trajectories_filepath):
+    from utils import read_pickle
+    buffer = list()
+    trajectories = read_pickle(trajectories_filepath)
+    for module_name, difficulty in trajectories:
+        trajectories_ = trajectories[(module_name, difficulty)]
+        for trajectory in trajectories_:
+            reward = trajectory[-1][2]
+            processed_trajectory = extract_buffer_trajectory(trajectory, reward)
+            buffer.extend(processed_trajectory)
+    return buffer

@@ -1,11 +1,9 @@
-import numpy as np
 import torch
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-from modelling.train_utils import init_trajectory_data_structures, init_envs, reset_all, step_all, get_action_batch, \
-    update_trajectory_data_structures, reset_environment, reset_environment_with_least_rewarded_problem_type, \
-    extract_buffer_trajectory, train_on_buffer, run_eval
+from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
+    load_buffer
 from modelling.transformer_encoder import TransformerEncoderModel
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -13,11 +11,11 @@ if torch.cuda.is_available():
     torch.cuda.set_device(0)
 
 selected_filenames = [
-    'numbers__is_factor.txt',  # checked
+    # 'numbers__is_factor.txt',  # checked
     # 'numbers__is_prime.txt',  # checked
-    # 'numbers__list_prime_factors.txt',  # checked
-    # 'calculus__differentiate.txt',  # checked
-    # 'polynomials__evaluate.txt',  # checked
+    'numbers__list_prime_factors.txt',  # checked
+    'calculus__differentiate.txt',  # checked
+    'polynomials__evaluate.txt',  # checked
     # 'numbers__div_remainder.txt',  # checked
     # 'numbers__gcd.txt',
     # 'numbers__lcm.txt',
@@ -76,7 +74,6 @@ batch_size = 8
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
 lr = 0.05
-batches_per_eval = 1
 n_required_validation_episodes = 1000
 max_grad_norm = 0.5
 
@@ -91,52 +88,27 @@ else:
 
 writer = SummaryWriter()
 
-# reset all environments
-buffer = []
-buffer_positives = 1
-buffer_negatives = 1  # init to 1 to prevent division by zero
-batch_i = last_eval_batch_i = 0
-obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
-# take steps in all environments num_parallel_steps times
-num_parallel_steps = num_steps // num_environments
-for parallel_step_i in tqdm(range(num_parallel_steps)):
-    # take a step in each environment in "parallel"
-    action_batch = get_action_batch(obs_batch, envs, model=dummy_model)
-    obs_batch, step_batch = step_all(envs, action_batch)
-    # for each environment process the most recent step
-    for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
-        envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
-        # if episode is complete, check if trajectory should be kept in buffer and reset environment
-        if done:
-            update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
-            with open('modelling/training_graphs.txt', 'a') as f:
-                f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
-            if reward == 1 and verbose:
-                print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
-            if buffer_positives/buffer_negatives <= positive_to_negative_ratio and reward == 1:
-                buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
-                buffer.extend(buffer_trajectory)
-                buffer_positives += 1
-            elif buffer_positives/buffer_negatives > positive_to_negative_ratio and reward == -1:
-                buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
-                buffer.extend(buffer_trajectory)
-                buffer_negatives += 1
-            obs_batch[env_i], envs_info[env_i] = \
-                reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
-                                                                   train=True)
+num_buffers = 100
+last_eval_batch_i = 0
+batches_per_eval = 1
+batch_i = 0
 
-    # when enough steps have been put into buffer, construct training batches and fit
-    if len(buffer) > buffer_threshold and not data_collection_only:
-        # train
-        train_on_buffer(model, buffer, writer, batch_i)
+# bootstrap
+buffer = load_buffer('mathematics_dataset-v1.0/trajectories.pkl')
+n_batches = train_on_buffer(model, buffer, writer, batch_i)
+batch_i += n_batches
 
-        # reset buffer
-        buffer = []
+# training loop
+for buffer_i in tqdm(range(num_buffers)):
+    # buffer = fill_buffer(dummy_model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
+    #                      rewarded_trajectory_statistics)
+    buffer = fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories, rewarded_trajectory_statistics)
+    n_batches = train_on_buffer(model, buffer, writer, batch_i)
+    batch_i += n_batches
+    # eval
+    if batch_i - last_eval_batch_i >= batches_per_eval:
+        last_eval_batch_i = batch_i
+        run_eval(model, envs, writer, batch_i, n_required_validation_episodes)
 
-        # eval
-        if batch_i - last_eval_batch_i >= batches_per_eval:
-            last_eval_batch_i = batch_i
-            run_eval(model, envs, writer, batch_i, n_required_validation_episodes)
-
-from utils import write_pickle
-write_pickle('mathematics_dataset-v1.0/trajectories.pkl', rewarded_trajectories)
+# from utils import write_pickle
+# write_pickle('mathematics_dataset-v1.0/trajectories.pkl', rewarded_trajectories)
