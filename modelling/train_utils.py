@@ -121,9 +121,11 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
             print(f"{module_name}@{difficulty}: {rewarded_trajectory_statistics[(module_name,difficulty)]} / {len(trajectories[(module_name,difficulty)])} = {round(percentage_correct, 5)}%")
 
 
-def train_on_buffer(model, replay_buffer, writer, current_batch_i, n_batches):
+def train_on_buffer(model, replay_buffer, writer, current_batch_i, max_n_batches):
     model.train()
     random.shuffle(replay_buffer)
+    n_available_batches = len(replay_buffer) // model.batch_size
+    n_batches = min(n_available_batches, max_n_batches)
     for buffer_batch_i in tqdm(range(n_batches)):
         batch = replay_buffer[buffer_batch_i * model.batch_size: (buffer_batch_i + 1) * model.batch_size]
         state_batch = torch.from_numpy(
