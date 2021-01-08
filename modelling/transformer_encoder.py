@@ -1,7 +1,8 @@
 import math
 import torch
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
-
+from hparams import HParams
+hparams = HParams.get_hparams_by_name('rl_math')
 
 class PositionalEncoding(torch.nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
@@ -41,9 +42,9 @@ class TransformerEncoderModel(torch.nn.Module):
         self.to(device)
         self.optimizer = torch.optim.SGD(self.parameters(), lr=lr)
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=1)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.2, patience=10,
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=hparams.train.factor, patience=hparams.train.patience,
                                                                threshold=0.001, threshold_mode='rel', cooldown=0,
-                                                               min_lr=0, eps=1e-08, verbose=False)
+                                                               min_lr=hparams.train.min_lr, eps=1e-08, verbose=False)
         self.max_grad_norm = max_grad_norm
         self.batch_size = batch_size
 

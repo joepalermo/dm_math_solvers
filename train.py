@@ -1,3 +1,7 @@
+from hparams import HParams
+
+hparams = HParams('.', hparams_filename='hparams', name='rl_math')
+
 import torch
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
@@ -5,9 +9,7 @@ from tqdm import tqdm
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
     load_buffer
 from modelling.transformer_encoder import TransformerEncoderModel
-from hparams import HParams
 
-hparams = HParams('.', hparams_filename='hparams', name='rl_math')
 
 
 device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
