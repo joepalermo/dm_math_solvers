@@ -184,10 +184,14 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
         mean_val_reward = total_reward[k]["tot_reward"] / total_reward[k]["n_completed_validation_episodes"]
         all_modules_reward += total_reward[k]["tot_reward"]
         writer.add_scalar(f'Val/{k[0]}_{k[1]}_reward', mean_val_reward, batch_i)
-        # check whether LR should be annealed via ReduceLROnPlateau
-        model.scheduler.step(mean_val_reward)
+            # check whether LR should be annealed via ReduceLROnPlateau
+            model.scheduler.step(mean_val_reward)
+            writer.add_scalar('lr')
 
     mean_val_reward = all_modules_reward / n_completed_validation_episodes
+    # check whether LR should be annealed via ReduceLROnPlateau
+    model.scheduler.step(mean_val_reward)
+    writer.add_scalar('Train/lr', optimizer.param_groups[0][‘lr’], batch_i)
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()

@@ -41,7 +41,7 @@ class TransformerEncoderModel(torch.nn.Module):
         self.to(device)
         self.optimizer = torch.optim.SGD(self.parameters(), lr=lr)
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=1)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.2, patience=20,
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.2, patience=10,
                                                                threshold=0.001, threshold_mode='rel', cooldown=0,
                                                                min_lr=0, eps=1e-08, verbose=False)
         self.max_grad_norm = max_grad_norm

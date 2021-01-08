@@ -11,11 +11,11 @@ if torch.cuda.is_available():
     torch.cuda.set_device(0)
 
 selected_filenames = [
-    # 'numbers__is_factor.txt',  # checked
+    #'numbers__is_factor.txt',  # checked
     # 'numbers__is_prime.txt',  # checked
-    'numbers__list_prime_factors.txt',  # checked
+    #'numbers__list_prime_factors.txt',  # checked
     'calculus__differentiate.txt',  # checked
-    'polynomials__evaluate.txt',  # checked
+    #'polynomials__evaluate.txt',  # checked
     # 'numbers__div_remainder.txt',  # checked
     # 'numbers__gcd.txt',
     # 'numbers__lcm.txt',
@@ -46,7 +46,7 @@ env_config = {
     "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
     "num_problems_per_module": 10 ** 6,
     "validation_percentage": 0.2,
-    "max_sequence_length": 400,
+    "max_sequence_length": 800,
     "vocab_size": 200,
     "max_difficulty": 0  # i.e. uncomposed only
 }
@@ -62,20 +62,20 @@ rewarded_trajectories, rewarded_trajectory_statistics = init_trajectory_data_str
 
 # architecture params
 ntoken = env_config['vocab_size'] + 1
-nhead = 4
-nhid = 128
+nhead = 8
+nhid = 512
 nlayers = 1
 num_outputs = len(envs[0].actions)
 dropout = 0.1
 
 # training params
 data_collection_only = False
-batch_size = 8
+batch_size = 32
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
-lr = 0.05
-n_required_validation_episodes = 1000
-max_grad_norm = 0.5
+lr = 0.5
+n_required_validation_episodes = 2000
+max_grad_norm = 0.05
 
 # load model
 load_model = False
@@ -86,9 +86,9 @@ else:
     model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
                 dropout=dropout, device=device, lr=lr, max_grad_norm=max_grad_norm, batch_size=batch_size)
 
-writer = SummaryWriter()
+writer = SummaryWriter(comment="calculus__differentiate")
 
-num_buffers = 100
+num_buffers = 1000000000
 last_eval_batch_i = 0
 batches_per_eval = 1
 batch_i = 0
