@@ -93,12 +93,12 @@ batches_per_eval = 10
 batches_per_train = 10
 batch_i = 0
 mode = 'positive_only'
+assert mode == 'positive_only' or mode == 'balanced'
 
 # bootstrap
 # buffer = load_buffer('mathematics_dataset-v1.0/differentiate_50_buffers.pkl')
 # batch_i = train_on_buffer(model, buffer, writer, batch_i, batches_per_train)
 # run_eval(model, envs, writer, batch_i, 100)
-
 
 # training loop
 replay_buffer = []
