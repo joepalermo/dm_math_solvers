@@ -88,6 +88,7 @@ else:
 writer = SummaryWriter(comment="calculus__differentiate")
 
 num_buffers = 1000000000
+fill_buffer_max_steps = 1000
 last_eval_batch_i = 0
 batches_per_eval = 10
 batches_per_train = 10
@@ -104,9 +105,9 @@ assert mode == 'positive_only' or mode == 'balanced'
 replay_buffer = []
 for buffer_i in tqdm(range(num_buffers)):
     # buffer = fill_buffer(dummy_model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
-    #                      rewarded_trajectory_statistics, mode=mode)
+    #                      rewarded_trajectory_statistics, mode=mode, max_num_steps=fill_buffer_max_steps)
     buffer = fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
-                         rewarded_trajectory_statistics, mode=mode)
+                         rewarded_trajectory_statistics, mode=mode, max_num_steps=fill_buffer_max_steps)
     replay_buffer.extend(buffer)
     batch_i = train_on_buffer(model, replay_buffer, writer, batch_i, batches_per_train)
     # eval
