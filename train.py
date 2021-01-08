@@ -69,8 +69,7 @@ num_outputs = len(envs[0].actions)
 dropout = 0.1
 
 # training params
-data_collection_only = False
-batch_size = 32
+batch_size = 8
 buffer_threshold = batch_size
 positive_to_negative_ratio = 1
 lr = 0.5
@@ -90,21 +89,26 @@ writer = SummaryWriter(comment="calculus__differentiate")
 
 num_buffers = 1000000000
 last_eval_batch_i = 0
-batches_per_eval = 1
+batches_per_eval = 10
+batches_per_train = 10
 batch_i = 0
+mode = 'positive_only'
 
 # bootstrap
-buffer = load_buffer('mathematics_dataset-v1.0/trajectories.pkl')
-n_batches = train_on_buffer(model, buffer, writer, batch_i)
-batch_i += n_batches
+# buffer = load_buffer('mathematics_dataset-v1.0/differentiate_50_buffers.pkl')
+# batch_i = train_on_buffer(model, buffer, writer, batch_i, batches_per_train)
+# run_eval(model, envs, writer, batch_i, 100)
+
 
 # training loop
+replay_buffer = []
 for buffer_i in tqdm(range(num_buffers)):
     # buffer = fill_buffer(dummy_model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
-    #                      rewarded_trajectory_statistics)
-    buffer = fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories, rewarded_trajectory_statistics)
-    n_batches = train_on_buffer(model, buffer, writer, batch_i)
-    batch_i += n_batches
+    #                      rewarded_trajectory_statistics, mode=mode)
+    buffer = fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
+                         rewarded_trajectory_statistics, mode=mode)
+    replay_buffer.extend(buffer)
+    batch_i = train_on_buffer(model, replay_buffer, writer, batch_i, batches_per_train)
     # eval
     if batch_i - last_eval_batch_i >= batches_per_eval:
         last_eval_batch_i = batch_i

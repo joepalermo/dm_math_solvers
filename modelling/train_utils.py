@@ -1,7 +1,7 @@
 import copy
 import math
 import random
-
+from tqdm import tqdm
 import numpy as np
 import torch
 from scipy.special import softmax
@@ -121,12 +121,11 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
             print(f"{module_name}@{difficulty}: {rewarded_trajectory_statistics[(module_name,difficulty)]} / {len(trajectories[(module_name,difficulty)])} = {round(percentage_correct, 5)}%")
 
 
-def train_on_buffer(model, buffer, writer, current_batch_i):
-    n_batches = math.floor(len(buffer) / model.batch_size)
-    random.shuffle(buffer)
+def train_on_buffer(model, replay_buffer, writer, current_batch_i, n_batches):
     model.train()
-    for buffer_batch_i in range(n_batches):
-        batch = buffer[buffer_batch_i * model.batch_size: (buffer_batch_i + 1) * model.batch_size]
+    random.shuffle(replay_buffer)
+    for buffer_batch_i in tqdm(range(n_batches)):
+        batch = replay_buffer[buffer_batch_i * model.batch_size: (buffer_batch_i + 1) * model.batch_size]
         state_batch = torch.from_numpy(
             np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).to(model.device)
         action_batch = torch.from_numpy(
@@ -146,7 +145,7 @@ def train_on_buffer(model, buffer, writer, current_batch_i):
         current_batch_i += 1
         writer.add_scalar('Train/loss', loss, current_batch_i)
         writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
-    return n_batches
+    return current_batch_i
 
 
 def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
@@ -195,7 +194,19 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
 
 
 def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
-                rewarded_trajectory_statistics, verbose=False):
+                rewarded_trajectory_statistics, verbose=False, mode='positive_only'):
+    '''
+
+    :param model:
+    :param envs:
+    :param buffer_threshold:
+    :param positive_to_negative_ratio:
+    :param rewarded_trajectories:
+    :param rewarded_trajectory_statistics:
+    :param verbose:
+    :param mode: can be 'positive_only' and 'balanced'
+    :return:
+    '''
     # reset all environments
     buffer = []
     buffer_positives = 1
@@ -216,11 +227,14 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
-                if buffer_positives / buffer_negatives <= positive_to_negative_ratio and reward == 1:
+                if (mode == 'positive_only' and reward == 1) or \
+                   (mode == 'balanced' and buffer_positives / buffer_negatives <= positive_to_negative_ratio and \
+                        reward == 1):
                     buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
                     buffer.extend(buffer_trajectory)
                     buffer_positives += 1
-                elif buffer_positives / buffer_negatives > positive_to_negative_ratio and reward == -1:
+                elif mode == 'balanced' and buffer_positives / buffer_negatives > positive_to_negative_ratio and \
+                        reward == -1:
                     buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
                     buffer.extend(buffer_trajectory)
                     buffer_negatives += 1
