@@ -164,9 +164,9 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
-                with open('modelling/validation_graphs.txt', 'a') as f:
-                    f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
+                with open(f'artifacts/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
+                    f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 if k in total_reward:
                     total_reward[k]["n_completed_validation_episodes"] += 1
                     total_reward[k]["tot_reward"] += reward
@@ -212,7 +212,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
                 update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
-                with open('modelling/training_graphs.txt', 'a') as f:
+                with open('artifacts/training_graphs.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
