@@ -144,8 +144,8 @@ def train_on_buffer(model, buffer, writer, current_batch_i):
         model.optimizer.step()
         # increment the batch index + track the loss and gradients
         current_batch_i += 1
-        writer.add_scalar('Loss/train', loss, current_batch_i)
-        writer.add_scalar('Gradients/train', grad_norm, current_batch_i)
+        writer.add_scalar('Train/loss', loss, current_batch_i)
+        writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
     return n_batches
 
 
