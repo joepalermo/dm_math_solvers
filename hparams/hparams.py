@@ -3,6 +3,7 @@ import io
 from contextlib import redirect_stderr
 import argparse
 import os
+import shutil
 
 
 class HParams(LocalConfig):
@@ -25,11 +26,23 @@ class HParams(LocalConfig):
         logfile = os.path.join(logdir, 'hparams-{}.cfg'.format(self.run.name))
 
         if os.path.isdir(logdir) and os.path.isfile(logfile):
-            # If logfile is found, assume we are resuming as old run, so use archived hparams file
-            super(HParams, self).__init__()
-            self.read(logfile)
-            # self.update(params_to_override)
-            print('Found existing {}! Resuming run using primary parameters!'.format(logfile))
+            # If logfile is found, ask if we are resuming or creating a new run
+            print('Found existing {}! Resume with previous parameters? [y/n]'.format(logfile))
+            choice = input()  # y or n
+            while choice != 'y' and choice != 'n':
+                print('hey that wasnt a choice! y or n please')
+                choice = input()
+            if choice == 'y':
+                super(HParams, self).__init__()
+                self.read(logfile)
+                # self.update(params_to_override)
+                print('Resuming run using primary parameters!')
+            if choice == 'n':
+                shutil.rmtree(logdir)
+                os.makedirs(logdir, exist_ok=True)
+                self.save_config(logfile)
+                print('New run config file saved in {}'.format(logfile))
+
         else:
             # New run
             # Keep a version of the updated config file as backup for replicability
