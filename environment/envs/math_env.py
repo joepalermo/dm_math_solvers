@@ -133,7 +133,6 @@ class MathEnv(gym.Env):
         # build or load encoder
         self.padding_token = self.vocab_size
         self.special_tokens = [operator.__name__ for operator in self.operators] + ["'p_0'", "'p_1'"]
-        print(self.special_tokens)
         self.tokenizer = Tokenizer(BPE())
         trainer = BpeTrainer(vocab_size=self.vocab_size, special_tokens=self.special_tokens)
         self.tokenizer.train(trainer, [self.config["corpus_filepath"]])
@@ -240,11 +239,16 @@ class MathEnv(gym.Env):
         compute_graph = str(self.compute_graph)
         raw_observation = f"{self.problem_statement}; {compute_graph}"
         observation = self.encode(raw_observation)
-        reward = 1 if str(output) == self.answer else -1
         done = (
             self.compute_graph.current_node is None
             or self.compute_graph.n_nodes >= self.max_n_nodes
         )
+        if str(output) == self.answer:
+            reward = 1
+        elif done:
+            reward = -1
+        else:
+            reward = 0
         info = {"raw_observation": raw_observation}
         return observation, reward, done, info
 

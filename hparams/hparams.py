@@ -9,7 +9,7 @@ import shutil
 class HParams(LocalConfig):
     _loaded_hparams_objects = {}
 
-    def __init__(self, project_path, hparams_filename="hparams", name="hparams"):
+    def __init__(self, project_path, hparams_filename="hparams", name="hparams", ask_before_deletion=True):
         if name in HParams._loaded_hparams_objects.keys():
             raise ValueError(f"hparams {name} is being loaded a second time")
 
@@ -25,7 +25,7 @@ class HParams(LocalConfig):
         os.makedirs(logdir, exist_ok=True)
         logfile = os.path.join(logdir, 'hparams-{}.cfg'.format(self.run.name))
 
-        if os.path.isdir(logdir) and os.path.isfile(logfile):
+        if os.path.isdir(logdir) and os.path.isfile(logfile) and ask_before_deletion:
             # If logfile is found, ask if we are resuming or creating a new run
             print('Found existing {}! Resume with previous parameters? [y/n]'.format(logfile))
             choice = input()  # y or n
@@ -42,7 +42,11 @@ class HParams(LocalConfig):
                 os.makedirs(logdir, exist_ok=True)
                 self.save_config(logfile)
                 print('New run config file saved in {}'.format(logfile))
-
+        elif os.path.isdir(logdir) and os.path.isfile(logfile) and not ask_before_deletion:
+            shutil.rmtree(logdir)
+            os.makedirs(logdir, exist_ok=True)
+            self.save_config(logfile)
+            print('New run config file saved in {}'.format(logfile))
         else:
             # New run
             # Keep a version of the updated config file as backup for replicability

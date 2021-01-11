@@ -1,3 +1,6 @@
+from hparams import HParams
+
+hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import numpy as np
 import gym
 from environment.utils import extract_formal_elements
@@ -22,7 +25,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then fail after 1st action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 0
+            "short_problems", 0, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
         f = extract_formal_elements(problem_statement)  # for use below
@@ -34,7 +37,7 @@ class Test(unittest.TestCase):
             info["raw_observation"]
             == f"{problem_statement}; Eq('0 = 4*b + b + 15')"
         )
-        assert reward == 0
+        assert reward == -1
         assert done
 
     def test_problem_0_fail_2(self):
@@ -49,7 +52,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then fail after 2nd action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 0
+            "short_problems", 0, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Solve 0 = 4*b + b + 15 for b."
@@ -57,7 +60,7 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-            info["raw_observation"] == f"{problem_statement}; ss('param_0')"
+            info["raw_observation"] == f"{problem_statement}; ss('p_0')"
         )
         assert reward == 0
         assert not done
@@ -72,7 +75,7 @@ class Test(unittest.TestCase):
             info["raw_observation"]
             == f"{problem_statement}; ss(Eq('0 = 4*b + b + 15'))"
         )
-        assert reward == 0
+        assert reward == -1
         assert done
 
     def test_problem_0_fail_3(self):
@@ -87,7 +90,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then fail after 1st action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 0
+            "short_problems", 0, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
         f = extract_formal_elements(problem_statement)  # for use below
@@ -95,7 +98,7 @@ class Test(unittest.TestCase):
         action = "f10"  # indexing out of range
         action_index = env.get_action_index(action)
         observation_, reward, done, info = env.step(action_index)
-        assert reward == 0
+        assert reward == -1
         assert done
 
     def test_problem_0_success_1(self):
@@ -110,7 +113,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 0
+            "short_problems", 0, 0
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Solve 0 = 4*b + b + 15 for b."
@@ -119,7 +122,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lv('param_0','param_1')"
+            == f"{problem_statement}; lv('p_0','p_1')"
         )
         assert reward == 0
         assert not done
@@ -134,7 +137,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lv(ss('param_0'),'param_1')"
+            == f"{problem_statement}; lv(ss('p_0'),'p_1')"
         )
         assert reward == 0
         assert not done
@@ -146,7 +149,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lv(ss('param_0'),Var('b'))"
+            == f"{problem_statement}; lv(ss('p_0'),Var('b'))"
         )
         assert reward == 0
         assert not done
@@ -158,7 +161,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; lv(ss(ape('param_0')),Var('b'))"
+            == f"{problem_statement}; lv(ss(ape('p_0')),Var('b'))"
         )
         assert reward == 0
         assert not done
@@ -185,7 +188,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 5
+            "short_problems", 0, 5
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Calculate the remainder when 93 is divided by 59."
@@ -195,7 +198,7 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-            info["raw_observation"] == f"{problem_statement}; mod('param_0','param_1')"
+            info["raw_observation"] == f"{problem_statement}; mod('p_0','p_1')"
         )
         assert reward == 0
         assert not done
@@ -205,7 +208,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{problem_statement}; mod(Val('93'),'param_1')"
+            == f"{problem_statement}; mod(Val('93'),'p_1')"
         )
         assert reward == 0
         assert not done
@@ -233,7 +236,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 6
+            "short_problems", 0, 6
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Calculate the highest common divisor of 1300 and 300."
@@ -242,7 +245,7 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; gcd('param_0','param_1')"
+                info["raw_observation"] == f"{problem_statement}; gcd('p_0','p_1')"
         )
         assert reward == 0
         assert not done
@@ -252,7 +255,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{problem_statement}; gcd(Val('1300'),'param_1')"
+                == f"{problem_statement}; gcd(Val('1300'),'p_1')"
         )
         assert reward == 0
         assert not done
@@ -280,7 +283,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 8
+            "short_problems", 0, 8
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Is 93163 a prime number?"
@@ -289,7 +292,7 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; ip('param_0')"
+                info["raw_observation"] == f"{problem_statement}; ip('p_0')"
         )
         assert reward == 0
         assert not done
@@ -317,7 +320,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 9
+            "short_problems", 0, 9
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Is 66574 a composite number?"
@@ -326,7 +329,7 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; nt('param_0')"
+                info["raw_observation"] == f"{problem_statement}; nt('p_0')"
         )
         assert reward == 0
         assert not done
@@ -336,7 +339,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{problem_statement}; nt(ip('param_0'))"
+                == f"{problem_statement}; nt(ip('p_0'))"
         )
         assert reward == 0
         assert not done
@@ -364,7 +367,7 @@ class Test(unittest.TestCase):
         env = MathEnv(env_config)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 1, 9
+            "short_problems", 0, 9
         )
         problem_statement = env.decode(encoded_problem_statement)
         assert problem_statement == "Is 66574 a composite number?"
@@ -373,7 +376,7 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; nt('param_0')"
+                info["raw_observation"] == f"{problem_statement}; nt('p_0')"
         )
         assert reward == 0
         assert not done
@@ -382,7 +385,7 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{problem_statement}; nt(nt('param_0'))"
+                info["raw_observation"] == f"{problem_statement}; nt(nt('p_0'))"
         )
         assert reward == 0
         assert not done
