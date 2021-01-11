@@ -6,7 +6,14 @@ import numpy as np
 import torch
 from scipy.special import softmax
 from environment.envs import MathEnv
+import os
+from hparams import HParams
+hparams = HParams.get_hparams_by_name('rl_math')
 # from train import batch_size, model, device, optimizer, max_grad_norm, writer
+
+
+def get_logdir():
+    return f'logs-{hparams.run.name}'
 
 
 def init_trajectory_data_structures(env):
@@ -152,6 +159,7 @@ def train_on_buffer(model, replay_buffer, writer, current_batch_i, max_n_batches
 
 def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
     model.eval()
+    logdir = get_logdir()
     total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
     n_completed_validation_episodes = 0
     obs_batch, envs_info = reset_all(envs, train=False)
@@ -166,7 +174,7 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
-                with open(f'artifacts/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
+                with open(f'{logdir}/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 if k in total_reward:
                     total_reward[k]["n_completed_validation_episodes"] += 1
@@ -211,6 +219,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     '''
     # reset all environments
     buffer = []
+    logdir = get_logdir()
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
@@ -225,7 +234,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
                 update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
-                with open('artifacts/training_graphs.txt', 'a') as f:
+                with open(f'{logdir}/training_graphs.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")

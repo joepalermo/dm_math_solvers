@@ -7,10 +7,10 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
-    load_buffer
+    load_buffer, get_logdir
 from modelling.transformer_encoder import TransformerEncoderModel
 
-
+logdir = get_logdir()
 
 device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 
@@ -49,7 +49,7 @@ else:
     model = TransformerEncoderModel(ntoken=ntoken, nhead=hparams.model.nhead, nhid=hparams.model.nhid, nlayers=hparams.model.nlayers, num_outputs=num_outputs,
                 dropout=hparams.model.dropout, device=device, lr=hparams.train.lr, max_grad_norm=hparams.train.max_grad_norm, batch_size=hparams.train.batch_size)
 
-writer = SummaryWriter(comment=hparams.run.name)
+writer = SummaryWriter(log_dir=logdir)
 
 mode = hparams.train.mode
 assert mode == 'positive_only' or mode == 'balanced'
@@ -58,7 +58,6 @@ assert mode == 'positive_only' or mode == 'balanced'
 # buffer = load_buffer('mathematics_dataset-v1.0/differentiate_50_buffers.pkl')
 # batch_i = train_on_buffer(model, buffer, writer, batch_i, batches_per_train)
 # run_eval(model, envs, writer, batch_i, 100)
-
 # training loop
 batch_i = 0
 last_eval_batch_i = 0
