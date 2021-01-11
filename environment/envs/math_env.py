@@ -130,8 +130,9 @@ class MathEnv(gym.Env):
         self.compute_graph = None
         # build or load encoder
         self.padding_token = self.vocab_size
+        self.special_tokens = [operator.__name__ for operator in self.operators] + ["'p_0'", "'p_1'"]
         self.tokenizer = Tokenizer(BPE())
-        trainer = BpeTrainer(vocab_size=self.vocab_size)
+        trainer = BpeTrainer(vocab_size=self.vocab_size, special_tokens=self.special_tokens)
         self.tokenizer.train(trainer, [self.config["corpus_filepath"]])
 
     def encode(self, raw_observation):

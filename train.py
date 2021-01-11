@@ -21,7 +21,7 @@ filepaths = [
 
 env_config = {
     "problem_filepaths": filepaths,
-    "corpus_filepath": str(Path("environment/corpus/10k_corpus.txt").resolve()),
+    "corpus_filepath": str(Path("environment/corpus/20k_question_corpus.txt").resolve()),
     "num_problems_per_module": hparams.env.num_problems_per_module,
     "validation_percentage": hparams.env.validation_percentage,
     "max_sequence_length": hparams.env.max_sequence_length,
