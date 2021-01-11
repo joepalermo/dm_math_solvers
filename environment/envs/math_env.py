@@ -14,7 +14,8 @@ from tokenizers.models import BPE
 from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.trainers import BpeTrainer
 from utils import write_pickle, read_pickle
-
+from hparams import HParams
+hparams = HParams.get_hparams_by_name('rl_math')
 
 class MathEnv(gym.Env):
     def __init__(self, config):
@@ -43,6 +44,7 @@ class MathEnv(gym.Env):
             fa,
             nt
         ]
+        self.operators = [operator for operator in self.operators if (operator.__name__ in hparams.env.operators)]
         self.operator_output_types = [
             signature(operator).return_annotation for operator in self.operators
         ]
@@ -131,6 +133,7 @@ class MathEnv(gym.Env):
         # build or load encoder
         self.padding_token = self.vocab_size
         self.special_tokens = [operator.__name__ for operator in self.operators] + ["'p_0'", "'p_1'"]
+        print(self.special_tokens)
         self.tokenizer = Tokenizer(BPE())
         trainer = BpeTrainer(vocab_size=self.vocab_size, special_tokens=self.special_tokens)
         self.tokenizer.train(trainer, [self.config["corpus_filepath"]])
