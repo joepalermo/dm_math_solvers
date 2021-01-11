@@ -243,7 +243,8 @@ class MathEnv(gym.Env):
             self.compute_graph.current_node is None
             or self.compute_graph.n_nodes >= self.max_n_nodes
         )
-        if str(output) == self.answer:
+        # get reward
+        if done and str(output) == self.answer:
             reward = 1
         elif done:
             reward = -1
@@ -265,7 +266,7 @@ class MathEnv(gym.Env):
                 self.operator_output_types + self.compute_graph.formal_element_types
             )
             mask = np.array(
-                [1 if issubclass(next_type, type_) else 0 for type_ in available_types]
+                [1 if issubclass(type_, next_type) else 0 for type_ in available_types]
             )
             mask = np.concatenate(
                 [

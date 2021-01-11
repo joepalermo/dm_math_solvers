@@ -58,11 +58,11 @@ def guess_until_problem_solved(
     episode_i = 0
     graph_guessed_correctly = False
     encoded_problem_statement, _ = env.reset_with_specific_problem(
-        "short_problems", 1, problem_index
+        "short_problems", 0, problem_index
     )
     print(f"\nproblem statement: {env.decode(encoded_problem_statement)}")
     while not graph_guessed_correctly and episode_i < max_episode_index:
-        _, _ = env.reset_with_specific_problem("short_problems", 1, problem_index)
+        _, _ = env.reset_with_specific_problem("short_problems", 0, problem_index)
         done = False
         step_i = 0
         if verbose:

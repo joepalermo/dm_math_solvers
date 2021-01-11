@@ -1,6 +1,5 @@
 from hparams import HParams
-
-hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+hparams = HParams('artifacts/.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import numpy as np
 import gym
 from environment.utils import extract_formal_elements
@@ -10,7 +9,6 @@ from utils import read_text_file
 import unittest
 import glob
 import os
-
 
 class Test(unittest.TestCase):
     def test_problem_0_fail_1(self):
@@ -276,7 +274,6 @@ class Test(unittest.TestCase):
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
             "validation_percentage": 0,
-            "mode": "ip",
             "max_sequence_length": 100,
             "vocab_size": 200
         }
@@ -313,7 +310,6 @@ class Test(unittest.TestCase):
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
             "validation_percentage": 0,
-            "mode": "ip",
             "max_sequence_length": 100,
             "vocab_size": 200
         }
@@ -389,3 +385,40 @@ class Test(unittest.TestCase):
         )
         assert reward == 0
         assert not done
+
+    def test_masking(self):
+        env_config = {
+            "problem_filepaths": ["artifacts/short_problems.txt"],
+            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
+            "num_problems_per_module": 10 ** 7,
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
+        }
+        env = MathEnv(env_config)
+        # reset - then succeed after 4th action
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
+            "short_problems", 0, 4
+        )
+        problem_statement = env.decode(encoded_problem_statement)
+        assert problem_statement == "Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d."
+        # take action
+        action = dfw
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"] == f"{problem_statement}; dfw('p_0','p_1')"
+        )
+        # take action
+        action = "f0"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        assert (
+                info["raw_observation"] == f"{problem_statement}; dfw(Ex('2*d**4 - 35*d**2 - 695'),'p_1')"
+        )
+        vector = np.ones(len(env.actions))
+        masked_vector = env.mask_invalid_types(vector)
+        assert masked_vector[env.get_action_index("f0")] == 0 and \
+               masked_vector[env.get_action_index("f1")] == 1
