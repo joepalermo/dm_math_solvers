@@ -46,4 +46,7 @@ tokenizer.train(trainer, ["environment/corpus/20k_question_corpus.txt"])
 
 save_to_filepath = "preprocessing/tokenizer"
 tokenizer.save(save_to_filepath)
-# tokenizer = Tokenizer.from_file(save_to_filepath)
+# tokenizer = Tokenizer.from_file
+
+example = "Solve 0 = 10*h - 5*h - 15 for h.; sy(lv(ss('p_0'),lv(ss('p_0'),sy(sy(slr('p_0','p_1'))))))"
+print(tokenizer.encode(example).tokens)
