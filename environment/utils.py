@@ -82,11 +82,11 @@ def guess_until_problem_solved(
 
 
 def filter_univariate(examples):
-    univariate_questions = []
-    for question,_ in examples:
+    univariate_examples = []
+    for question,answer in examples:
         formal_elements = extract_formal_elements(question, cast=False)
         function = formal_elements[0]
         num_vars = len([ch for ch in set(function) if ch.isalpha()])
         if num_vars == 1:
-            univariate_questions.append(question)
-    return univariate_questions
+            univariate_examples.append((question, answer))
+    return univariate_examples
