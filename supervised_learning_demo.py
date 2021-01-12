@@ -1,3 +1,6 @@
+from hparams import HParams
+hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+
 import numpy as np
 import math
 import torch
@@ -17,22 +20,43 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
 
+
 def load_data_from_corpus(filepath):
     examples = read_text_file(filepath).split('\n')
-    examples = [e for e in examples if e.count('gcd') < 2 and e.count('; Val') < 1]
-    return examples
+    examples = [e for e in examples if 'None' not in e]  # filter out multi-variate problems
+    examples = [e for e in examples if ('first' in e) or ('second' in e) or ('third' in e)]  # filter out multi-variate problems
+    questions = [e.split(';')[0] for e in examples]
+    questions_with_graphs = [sample_graph(q) for q in questions]
+    questions_with_targets = [(q,input_to_target(q)) for q in questions_with_graphs]
+    return questions_with_targets
 
 
 def input_to_target(x):
-    if 'gcd' in x and 'param_0' in x and 'param_1' in x:
+    '''let y=0 mean df,
+       let y=1 mean Eq(...)'''
+    if 'third' in x and ' df(df(df(p_' in x:
         y = 1
-    elif 'gcd' in x and 'param_1' in x:
-        y = 2
-    elif 'gcd' in x:
-        y = 3
+    elif 'second' in x and ' df(df(p_' in x:
+        y = 1
+    elif 'first' in x and ' df(p_' in x:
+        y = 1
     else:
         y = 0
     return y
+
+def sample_graph(x):
+    import random
+    df_0 = ''
+    df_1 = ' df(p_'
+    df_2 = ' df(df(p_'
+    df_3 = ' df(df(df(p_'
+    if 'third' in x:
+        g = random.sample([df_0, df_1, df_2, df_3], k=1)[0]
+    elif 'second' in x:
+        g = random.sample([df_0, df_1, df_2], k=1)[0]
+    elif 'first' in x:
+        g = random.sample([df_0, df_1], k=1)[0]
+    return f'{x}; {g}'
 
 
 def encode(raw_observation, tokenizer):
@@ -69,23 +93,32 @@ max_grad_norm = 0.5
 
 # prep dataset ---------------------------------------------------------------------------------------------------------
 
-raw_xs = load_data_from_corpus('environment/corpus/gcd_corpus.txt')
-ys = [input_to_target(x) for x in raw_xs]
+data = load_data_from_corpus('environment/corpus/validation_graphs_calculus__differentiate_0.txt')
+print(len(data))
+data = data[:1000]
+raw_xs = [d[0] for d in data]
+ys = [d[1] for d in data]
+print('data loaded')
+
+padding_token = vocab_size
+special_tokens = ['df', 'p_']
 tokenizer = Tokenizer(BPE())
-trainer = BpeTrainer(vocab_size=vocab_size)
-tokenizer.train(trainer, ['environment/corpus/10k_corpus.txt'])
-tokenizer.save('tokenizer.json')
+trainer = BpeTrainer(vocab_size=vocab_size, special_tokens=special_tokens)
+tokenizer.train(trainer, ['environment/corpus/20k_question_corpus.txt'])
+print('tokenizer created')
+
 xs = np.concatenate([np.expand_dims(encode(x, tokenizer), 0) for x in raw_xs], axis=0)
 ys = np.array(ys)
 num_examples = len(xs)
 
-# # inspect data
-# for i in range(100):
-#     print(raw_xs[i])
-#     print(xs[i])
-#     print(decode(xs[i], tokenizer), 'answer:', ys[i])
-#     print()
-
+# inspect data
+for i in range(100):
+    print('raw question: ', raw_xs[i])
+    print('encoded question: ', xs[i])
+    print('decoded question: ', decode(xs[i], tokenizer))
+    print('target: ', ys[i])
+    print()
+#
 train_xs, valid_xs, train_ys, valid_ys = train_test_split(xs, ys, test_size=int(num_examples * 0.1))
 train_xs = torch.from_numpy(train_xs)
 train_ys = torch.from_numpy(train_ys)

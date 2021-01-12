@@ -174,6 +174,82 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
+    def test_problem_4_success_1_with_masking(self):
+        env_config = {
+            "problem_filepaths": ["artifacts/short_problems.txt"],
+            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
+            "num_problems_per_module": 10 ** 7,
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
+        }
+        env = MathEnv(env_config)
+        # reset - then succeed after 4th action
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
+            "short_problems", 0, 4
+        )
+        problem_statement = env.decode(encoded_problem_statement)
+        assert problem_statement == "Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d."
+        # take action
+        action = dfw
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"] == f"{problem_statement}; dfw('p_0','p_1')"
+        )
+        # take action
+        action = "f0"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        assert (
+                info["raw_observation"] == f"{problem_statement}; dfw(Ex('2*d**4 - 35*d**2 - 695'),'p_1')"
+        )
+        vector = np.ones(len(env.actions))
+        masked_vector = env.mask_invalid_types(vector)
+        assert masked_vector[env.get_action_index("f0")] == 0 and \
+               masked_vector[env.get_action_index("f1")] == 1
+        # take action
+        action = "f1"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 1
+        assert done
+
+    def test_problem_4_success_2_with_masking(self):
+        env_config = {
+            "problem_filepaths": ["artifacts/short_problems.txt"],
+            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
+            "num_problems_per_module": 10 ** 7,
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200
+        }
+        env = MathEnv(env_config)
+        # reset - then succeed after 4th action
+        encoded_problem_statement, _ = env.reset_with_specific_problem(
+            "short_problems", 0, 4
+        )
+        problem_statement = env.decode(encoded_problem_statement)
+        assert problem_statement == "Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d."
+        # take action
+        action = df
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert (
+                info["raw_observation"] == f"{problem_statement}; df('p_0')"
+        )
+        # take action
+        action = "f0"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 1
+        assert done
+        assert (
+                info["raw_observation"] == f"{problem_statement}; df(Ex('2*d**4 - 35*d**2 - 695'))"
+        )
+
     def test_problem_5_success(self):
         env_config = {
             "problem_filepaths": ["artifacts/short_problems.txt"],
@@ -227,7 +303,6 @@ class Test(unittest.TestCase):
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
             "validation_percentage": 0,
-            "gcd_test": True,
             "max_sequence_length": 100,
             "vocab_size": 200
         }
@@ -268,7 +343,7 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_mode_is_prime_success_1(self):
+    def test_problem_8_success_1(self):
         env_config = {
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
@@ -304,7 +379,7 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_mode_is_prime_success_2(self):
+    def test_problem_8_success_2(self):
         env_config = {
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
@@ -350,13 +425,12 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_not_op(self):
+    def test_problem_9_success(self):
         env_config = {
             "problem_filepaths": ["artifacts/short_problems.txt"],
             "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
             "num_problems_per_module": 10 ** 7,
             "validation_percentage": 0,
-            "mode": "ip",
             "max_sequence_length": 100,
             "vocab_size": 200
         }
@@ -386,39 +460,3 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert not done
 
-    def test_masking(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
-        # reset - then succeed after 4th action
-        encoded_problem_statement, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 4
-        )
-        problem_statement = env.decode(encoded_problem_statement)
-        assert problem_statement == "Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d."
-        # take action
-        action = dfw
-        action_index = env.get_action_index(action)
-        observation, reward, done, info = env.step(action_index)
-        assert (
-                info["raw_observation"] == f"{problem_statement}; dfw('p_0','p_1')"
-        )
-        # take action
-        action = "f0"
-        action_index = env.get_action_index(action)
-        observation, reward, done, info = env.step(action_index)
-        assert reward == 0
-        assert not done
-        assert (
-                info["raw_observation"] == f"{problem_statement}; dfw(Ex('2*d**4 - 35*d**2 - 695'),'p_1')"
-        )
-        vector = np.ones(len(env.actions))
-        masked_vector = env.mask_invalid_types(vector)
-        assert masked_vector[env.get_action_index("f0")] == 0 and \
-               masked_vector[env.get_action_index("f1")] == 1

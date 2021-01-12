@@ -48,28 +48,11 @@ class MathEnv(gym.Env):
         self.operator_output_types = [
             signature(operator).return_annotation for operator in self.operators
         ]
-        if config.get("mode", None) == "gcd":
-            self.max_formal_elements = 2
-            self.actions = [gcd] + [f"f{i}" for i in range(self.max_formal_elements)]
-            self.max_n_nodes = 3
-        elif config.get("mode", None) == "ip":
-            self.max_formal_elements = 1
-            self.actions = [ip, nt] + [f"f{i}" for i in range(self.max_formal_elements)]
-            self.max_n_nodes = 3
-        elif config.get("mode", None) == "df": # TODO: fix
-            self.max_formal_elements = 1
-            self.actions = [df] + [f"f{i}" for i in range(self.max_formal_elements)]
-            self.max_n_nodes = 2
-        elif config.get("mode", None) == "pf":
-            self.max_formal_elements = 1
-            self.actions = [pf] + [f"f{i}" for i in range(self.max_formal_elements)]
-            self.max_n_nodes = 2
-        else:
-            self.max_formal_elements = 13  # TODO: make into a hyperparameter
-            self.actions = self.operators + [
-                f"f{i}" for i in range(self.max_formal_elements)
-            ]
-            self.max_n_nodes = 10 # TODO: change
+        self.max_formal_elements = 13  # TODO: make into a hyperparameter
+        self.actions = self.operators + [
+            f"f{i}" for i in range(self.max_formal_elements)
+        ]
+        self.max_n_nodes = 10  # TODO: make into a hyperparameter
         self.action_space = spaces.Discrete(len(self.actions))
         self.action_indices = np.arange(len(self.actions))
         self.vocab_size = config["vocab_size"]
