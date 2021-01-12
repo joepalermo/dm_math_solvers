@@ -41,10 +41,10 @@ class TransformerEncoderModel(torch.nn.Module):
         self.device = device
         self.to(device)
         self.optimizer = torch.optim.SGD(self.parameters(), lr=lr)
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=1)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=hparams.train.factor, patience=hparams.train.patience,
-                                                               threshold=0.001, threshold_mode='rel', cooldown=0,
-                                                               min_lr=hparams.train.min_lr, eps=1e-08, verbose=False)
+        scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=1)
+        # self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=hparams.train.factor, patience=hparams.train.patience,
+        #                                                        threshold=0.001, threshold_mode='rel', cooldown=0,
+        #                                                        min_lr=hparams.train.min_lr, eps=1e-08, verbose=False)
         self.max_grad_norm = max_grad_norm
         self.batch_size = batch_size
 
