@@ -128,11 +128,9 @@ valid_ys = torch.from_numpy(valid_ys)
 # train and validate model ---------------------------------------------------------------------------------------------
 
 model = TransformerEncoderModel(ntoken=ntoken, nhead=nhead, nhid=nhid, nlayers=nlayers, num_outputs=num_outputs,
-                                dropout=dropout, device=device).cuda()
+                                dropout=dropout, device=device, lr=lr, max_grad_norm=max_grad_norm,
+                                batch_size=batch_size).cuda()
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=lr_decay_factor)
-writer = SummaryWriter(comment="_seed_42_yes_padding")
 
 total_batches = 0
 for epoch in range(n_epochs):
@@ -143,10 +141,10 @@ for epoch in range(n_epochs):
         batch_xs, batch_ys = train_xs[batch_indices], train_ys[batch_indices]
         batch_logits = model(batch_xs.cuda())
         loss = criterion(batch_logits, batch_ys.cuda())
-        optimizer.zero_grad()
+        model.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-        optimizer.step()
+        model.optimizer.step()
         total_batches += 1
         if total_batches % 10 == 0:
             print(f'train_loss @ step #{total_batches}', loss.item())
@@ -156,8 +154,8 @@ for epoch in range(n_epochs):
             valid_targets = valid_ys.detach().cpu().numpy()
             valid_acc = accuracy_score(valid_targets, valid_preds)
             print(f'valid_acc', valid_acc)
-            writer.add_scalar('Val/acc', valid_acc, total_batches)
-            writer.add_scalar('Train/loss', loss.item(), total_batches)
-            writer.close()
-    scheduler.step()
+            # writer.add_scalar('Val/acc', valid_acc, total_batches)
+            # writer.add_scalar('Train/loss', loss.item(), total_batches)
+            # writer.close()
+    model.scheduler.step()
 
