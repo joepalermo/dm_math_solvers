@@ -83,7 +83,7 @@ def guess_until_problem_solved(
 
 def filter_univariate(examples):
     univariate_examples = []
-    for question,answer in examples:
+    for question, answer in examples:
         formal_elements = extract_formal_elements(question, cast=False)
         function = formal_elements[0]
         num_vars = len([ch for ch in set(function) if ch.isalpha()])

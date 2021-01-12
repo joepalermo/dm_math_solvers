@@ -86,7 +86,7 @@ dropout = 0
 
 # training params
 n_epochs = 8
-batch_size = 64
+batch_size = 8
 lr = 1
 lr_decay_factor = 0.8
 max_grad_norm = 0.5

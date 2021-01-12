@@ -49,7 +49,7 @@ def reset_all(envs, rewarded_trajectory_statistics=None, train=True):
             obs, info = env.reset(train=train)
             module_name, difficulty = env.module_name, env.difficulty
         envs_info.append({'problem_statement': info['raw_observation'],
-                          'trajectory': list(),
+                          'trajectory': [(obs, None, None, None, info)],
                           'module_name': module_name,
                           'difficulty': difficulty})
         obs_batch.append(np.expand_dims(obs, 0))
@@ -74,14 +74,14 @@ def get_action_batch(obs_batch, envs, model=None):
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
         logits_batch = model(obs_batch.to(model.device)).detach().cpu().numpy()
     else:
-        logits_batch = np.random.uniform(size=(32,35))
+        logits_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
     policy_batch = softmax(logits_batch, axis=1)
     actions = []
     for i, env in enumerate(envs):
         masked_policy_vector = env.mask_invalid_types(policy_batch[i])
-        masked_normed_policy_vector = masked_policy_vector / np.sum(
-            masked_policy_vector
-        )
+        # if all actions are masked, then let the policy vector be uniform
+        masked_policy_vector = masked_policy_vector if np.sum(masked_policy_vector) != 0 else np.ones(len(masked_policy_vector))
+        masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
         action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         actions.append(action_index)
     return actions
@@ -203,6 +203,14 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
     writer.close()
 
 
+def visualize_buffer(buffer, env):
+    states = [state for state, _, _ in buffer]
+    decoded_states = [env.decode(state) for state in states]
+    for d in decoded_states:
+        print(d)
+    print()
+
+
 def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
                 rewarded_trajectory_statistics, verbose=False, mode='positive_only', max_num_steps=1000):
     '''
@@ -252,6 +260,9 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
                                                                        train=True)
+                # append first state of trajectory after reset
+                info_dict = {'raw_observation': envs_info[env_i]['problem_statement']}
+                envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
         if len(buffer) > buffer_threshold:
             break
     return buffer

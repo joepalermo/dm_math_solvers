@@ -1,13 +1,14 @@
 from hparams import HParams
 
-hparams = HParams('.', hparams_filename='hparams', name='rl_math')
+# TODO: remove ask_before
+hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 
 import torch
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
-    load_buffer, get_logdir
+    load_buffer, get_logdir, visualize_buffer
 from modelling.transformer_encoder import TransformerEncoderModel
 
 logdir = get_logdir()
@@ -59,15 +60,17 @@ assert mode == 'positive_only' or mode == 'balanced'
 # buffer = load_buffer('mathematics_dataset-v1.0/differentiate_50_buffers.pkl')
 # batch_i = train_on_buffer(model, buffer, writer, batch_i, batches_per_train)
 # run_eval(model, envs, writer, batch_i, 100)
+
 # training loop
 batch_i = 0
 last_eval_batch_i = 0
 replay_buffer = []
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
-    # buffer = fill_buffer(dummy_model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
-    #                      rewarded_trajectory_statistics, mode=mode, max_num_steps=fill_buffer_max_steps)
+    # buffer = fill_buffer(dummy_model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
+    #                      rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=False)
     buffer = fill_buffer(model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
                          rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps)
+    # visualize_buffer(buffer, envs[0])
     replay_buffer.extend(buffer)
     batch_i = train_on_buffer(model, replay_buffer, writer, batch_i, hparams.train.batches_per_train)
     # eval
