@@ -71,8 +71,11 @@ for buffer_i in tqdm(range(hparams.train.num_buffers)):
     buffer = fill_buffer(model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
                          rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps)
     # visualize_buffer(buffer, envs[0])
-    replay_buffer.extend(buffer)
-    batch_i = train_on_buffer(model, replay_buffer, writer, batch_i, hparams.train.batches_per_train)
+    if hparams.train.use_replay_buffer:
+        replay_buffer.extend(buffer)
+        batch_i = train_on_buffer(model, replay_buffer, writer, batch_i, hparams.train.batches_per_train)
+    else:
+        batch_i = train_on_buffer(model, buffer, writer, batch_i, hparams.train.batches_per_train)
     # eval
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
