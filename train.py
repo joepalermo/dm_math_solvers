@@ -66,11 +66,11 @@ batch_i = 0
 last_eval_batch_i = 0
 replay_buffer = []
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
-    # buffer = fill_buffer(dummy_model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
-    #                      rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=False)
-    buffer = fill_buffer(model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
-                         rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps)
-    # visualize_buffer(buffer, envs[0])
+    buffer = fill_buffer(dummy_model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
+                         rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=True)
+    # buffer = fill_buffer(model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
+    #                      rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps)
+    visualize_buffer(buffer, envs[0])
     replay_buffer.extend(buffer)
     batch_i = train_on_buffer(model, replay_buffer, writer, batch_i, hparams.train.batches_per_train)
     # eval

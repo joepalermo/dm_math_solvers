@@ -205,9 +205,10 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
 
 def visualize_buffer(buffer, env):
     states = [state for state, _, _ in buffer]
+    actions = [action for _, action, _ in buffer]
     decoded_states = [env.decode(state) for state in states]
-    for d in decoded_states:
-        print(d)
+    for d, a in zip(decoded_states, actions):
+        print(d, a)
     print()
 
 
@@ -260,9 +261,9 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
                                                                        train=True)
-                # append first state of trajectory after reset
-                info_dict = {'raw_observation': envs_info[env_i]['problem_statement']}
-                envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
+                # # append first state of trajectory after reset
+                # info_dict = {'raw_observation': envs_info[env_i]['problem_statement']}
+                # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
         if len(buffer) > buffer_threshold:
             break
     return buffer
