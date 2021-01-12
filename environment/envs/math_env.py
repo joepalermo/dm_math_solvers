@@ -9,6 +9,7 @@ from tqdm import tqdm
 from scipy.special import softmax
 from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
+from environment.utils import filter_univariate
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.pre_tokenizers import Whitespace
@@ -93,6 +94,8 @@ class MathEnv(gym.Env):
                         self.train[module_name][difficulty] = [(question, answer)]
                 else:
                     self.train[module_name] = {difficulty: [(question, answer)]}
+        if config["univariate_differentiation"]:
+            self.train['calculus__differentiate'][0] = filter_univariate(self.train['calculus__differentiate'][0])
         # split out val data
         self.val = {}
         for module_name in self.train:

@@ -26,6 +26,7 @@ env_config = {
     "validation_percentage": hparams.env.validation_percentage,
     "max_sequence_length": hparams.env.max_sequence_length,
     "vocab_size": hparams.env.vocab_size,
+    "univariate_differentiation": hparams.env.univariate,
     "max_difficulty": hparams.env.max_difficulty  # i.e. uncomposed only
 }
 

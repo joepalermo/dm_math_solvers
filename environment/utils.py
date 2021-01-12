@@ -11,7 +11,7 @@ def extract_formal_elements_as_annotations(problem_statement):
     return re.findall(pattern, problem_statement)
 
 
-def extract_formal_elements(question):
+def extract_formal_elements(question, cast=True):
     # split on punctuation unless it is immediately preceded and followed by a number (indicating it is a decimal)
     split_on_punctuation = "***".join(
         [
@@ -34,7 +34,8 @@ def extract_formal_elements(question):
         for f in formal_elements
     ]
     # cast types
-    formal_elements = [cast_formal_element(f) for f in formal_elements]
+    if cast:
+        formal_elements = [cast_formal_element(f) for f in formal_elements]
     return formal_elements
 
 
@@ -78,3 +79,14 @@ def guess_until_problem_solved(
         episode_i += 1
     print(f'graph: {info["raw_observation"].split(";")[1]}')
     print(f"trials taken to guess problem #{problem_index}: {episode_i}")
+
+
+def filter_univariate(examples):
+    univariate_questions = []
+    for question,_ in examples:
+        formal_elements = extract_formal_elements(question, cast=False)
+        function = formal_elements[0]
+        num_vars = len([ch for ch in set(function) if ch.isalpha()])
+        if num_vars == 1:
+            univariate_questions.append(question)
+    return univariate_questions

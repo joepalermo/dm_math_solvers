@@ -460,3 +460,16 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert not done
 
+    def test_univariate(self):
+        env_config = {
+            "problem_filepaths": ["artifacts/calculus__differentiate.txt"],
+            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
+            "num_problems_per_module": 10 ** 7,
+            "validation_percentage": 0,
+            "max_sequence_length": 100,
+            "vocab_size": 200,
+            "univariate_differentiation": True
+        }
+        env = MathEnv(env_config)
+        # for q in env.train['calculus__differentiate'][0][:20]:
+        #     print(q)
