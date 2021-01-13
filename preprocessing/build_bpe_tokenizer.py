@@ -13,14 +13,40 @@ def decode(tokenizer, ids):
 # tokenizer.pre_tokenizer = Whitespace()
 # trainer = BpeTrainer(special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
 
+special_tokens = [
+            "lv",
+            "ss",
+            "ap",
+            "ape",
+            "meq",
+            "lve",
+            "eiv",
+            "slr",
+            "fac",
+            "df",
+            "dfw",
+            "sy",
+            "mfn",
+            "ra",
+            "mod",
+            "gcd",
+            "md0",
+            "ip",
+            "lcm",
+            "pf",
+            "fa",
+            "nt",
+            "'p_0'",
+            "'p_1'"
+        ]
+
 tokenizer = Tokenizer(BPE())
-trainer = BpeTrainer(vocab_size=280, special_tokens=["[PAD]"])
-tokenizer.train(trainer, ["environment/corpus/10k_corpus.txt"])
+trainer = BpeTrainer(vocab_size=280, special_tokens=special_tokens)
+tokenizer.train(trainer, ["environment/corpus/20k_question_corpus.txt"])
+
 save_to_filepath = "preprocessing/tokenizer"
 tokenizer.save(save_to_filepath)
-# tokenizer = Tokenizer.from_file(save_to_filepath)
-with open("environment/corpus/1k_corpus.txt") as f:
-    corpus = f.read()
-observations = corpus.split("\n")
-max_observation_length = max([len(tokenizer.encode(obs)) for obs in observations])
-print(max_observation_length)
+# tokenizer = Tokenizer.from_file
+
+example = "Solve 0 = 10*h - 5*h - 15 for h.; sy(lv(ss('p_0'),lv(ss('p_0'),sy(sy(slr('p_0','p_1'))))))"
+print(tokenizer.encode(example).tokens)

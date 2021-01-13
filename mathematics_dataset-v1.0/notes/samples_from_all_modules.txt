@@ -385,7 +385,7 @@ Let a be 72/(-27) + 2/(-6). Let i(p) = 2*p**2 + 2*p - 3. What is the remainder w
 train-easy/numbers__gcd.txt: 
 Calculate the highest common divisor of 1300 and 300.
 	100
-Calculate the greatest common factor of 11130 and 6.
+Calculate the greatest common fac of 11130 and 6.
 	6
 What is the greatest common divisor of 352 and 3454?
 	22
@@ -397,17 +397,17 @@ Calculate the highest common divisor of 11711 and 49.
 train-easy/numbers__gcd_composed.txt: 
 Let q be (25 + 1)/2 - (5 + -3). What is the highest common divisor of q and 99?
 	11
-Let n(j) = 5*j**3 - j**2 + 2*j - 1. Let u be 7/9 - 6/(-27). Let v be n(u). Calculate the greatest common factor of 1 and v.
+Let n(j) = 5*j**3 - j**2 + 2*j - 1. Let u be 7/9 - 6/(-27). Let v be n(u). Calculate the greatest common fac of 1 and v.
 	1
-Let f be (-6)/5*(-360)/(-27). Suppose -5*k - 5*a = -335, 0*k = 4*k + 3*a - 271. Let p = k + f. Calculate the greatest common factor of p and 6.
+Let f be (-6)/5*(-360)/(-27). Suppose -5*k - 5*a = -335, 0*k = 4*k + 3*a - 271. Let p = k + f. Calculate the greatest common fac of p and 6.
 	6
 Let y = 37 + -31. Calculate the highest common divisor of y and 12.
 	6
-Suppose 39 = -2*d + 5*d. What is the greatest common factor of d and 52?
+Suppose 39 = -2*d + 5*d. What is the greatest common fac of d and 52?
 	13
 
 train-easy/numbers__is_factor.txt: 
-Is 15 a factor of 720?
+Is 15 a fac of 720?
 	True
 Does 11 divide 1973?
 	False
@@ -415,7 +415,7 @@ Is 347 a multiple of 3?
 	False
 Does 28 divide 1204?
 	True
-Is 17 a factor of 3594?
+Is 17 a fac of 3594?
 	False
 
 train-easy/numbers__is_factor_composed.txt: 
@@ -425,7 +425,7 @@ Is 1330/(-28)*4/(-2) a multiple of 19?
 	True
 Is 3 - (1344/(-10) + 2/5) a multiple of 36?
 	False
-Let y = -97 - -163. Is 19 a factor of y?
+Let y = -97 - -163. Is 19 a fac of y?
 	False
 Let z be (-3)/1 - (-6 + -2). Does 7 divide z/(10/6) - -11?
 	True
@@ -1055,23 +1055,23 @@ Suppose 44*w - 915 = 449. Suppose 0 = -5*v + 9*v - 68. Calculate the remainder w
 	14
 
 train-medium/numbers__gcd.txt: 
-What is the greatest common factor of 56 and 38094?
+What is the greatest common fac of 56 and 38094?
 	14
 Calculate the highest common divisor of 2838 and 8184.
 	66
 Calculate the greatest common divisor of 19886 and 5978.
 	122
-What is the greatest common factor of 806848 and 21?
+What is the greatest common fac of 806848 and 21?
 	7
 What is the greatest common divisor of 2644650 and 54?
 	54
 
 train-medium/numbers__gcd_composed.txt: 
-Let x(c) = 3*c**2 + 3*c - 14. Let v(s) = -s**2 + s + 7. Let u be v(0). Let t be x(u). Calculate the greatest common factor of 22 and t.
+Let x(c) = 3*c**2 + 3*c - 14. Let v(s) = -s**2 + s + 7. Let u be v(0). Let t be x(u). Calculate the greatest common fac of 22 and t.
 	22
 Suppose 3*k - 5*k = -12. Suppose 84 = k*p - p - 4*v, 100 = 4*p + 5*v. Calculate the greatest common divisor of p and 180.
 	20
-Let v(u) = 2*u**3 - 20*u**2 + 18*u - 1. Let l be v(9). Let n be (-1 - 4) + 5 + l + 44. Calculate the greatest common factor of 43 and n.
+Let v(u) = 2*u**3 - 20*u**2 + 18*u - 1. Let l be v(9). Let n be (-1 - 4) + 5 + l + 44. Calculate the greatest common fac of 43 and n.
 	43
 Let k = 423 - 282. What is the greatest common divisor of k and 94?
 	47
@@ -1081,23 +1081,23 @@ Let u(l) = 9*l**2 + 5*l - 111. Let w be u(-8). Calculate the highest common divi
 train-medium/numbers__is_factor.txt: 
 Is 72567 a multiple of 9?
 	True
-Is 91 a factor of 1012773?
+Is 91 a fac of 1012773?
 	False
-Is 76 a factor of 1017488?
+Is 76 a fac of 1017488?
 	True
 Is 165792 a multiple of 471?
 	True
-Is 311 a factor of 143731?
+Is 311 a fac of 143731?
 	False
 
 train-medium/numbers__is_factor_composed.txt: 
-Let d = -588 + 1274. Is 14 a factor of d?
+Let d = -588 + 1274. Is 14 a fac of d?
 	True
 Is (-8)/(-20) + (-3390)/(-25) a multiple of 17?
 	True
 Let g = 27 - 8. Suppose 1 = 5*w - g. Suppose 16 = -w*v + 64. Does 4 divide v?
 	True
-Suppose 0 = 5*u - 7*u + 850. Is 22 a factor of u?
+Suppose 0 = 5*u - 7*u + 850. Is 22 a fac of u?
 	False
 Let t(z) = -z**2 - 3*z + 30. Let k be t(6). Let h be 124/(-3) - 3/(-9). Let x = k - h. Does 11 divide x?
 	False
@@ -1727,21 +1727,21 @@ Let l = -40785 - -40877. Let y = -23 - -35. Calculate the remainder when l is di
 train-hard/numbers__gcd.txt: 
 What is the highest common divisor of 85 and 2871147?
 	17
-What is the highest common factor of 268870 and 154560?
+What is the highest common fac of 268870 and 154560?
 	1610
 Calculate the highest common divisor of 148414 and 12740.
 	14
 What is the highest common divisor of 86 and 7556261?
 	43
-Calculate the greatest common factor of 9016 and 298724.
+Calculate the greatest common fac of 9016 and 298724.
 	92
 
 train-hard/numbers__gcd_composed.txt: 
-Suppose -3*y - 12*t + 27 = -8*t, -2*t - 36 = -4*y. Suppose -a + 2 = -3*v - 22, a = 4*v + 27. Calculate the greatest common factor of a and y.
+Suppose -3*y - 12*t + 27 = -8*t, -2*t - 36 = -4*y. Suppose -a + 2 = -3*v - 22, a = 4*v + 27. Calculate the greatest common fac of a and y.
 	3
 Suppose 27*t = 43 + 11. Let f be (t + (-111)/(-12))/((-2)/(-8)). What is the highest common divisor of f and 15?
 	15
-Suppose -m + 0*m = w - 27, -2*w - 6 = 0. Let b = 93 - 89. Suppose 50 = 5*p + 3*q + 2*q, -q = b*p - 46. What is the highest common factor of m and p?
+Suppose -m + 0*m = w - 27, -2*w - 6 = 0. Let b = 93 - 89. Suppose 50 = 5*p + 3*q + 2*q, -q = b*p - 46. What is the highest common fac of m and p?
 	6
 Let k = 51 + 1. Suppose 0 = 2*d - d - k. Let m = d - 30. Calculate the greatest common divisor of 66 and m.
 	22
@@ -1753,7 +1753,7 @@ Is 86780716 a multiple of 53?
 	True
 Is 13193960 a multiple of 3?
 	False
-Is 1219 a factor of 47775563?
+Is 1219 a fac of 47775563?
 	False
 Is 1400703069 a multiple of 7546?
 	False
@@ -1763,13 +1763,13 @@ Does 77 divide 1566719?
 train-hard/numbers__is_factor_composed.txt: 
 Let j = 365 + -387. Let r(b) = -b**3 - 21*b**2 - 27*b + 2. Is r(j) a multiple of 24?
 	True
-Let q = 93 - 59. Let d = 41 - q. Suppose d*b - 27 = 15. Is 3 a factor of b?
+Let q = 93 - 59. Let d = 41 - q. Suppose d*b - 27 = 15. Is 3 a fac of b?
 	True
-Let v(s) = 16*s + 780. Is 22 a factor of v(68)?
+Let v(s) = 16*s + 780. Is 22 a fac of v(68)?
 	False
 Let z(b) = -b**3 - 40*b**2 - 6*b - 9. Suppose -27*q - 839 - 241 = 0. Is z(q) a multiple of 18?
 	False
-Let j(c) = -c**3 + 7*c**2 - 6*c. Let g be j(8). Let z = g - -149. Is 2 a factor of z?
+Let j(c) = -c**3 + 7*c**2 - 6*c. Let g be j(8). Let z = g - -149. Is 2 a fac of z?
 	False
 
 train-hard/numbers__is_prime.txt: 

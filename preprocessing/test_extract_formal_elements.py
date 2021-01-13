@@ -39,7 +39,7 @@ def extract_questions(all_filepaths, num_files, questions_per_file):
 #             question = lines[i].strip()
 #             answer = lines[i + 1].strip()
 #             annotated_question
-#             pairs.append((question, answer))
+#             pairs.ap((question, answer))
 #     return pairs
 
 

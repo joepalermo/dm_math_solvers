@@ -1,5 +1,5 @@
 import re
-from environment.typed_operators import Equation, Function, Expression, Variable, Value
+from environment.typed_operators import Eq, Fn, Ex, Var, Val
 
 
 def is_numeric(string):
@@ -11,7 +11,7 @@ def extract_formal_elements_as_annotations(problem_statement):
     return re.findall(pattern, problem_statement)
 
 
-def extract_formal_elements(question):
+def extract_formal_elements(question, cast=True):
     # split on punctuation unless it is immediately preceded and followed by a number (indicating it is a decimal)
     split_on_punctuation = "***".join(
         [
@@ -34,22 +34,23 @@ def extract_formal_elements(question):
         for f in formal_elements
     ]
     # cast types
-    formal_elements = [cast_formal_element(f) for f in formal_elements]
+    if cast:
+        formal_elements = [cast_formal_element(f) for f in formal_elements]
     return formal_elements
 
 
 def cast_formal_element(f):
     if "=" in f:
         try:
-            return Function(f)
+            return Fn(f)
         except:
-            return Equation(f)
+            return Eq(f)
     elif len(f) == 1 and f.isalpha():
-        return Variable(f)
+        return Var(f)
     elif f.isnumeric():
-        return Value(f)
+        return Val(f)
     else:
-        return Expression(f)
+        return Ex(f)
 
 
 def guess_until_problem_solved(
@@ -58,11 +59,11 @@ def guess_until_problem_solved(
     episode_i = 0
     graph_guessed_correctly = False
     encoded_problem_statement, _ = env.reset_with_specific_problem(
-        "short_problems", 1, problem_index
+        "short_problems", 0, problem_index
     )
-    print(f"problem statement: {env.decode(encoded_problem_statement)}")
+    print(f"\nproblem statement: {env.decode(encoded_problem_statement)}")
     while not graph_guessed_correctly and episode_i < max_episode_index:
-        _, _ = env.reset_with_specific_problem("short_problems", 1, problem_index)
+        _, _ = env.reset_with_specific_problem("short_problems", 0, problem_index)
         done = False
         step_i = 0
         if verbose:
@@ -78,3 +79,14 @@ def guess_until_problem_solved(
         episode_i += 1
     print(f'graph: {info["raw_observation"].split(";")[1]}')
     print(f"trials taken to guess problem #{problem_index}: {episode_i}")
+
+
+def filter_univariate(examples):
+    univariate_examples = []
+    for question, answer in examples:
+        formal_elements = extract_formal_elements(question, cast=False)
+        function = formal_elements[0]
+        num_vars = len([ch for ch in set(function) if ch.isalpha()])
+        if num_vars == 1:
+            univariate_examples.append((question, answer))
+    return univariate_examples
