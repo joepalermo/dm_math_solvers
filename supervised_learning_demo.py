@@ -31,19 +31,6 @@ def load_data_from_corpus(filepath):
     return questions_with_targets
 
 
-def input_to_target(x):
-    '''let y=0 mean df,
-       let y=1 mean Eq(...)'''
-    if 'third' in x and ' df(df(df(p_' in x:
-        y = 1
-    elif 'second' in x and ' df(df(p_' in x:
-        y = 1
-    elif 'first' in x and ' df(p_' in x:
-        y = 1
-    else:
-        y = 0
-    return y
-
 def sample_graph(x):
     import random
     df_0 = ''
@@ -57,6 +44,20 @@ def sample_graph(x):
     elif 'first' in x:
         g = random.sample([df_0, df_1], k=1)[0]
     return f'{x}; {g}'
+
+
+def input_to_target(x):
+    '''let y=0 mean df,
+       let y=1 mean Eq(...)'''
+    if 'third' in x and ' df(df(df(p_' in x:
+        y = 1
+    elif 'second' in x and ' df(df(p_' in x:
+        y = 1
+    elif 'first' in x and ' df(p_' in x:
+        y = 1
+    else:
+        y = 0
+    return y
 
 
 def encode(raw_observation, tokenizer):
