@@ -1,5 +1,5 @@
 import re
-from environment.typed_operators import Eq, Fn, Ex, Var, Val
+from environment.typed_operators import Eq, Fn, Ex, Var, Val, Rat
 
 
 def is_numeric(string):
@@ -49,6 +49,8 @@ def cast_formal_element(f):
         return Var(f)
     elif f.isnumeric():
         return Val(f)
+    elif re.compile("([0-9]+[/][0-9]+$)").match(f):
+        return Rat(f)
     else:
         return Ex(f)
 

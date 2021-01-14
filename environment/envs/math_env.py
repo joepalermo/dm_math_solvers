@@ -41,6 +41,7 @@ class MathEnv(gym.Env):
             md0,
             ip,
             lcm,
+            lcd,
             pf,
             fa,
             nt
