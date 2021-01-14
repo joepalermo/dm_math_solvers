@@ -87,7 +87,7 @@ train_buffer = [(s,a,r) for s,a,r in zip(train_states, train_actions, train_rewa
 # train and validate model ---------------------------------------------------------------------------------------------
 
 n_outputs = 2
-model = TransformerEncoderModel(ntoken=hparams.model.vocab_size + 1,
+model = TransformerEncoderModel(ntoken=hparams.env.vocab_size + 1,
                                 nhead=hparams.model.nhead,
                                 nhid=hparams.model.nhid,
                                 nlayers=hparams.model.nlayers,
