@@ -86,8 +86,8 @@ total_batches = 0
 for epoch in range(10):
     # shuffle training set indices
     permutation = torch.randperm(train_xs.size()[0])
-    for batch_i, i in enumerate(list(range(0, train_xs.size()[0], hparams.model.batch_size))):
-        batch_indices = permutation[i:i+hparams.model.batch_size]
+    for batch_i, i in enumerate(list(range(0, train_xs.size()[0], hparams.train.batch_size))):
+        batch_indices = permutation[i:i+hparams.train.batch_size]
         batch_xs, batch_ys = train_xs[batch_indices], train_ys[batch_indices]
         batch_logits = model(batch_xs.cuda())
         loss = criterion(batch_logits, batch_ys.cuda())
