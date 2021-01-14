@@ -78,7 +78,7 @@ model = TransformerEncoderModel(ntoken=hparams.env.vocab_size + 1,
                                 device=device,
                                 lr=hparams.train.lr,
                                 max_grad_norm=hparams.train.max_grad_norm,
-                                batch_size=hparams.train.batch_size).cuda()
+                                batch_size=hparams.train.batch_size)
 
 # learn via SL ---------------------------------------------------------------------------------------------
 criterion = torch.nn.CrossEntropyLoss()
@@ -89,8 +89,8 @@ for epoch in range(10):
     for batch_i, i in enumerate(list(range(0, train_xs.size()[0], hparams.train.batch_size))):
         batch_indices = permutation[i:i+hparams.train.batch_size]
         batch_xs, batch_ys = train_xs[batch_indices], train_ys[batch_indices]
-        batch_logits = model(batch_xs.cuda())
-        loss = criterion(batch_logits, batch_ys.cuda())
+        batch_logits = model(batch_xs.to(model.device))
+        loss = criterion(batch_logits, batch_ys.to(model.device))
         model.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.model.max_grad_norm)
@@ -98,7 +98,7 @@ for epoch in range(10):
         total_batches += 1
         if total_batches % 10 == 0:
             print(f'train_loss @ step #{total_batches}', loss.item())
-            valid_logits = model(valid_xs.cuda())
+            valid_logits = model(valid_xs.to(model.device))
             valid_preds = torch.argmax(valid_logits, axis=1)
             valid_preds = valid_preds.detach().cpu().numpy()
             valid_targets = valid_ys.detach().cpu().numpy()

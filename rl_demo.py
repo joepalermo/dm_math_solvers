@@ -94,7 +94,7 @@ model = TransformerEncoderModel(ntoken=hparams.env.vocab_size + 1,
                                 device=device,
                                 lr=hparams.train.lr,
                                 max_grad_norm=hparams.train.max_grad_norm,
-                                batch_size=hparams.train.batch_size).cuda()
+                                batch_size=hparams.train.batch_size)
 
 # learn via RL ---------------------------------------------------------------------------------------------
 from modelling.train_utils import train_on_buffer, get_logdir
@@ -104,7 +104,7 @@ for i in range(10):
     # train -----------------
     train_on_buffer(model, train_buffer, writer, 0, hparams.train.batches_per_train)
     # validate -----------------
-    valid_logits = model(valid_xs.cuda())
+    valid_logits = model(valid_xs.to(model.device))
     valid_preds = torch.argmax(valid_logits, axis=1)
     print(f'some preds:', valid_preds[:20])
     valid_preds = valid_preds.detach().cpu().numpy()
