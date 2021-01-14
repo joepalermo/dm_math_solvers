@@ -128,6 +128,24 @@ def inspect_performance(trajectories, rewarded_trajectory_statistics):
             print(f"{module_name}@{difficulty}: {rewarded_trajectory_statistics[(module_name,difficulty)]} / {len(trajectories[(module_name,difficulty)])} = {round(percentage_correct, 5)}%")
 
 
+# make function to compute action distribution
+def get_policy(model, obs):
+    from torch.distributions.categorical import Categorical
+    logits = model(obs)
+    return Categorical(logits=logits)
+
+
+# make action selection function (outputs int actions, sampled from policy)
+def get_action(model, obs):
+    return get_policy(model, obs).sample().item()
+
+
+# make loss function whose gradient, for the right data, is policy gradient
+def compute_loss(model, obs, act, weights):
+    logp = get_policy(model, obs).log_prob(act)
+    return -(logp * weights).mean()
+
+
 def train_on_buffer(model, replay_buffer, writer, current_batch_i, max_n_batches):
     model.train()
     random.shuffle(replay_buffer)
@@ -141,19 +159,26 @@ def train_on_buffer(model, replay_buffer, writer, current_batch_i, max_n_batches
             np.concatenate([np.expand_dims(step[1], 0) for step in batch]).astype(np.int64)).to(model.device)
         reward_batch = torch.from_numpy(
             np.concatenate([np.expand_dims(step[2], 0) for step in batch]).astype(np.int64)).to(model.device)
-        batch_logits = model(state_batch)
-        batch_probs = torch.softmax(batch_logits, axis=1)
-        # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
-        loss = -torch.mean(torch.log(batch_probs[:, action_batch]) * reward_batch)
-        # backprop + gradient descent
+
+        # take a single policy gradient update step
         model.optimizer.zero_grad()
-        loss.backward()
-        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
+        batch_loss = compute_loss(model=model, obs=state_batch, act=action_batch, weights=reward_batch)
+        batch_loss.backward()
         model.optimizer.step()
+        
+        # batch_probs = torch.softmax(batch_logits, axis=1)
+        # # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
+        # loss = -torch.mean(torch.log(batch_probs[:, action_batch]) * reward_batch)
+        # # backprop + gradient descent
+        # model.optimizer.zero_grad()
+        # loss.backward()
+        # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
+        # model.optimizer.step()
+        
         # increment the batch index + track the loss and gradients
         current_batch_i += 1
-        writer.add_scalar('Train/loss', loss, current_batch_i)
-        writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
+        writer.add_scalar('Train/loss', batch_loss, current_batch_i)
+        # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
     return current_batch_i
 
 
