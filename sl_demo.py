@@ -56,7 +56,7 @@ for i in range(100):
     print()
 
 # split train and val
-train_xs, valid_xs, train_ys, valid_ys = train_test_split(xs, ys, test_size=int(num_examples * 0.1))
+train_xs, valid_xs, train_ys, valid_ys = train_test_split(xs, ys, test_size=int(num_examples * 0.01))
 
 # setup SL dataset ---------------------------------------------------------------------------------------------
 
