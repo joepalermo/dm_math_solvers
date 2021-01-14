@@ -67,10 +67,10 @@ train_xs, valid_xs, train_ys, valid_ys = train_test_split(xs, ys, test_size=int(
 train_states = train_xs
 train_actions = train_ys
 train_rewards = np.ones(len(ys))
-# flip some actions and set corresponding rewards to negative
-train_flip = np.random.randint(0, 2, size=len(train_actions))  # get array of boolean flags (indices to flip)
-train_actions = np.array([1-action if flip else action for action, flip in zip(train_actions, train_flip)])
-train_rewards = np.array([-reward if flip else reward for reward, flip in zip(train_rewards, train_flip)])
+# # flip some actions and set corresponding rewards to negative
+# train_flip = np.random.randint(0, 2, size=len(train_actions))  # get array of boolean flags (indices to flip)
+# train_actions = np.array([1-action if flip else action for action, flip in zip(train_actions, train_flip)])
+# train_rewards = np.array([-reward if flip else reward for reward, flip in zip(train_rewards, train_flip)])
 
 # convert to torch
 train_states = torch.from_numpy(train_states)
