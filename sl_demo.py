@@ -93,7 +93,7 @@ for epoch in range(10):
         loss = criterion(batch_logits, batch_ys.to(model.device))
         model.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.model.max_grad_norm)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.train.max_grad_norm)
         model.optimizer.step()
         total_batches += 1
         if total_batches % 10 == 0:
