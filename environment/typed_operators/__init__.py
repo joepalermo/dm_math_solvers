@@ -107,6 +107,16 @@ class Val(Ex):
     def __gt__(self, other):
         return self.value > other.value
 
+class Rat(Ex):
+    def __init__(self, rational: str):
+        self.rational = str(rational)
+        self.numerator, self.denominator = [Val(x) for x in self.rational.split('/')]
+
+    def __str__(self):
+        return self.rational
+
+    def __eq__(self, rational):
+        return self.rational == str(rational)
 
 # operator definitions --------------------------------------
 
@@ -276,6 +286,10 @@ def lcm(x: Val, y: Val) -> Val:
     assert int(x.value) == x.value and int(y.value) == y.value
     x, y = int(x.value), int(y.value)
     return Val(abs(x * y) // math.gcd(x, y))
+
+def lcd(x: Rat, y: Rat) -> Val:
+    "least common denominator"
+    return lcm(x.denominator, y.denominator)
 
 
 def pf(n: Val) -> set:

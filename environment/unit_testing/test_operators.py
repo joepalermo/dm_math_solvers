@@ -55,3 +55,5 @@ class Test(unittest.TestCase):
         result = pf(Val('7380'))
         assert ", ".join([str(x) for x in sorted(list(result))]) == '2, 3, 5, 41'
 
+    def test_lcd(self):
+        assert lcd(Rat('2/3'), Rat('3/5')) == Val('15')
