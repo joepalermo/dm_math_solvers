@@ -100,7 +100,7 @@ model = TransformerEncoderModel(ntoken=hparams.env.vocab_size + 1,
 from modelling.train_utils import train_on_buffer, get_logdir
 logdir = get_logdir()
 writer = SummaryWriter(log_dir=logdir)
-for i in range(10):
+for epoch in range(1000):
     # train -----------------
     train_on_buffer(model, train_buffer, writer, 0, hparams.train.batches_per_train)
     # validate -----------------
