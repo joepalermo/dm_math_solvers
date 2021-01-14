@@ -15,9 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 torch.manual_seed(42)
 np.random.seed(seed=42)
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-if torch.cuda.is_available():
-    torch.cuda.set_device(0)
+device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 
 
 def encode(raw_observation, tokenizer):
