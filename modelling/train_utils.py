@@ -164,6 +164,7 @@ def train_on_buffer(model, replay_buffer, writer, current_batch_i, max_n_batches
         model.optimizer.zero_grad()
         batch_loss = compute_loss(model=model, obs=state_batch, act=action_batch, weights=reward_batch)
         batch_loss.backward()
+        # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
         model.optimizer.step()
         
         # batch_probs = torch.softmax(batch_logits, axis=1)
