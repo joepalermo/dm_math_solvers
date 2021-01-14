@@ -18,10 +18,11 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
 
+
 def encode(raw_observation, tokenizer):
     encoded_ids = tokenizer.encode(raw_observation).ids
     # pad the encoded ids up to a maximum length
-    encoded_ids.extend([padding_token for _ in range(seq_len - len(encoded_ids))])
+    encoded_ids.extend([padding_token for _ in range(hparams.env.max_sequence_length - len(encoded_ids))])
     return np.array(encoded_ids)
 
 
@@ -71,8 +72,7 @@ valid_ys = torch.from_numpy(valid_ys)
 # train and validate model ---------------------------------------------------------------------------------------------
 
 n_outputs = 2
-ntoken = hparams.model.vocab_size + 1
-model = TransformerEncoderModel(ntoken=ntoken,
+model = TransformerEncoderModel(ntoken=hparams.env.vocab_size + 1,
                                 nhead=hparams.model.nhead,
                                 nhid=hparams.model.nhid,
                                 nlayers=hparams.model.nlayers,
@@ -81,7 +81,7 @@ model = TransformerEncoderModel(ntoken=ntoken,
                                 device=device,
                                 lr=hparams.train.lr,
                                 max_grad_norm=hparams.train.max_grad_norm,
-                                batch_size=hparams.model.batch_size).cuda()
+                                batch_size=hparams.train.batch_size).cuda()
 
 # learn via SL ---------------------------------------------------------------------------------------------
 criterion = torch.nn.CrossEntropyLoss()

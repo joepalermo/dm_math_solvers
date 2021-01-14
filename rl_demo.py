@@ -3,14 +3,14 @@ hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_de
 
 import numpy as np
 import torch
-from sklearn.metrics import accuracy_score
 from modelling.transformer_encoder import TransformerEncoderModel
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
-from torch.utils.tensorboard import SummaryWriter
 from demo_utils import load_data_from_corpus
+from torch.utils.tensorboard import SummaryWriter
 
 torch.manual_seed(42)
 np.random.seed(seed=42)
@@ -23,7 +23,7 @@ if torch.cuda.is_available():
 def encode(raw_observation, tokenizer):
     encoded_ids = tokenizer.encode(raw_observation).ids
     # pad the encoded ids up to a maximum length
-    encoded_ids.extend([padding_token for _ in range(seq_len - len(encoded_ids))])
+    encoded_ids.extend([padding_token for _ in range(hparams.env.max_sequence_length - len(encoded_ids))])
     return np.array(encoded_ids)
 
 
@@ -87,12 +87,11 @@ train_buffer = [(s,a,r) for s,a,r in zip(train_states, train_actions, train_rewa
 # train and validate model ---------------------------------------------------------------------------------------------
 
 n_outputs = 2
-ntoken = hparams.model.vocab_size + 1
 model = TransformerEncoderModel(ntoken=hparams.model.vocab_size + 1,
                                 nhead=hparams.model.nhead,
                                 nhid=hparams.model.nhid,
                                 nlayers=hparams.model.nlayers,
-                                num_outputs=hparams.model.num_outputs,
+                                num_outputs=n_outputs,
                                 dropout=hparams.model.dropout,
                                 device=device,
                                 lr=hparams.train.lr,
