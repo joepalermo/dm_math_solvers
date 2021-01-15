@@ -2,33 +2,31 @@ Download data
 wget https://storage.cloud.google.com/mathematics-dataset/mathematics_dataset-v1.0.tar.gz
 ____
 
-Tasks
+What does end-state look like?
 
-Clear Tasks
-- Breakdown validation performance by module_name and difficulty
-    
-Clear Benefit to Performance
-- dropout only during training?
-- Add padding mask
-- Make the graphs more compact?
-    - Reducing the length of the description
+- Use an off-policy algorithm with a parameter to control exploration/exploitation tradeoff
 
-Experiments
-- Scale up to whole dataset
-    - Any module type that doesn't converge easily, train them in isolation to figure out why 
-    
-Open Ended Improvements
-- Add curriculum learning
-- Hyperparam search
-- Optimizing exploration
-- Use advantage functions?
-    - Actor/Critic?
-    - PPO?
-- Provide access to a test set within the environment
+- Maintain a database of rewarded graphs:
+    - Map each problem id (module_name + index) to set of rewarded graphs for that problem
+    - Persist between runs so that it keeps growing
 
-Less Important for now
-- Multi-gpu
-- Parallel environment steps? (only if this becomes a bottleneck)
+- How to use multi-GPUs for sampling
+    - 2 alternatives:
+        - sampling in parallel (one set of environments associated to each GPU)
+        - sample sequentially but with huge batch size (sharing all GPUs for one big batch) 
+
+- Multi-GPU training
+    - Do we need model parallelism (i.e. split model over multi-gpu)
+    - Or is data parallelism enough?
+
+- Curriculum learning: How to change the data distribution over time from simple to complex
+    - If performance of (module, difficulty) pair goes over a threshold then switch from 'learning' mode to 'maintenance' mode
+    - 'learning' mode implies a larger fraction of each batch would comprise that (module, difficulty) pair
+    - 'maintenance' mode  implies a smaller fraction
+    - Teacher-student curriculum learning?
+
+- Adaptive modification of the exploration/exploitation tradeoff
+    - how does this change?
 
 Optional future work:
     - Extend the dataset by composing all problem types more fully, then systematically study generalization of different sorts
