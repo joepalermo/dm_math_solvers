@@ -1,57 +1,34 @@
 from hparams import HParams
-
-# TODO: remove ask_before
+# hparams = HParams('.', hparams_filename='hparams', name='rl_math')
 hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
-
 import torch
-from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
     load_buffer, get_logdir, visualize_buffer
 from modelling.transformer_encoder import TransformerEncoderModel
-
-logdir = get_logdir()
-
 device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 
-# define and init environment
-filepaths = [
-    f"mathematics_dataset-v1.0/train-easy/{fn}" for fn in hparams.env.selected_filenames if 'composed' not in fn
-]
-
-env_config = {
-    "problem_filepaths": filepaths,
-    "corpus_filepath": str(Path("environment/corpus/20k_question_corpus.txt").resolve()),
-    "num_problems_per_module": hparams.env.num_problems_per_module,
-    "validation_percentage": hparams.env.validation_percentage,
-    "max_sequence_length": hparams.env.max_sequence_length,
-    "vocab_size": hparams.env.vocab_size,
-    "univariate_differentiation": hparams.env.univariate_differentiation,
-    "max_difficulty": hparams.env.max_difficulty  # i.e. uncomposed only
-}
+# define the writer
+logdir = get_logdir()
+writer = SummaryWriter(log_dir=logdir)
 
 # initialize all environments
-envs = init_envs(env_config, hparams.env.num_environments)
+envs = init_envs(hparams.env)
 rewarded_trajectories, rewarded_trajectory_statistics = init_trajectory_data_structures(envs[0])
 
-# architecture params
-ntoken = env_config['vocab_size'] + 1
+# set dependent params
+ntoken = hparams.env.vocab_size + 1
 num_outputs = len(envs[0].actions)
 
-# training params
-buffer_threshold = hparams.train.batch_size
-
 # load model
-load_model = False
-if load_model:
-    model = torch.load('modelling/models/model.pt')
+if hparams.model.model_filepath is not None:
+    model = torch.load(hparams.model.model_filepath)
 else:
     dummy_model = None
     model = TransformerEncoderModel(ntoken=ntoken, nhead=hparams.model.nhead, nhid=hparams.model.nhid, nlayers=hparams.model.nlayers, num_outputs=num_outputs,
                 dropout=hparams.model.dropout, device=device, lr=hparams.train.lr, max_grad_norm=hparams.train.max_grad_norm, batch_size=hparams.train.batch_size)
 
-writer = SummaryWriter(log_dir=logdir)
 
 mode = hparams.train.mode
 assert mode == 'positive_only' or mode == 'balanced'
@@ -66,9 +43,9 @@ batch_i = 0
 last_eval_batch_i = 0
 replay_buffer = []
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
-    # buffer = fill_buffer(dummy_model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
+    # buffer = fill_buffer(dummy_model, envs, hparams.train.buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
     #                      rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=True)
-    buffer = fill_buffer(model, envs, buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
+    buffer = fill_buffer(model, envs, hparams.train.buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
                          rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps)
     # visualize_buffer(buffer, envs[0])
     if hparams.train.use_replay_buffer:

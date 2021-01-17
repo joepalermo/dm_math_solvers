@@ -1,4 +1,5 @@
 import re
+import tqdm as tqdm
 from environment.typed_operators import Eq, Fn, Ex, Var, Val, Rat
 
 
@@ -92,3 +93,68 @@ def filter_univariate(examples):
         if num_vars == 1:
             univariate_examples.append((question, answer))
     return univariate_examples
+
+
+def get_module_name_from_filepath(fp):
+    module_name = fp.split("/")[-1].split(".txt")[0]
+    if "compose" in module_name:
+        module_name = module_name.split("_compose")[0]
+    else:
+        module_name = module_name
+    return module_name
+
+
+# load train data
+def load_training_data(config):
+    train = {}
+    print("loading problems")
+    for filepath in tqdm(config.problem_filepaths):
+        with open(filepath, "r") as f:
+            lines = f.readlines()
+        num_pairs = min(len(lines) // 2, config.num_problems_per_module)
+        for i in range(0, 2 * num_pairs, 2):
+            question = lines[i].strip()
+            answer = lines[i + 1].strip()
+            # for uncomposed problems set difficulty to 0 to distinguish them
+            difficulty = (
+                len(re.split("(?<![0-9])[.,;:?]|[.,;:?](?![0-9])", question)) - 1
+                if 'compose' in filepath
+                else 0
+            )
+            # don't load problems with difficulty above the maximum
+            if difficulty > config.max_difficulty:
+                continue
+            module_name = get_module_name_from_filepath(filepath)
+            if module_name in train:
+                if difficulty in train[module_name]:
+                    train[module_name][difficulty].append((question, answer))
+                else:
+                    train[module_name][difficulty] = [(question, answer)]
+            else:
+                train[module_name] = {difficulty: [(question, answer)]}
+    if config.univariate_differentiation:
+        train['calculus__differentiate'][0] = filter_univariate(train['calculus__differentiate'][0])
+    return train
+
+
+def split_validation_data(config, train):
+    val = {}
+    for module_name in train:
+        val[module_name] = {}
+        for difficulty in train[module_name]:
+            num_examples = len(train[module_name][difficulty])
+            num_val = int(num_examples * config.validation_percentage)
+            val[module_name][difficulty] = train[module_name][difficulty][:num_val]
+            train[module_name][difficulty] = train[module_name][difficulty][num_val:]
+            assert (
+                len(train[module_name][difficulty])
+                + len(val[module_name][difficulty])
+                == num_examples
+            )
+    return val
+
+def build_tokenizer(config)
+    self.padding_token = config.vocab_size
+    self.tokenizer = Tokenizer(BPE())
+    trainer = BpeTrainer(vocab_size=self.vocab_size, special_tokens=self.special_tokens)
+    self.tokenizer.train(trainer, [str(Path(config.corpus_filepath).resolve())])
