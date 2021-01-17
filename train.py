@@ -7,11 +7,11 @@ from tqdm import tqdm
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
     load_buffer, get_logdir, visualize_buffer
 from modelling.transformer_encoder import TransformerEncoderModel
-device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 
-# define the writer
-logdir = get_logdir()
-writer = SummaryWriter(log_dir=logdir)
+# basic setup and checks
+device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
+assert hparams.train.mode == 'positive_only' or hparams.train.mode == 'balanced'
+writer = SummaryWriter(log_dir=get_logdir())
 
 # initialize all environments
 envs = init_envs(hparams.env)
@@ -21,17 +21,13 @@ rewarded_trajectories, rewarded_trajectory_statistics = init_trajectory_data_str
 ntoken = hparams.env.vocab_size + 1
 num_outputs = len(envs[0].actions)
 
-# load model
+# load or init model
 if hparams.model.model_filepath is not None:
     model = torch.load(hparams.model.model_filepath)
 else:
     dummy_model = None
     model = TransformerEncoderModel(ntoken=ntoken, nhead=hparams.model.nhead, nhid=hparams.model.nhid, nlayers=hparams.model.nlayers, num_outputs=num_outputs,
                 dropout=hparams.model.dropout, device=device, lr=hparams.train.lr, max_grad_norm=hparams.train.max_grad_norm, batch_size=hparams.train.batch_size)
-
-
-mode = hparams.train.mode
-assert mode == 'positive_only' or mode == 'balanced'
 
 # bootstrap
 # buffer = load_buffer('mathematics_dataset-v1.0/differentiate_50_buffers.pkl')
@@ -44,9 +40,9 @@ last_eval_batch_i = 0
 replay_buffer = []
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
     # buffer = fill_buffer(dummy_model, envs, hparams.train.buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
-    #                      rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=True)
+    #                      rewarded_trajectory_statistics, mode=hparams.train.mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=True)
     buffer = fill_buffer(model, envs, hparams.train.buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
-                         rewarded_trajectory_statistics, mode=mode, max_num_steps=hparams.train.fill_buffer_max_steps)
+                         rewarded_trajectory_statistics, mode=hparams.train.mode, max_num_steps=hparams.train.fill_buffer_max_steps)
     # visualize_buffer(buffer, envs[0])
     if hparams.train.use_replay_buffer:
         replay_buffer.extend(buffer)

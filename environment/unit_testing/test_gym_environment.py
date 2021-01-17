@@ -1,26 +1,15 @@
 from hparams import HParams
 hparams = HParams('artifacts/.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import numpy as np
-import gym
 from environment.utils import extract_formal_elements
 from environment.envs.math_env import MathEnv
 from environment.typed_operators import *
 from utils import read_text_file
 import unittest
-import glob
-import os
 
 class Test(unittest.TestCase):
     def test_problem_0_fail_1(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then fail after 1st action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 0
@@ -39,15 +28,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_0_fail_2(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then fail after 2nd action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 0
@@ -77,15 +58,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_0_fail_3(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then fail after 1st action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 0
@@ -100,15 +73,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_0_success_1(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 0
@@ -175,15 +140,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_4_success_1_with_masking(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 4
@@ -218,15 +175,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_4_success_2_with_masking(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 4
@@ -251,15 +200,7 @@ class Test(unittest.TestCase):
         )
 
     def test_problem_5_success(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 5
@@ -298,15 +239,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_6_success(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 6
@@ -344,15 +277,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_8_success_1(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 8
@@ -380,15 +305,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_8_success_2(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 9
@@ -426,15 +343,7 @@ class Test(unittest.TestCase):
         assert done
 
     def test_problem_9_success(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/short_problems.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200
-        }
-        env = MathEnv(env_config)
+        env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_problem_statement, _ = env.reset_with_specific_problem(
             "short_problems", 0, 9
@@ -459,17 +368,3 @@ class Test(unittest.TestCase):
         )
         assert reward == 0
         assert not done
-
-    def test_univariate(self):
-        env_config = {
-            "problem_filepaths": ["artifacts/calculus__differentiate.txt"],
-            "corpus_filepath": "../../environment/corpus/1k_corpus.txt",
-            "num_problems_per_module": 10 ** 7,
-            "validation_percentage": 0,
-            "max_sequence_length": 100,
-            "vocab_size": 200,
-            "univariate_differentiation": True
-        }
-        env = MathEnv(env_config)
-        # for q in env.train['calculus__differentiate'][0][:20]:
-        #     print(q)

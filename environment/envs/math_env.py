@@ -113,6 +113,7 @@ class MathEnv(gym.Env):
     def build_tokenizer(self):
         tokenizer = Tokenizer(BPE())
         trainer = BpeTrainer(vocab_size=self.vocab_size, special_tokens=self.special_tokens)
+        print(self.config.corpus_filepath)
         tokenizer.train(trainer, [str(Path(self.config.corpus_filepath).resolve())])
         return tokenizer
 

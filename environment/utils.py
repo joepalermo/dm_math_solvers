@@ -1,5 +1,6 @@
+import os
 import re
-import tqdm as tqdm
+from tqdm import tqdm
 from environment.typed_operators import Eq, Fn, Ex, Var, Val, Rat
 
 
@@ -108,7 +109,8 @@ def get_module_name_from_filepath(fp):
 def load_training_data(config):
     train = {}
     print("loading problems")
-    for filepath in tqdm(config.problem_filepaths):
+    problem_filepaths = [os.path.join(config.data_dirpath, filename) for filename in config.selected_filenames]
+    for filepath in tqdm(problem_filepaths):
         with open(filepath, "r") as f:
             lines = f.readlines()
         num_pairs = min(len(lines) // 2, config.num_problems_per_module)
@@ -152,9 +154,3 @@ def split_validation_data(config, train):
                 == num_examples
             )
     return val
-
-def build_tokenizer(config)
-    self.padding_token = config.vocab_size
-    self.tokenizer = Tokenizer(BPE())
-    trainer = BpeTrainer(vocab_size=self.vocab_size, special_tokens=self.special_tokens)
-    self.tokenizer.train(trainer, [str(Path(config.corpus_filepath).resolve())])
