@@ -9,6 +9,9 @@ from modelling.train_utils import init_trajectory_data_structures, init_envs, tr
     load_buffer, get_logdir, visualize_buffer, StepDataset
 from modelling.transformer_encoder import TransformerEncoderModel
 
+torch.manual_seed(hparams.run.seed)
+np.random.seed(seed=hparams.run.seed)
+
 # basic setup and checks
 device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 assert hparams.train.mode == 'positive_only' or hparams.train.mode == 'balanced'
