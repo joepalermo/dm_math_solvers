@@ -8,6 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
     load_buffer, get_logdir, visualize_buffer, StepDataset
 from modelling.transformer_encoder import TransformerEncoderModel
+import numpy as np
 
 torch.manual_seed(hparams.run.seed)
 np.random.seed(seed=hparams.run.seed)
@@ -55,7 +56,7 @@ for buffer_i in tqdm(range(hparams.train.num_buffers)):
     else:
         step_dataset = StepDataset(trajectory_buffer, model.device)
     # construct data loader
-    data_loader = DataLoader(step_dataset, batch_size=model.batch_size, shuffle=True)
+    data_loader = DataLoader(step_dataset, batch_size=model.batch_size, shuffle=True, drop_last=True)
     # train
     batches_in_dataset = len(step_dataset) // model.batch_size
     batches_to_train = min(batches_in_dataset, hparams.train.batches_per_train)

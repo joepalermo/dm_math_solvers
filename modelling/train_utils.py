@@ -69,12 +69,12 @@ def step_all(envs, action_batch):
     return obs_batch, step_batch
 
 
-def action_batch(obs_batch, envs, model=None):
+def get_action_batch(obs_batch, envs, model=None):
     # get model output
     if model:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
         output_batch = model(obs_batch.to(model.device)).detach().cpu().numpy()
-        model_type = model.model_type
+        model_type = hparams.model.model_type
     else:
         output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
         model_type = 'policy'
@@ -84,12 +84,12 @@ def action_batch(obs_batch, envs, model=None):
     for i, env in enumerate(envs):
         # mask the corresponding model output
         masked_output = env.mask_invalid_types(output_batch[i])
-        assert np.sum(masked_output) != 0
+        # assert np.sum(masked_output) != 0
         if model_type == 'policy':
             # normalize and sample
             # TODO: remove conditional if assert never triggered?
             masked_policy_vector = masked_output if np.sum(masked_output) != 0 else np.ones(
-                len(masked_output))
+                len(masked_output), dtype=np.int64)
             masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
             action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         elif model_type == 'value':
@@ -98,7 +98,7 @@ def action_batch(obs_batch, envs, model=None):
                 # take random action
                 # TODO: remove conditional if assert never triggered?
                 available_actions = [i for i in env.action_indices if masked_output[i] != 0] if np.sum(masked_output) != 0 else np.ones(
-                    len(masked_output))
+                    len(masked_output), dtype=np.int64)
                 action_index = random.choice(available_actions)
             else:
                 action_index = np.argmax(masked_output)
@@ -173,7 +173,16 @@ def vpg_step(model, state_batch, action_batch, reward_batch):
 
 
 def dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch):
-    pass
+    # Take a single deep Q learning update step
+    targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(model(next_state_batch), dim=1)[0]
+    model.optimizer.zero_grad()
+    batch_output = model(state_batch)
+    batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
+    batch_loss = torch.nn.MSELoss()(batch_output, targets)
+    batch_loss.backward()
+    # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
+    model.optimizer.step()
+    return batch_loss
 
 
 class StepDataset(torch.utils.data.Dataset):
@@ -201,7 +210,7 @@ def train_on_buffer(model, data_loader, n_batches, writer, current_batch_i):
     model.train()
     for i, (state_batch, action_batch, reward_batch, next_state_batch, done_batch) in enumerate(data_loader):
         batch_loss = dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
-        batch_loss = vpg_step(model, state_batch, action_batch, reward_batch)
+        # batch_loss = vpg_step(model, state_batch, action_batch, reward_batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
