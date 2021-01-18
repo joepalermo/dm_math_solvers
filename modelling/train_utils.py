@@ -115,9 +115,11 @@ def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_
 
 
 def extract_buffer_trajectory(raw_trajectory):
-    states = [state for state, _, _, _, _ in raw_trajectory[0:-1]]
-    action_reward = [(action, reward) for _, action, reward, _, _ in raw_trajectory[1:]]
-    buffer_trajectory = [(state, action, reward) for state, (action, reward) in zip(states, action_reward)]
+    states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
+    everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
+    buffer_trajectory = [(state, action, reward, next_state, done)
+                         for state, (next_state, action, reward, done)
+                         in zip(states, everything_else)]
     return buffer_trajectory
 
 
@@ -156,6 +158,10 @@ def vpg_step(model, state_batch, action_batch, reward_batch):
     return batch_loss
 
 
+def dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch):
+    pass
+
+
 class StepDataset(torch.utils.data.Dataset):
     """Step Dataset"""
 
@@ -168,16 +174,19 @@ class StepDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         # return only the (state, action, reward)?
-        state, action, reward = self.step_buffer[idx]
+        state, action, reward, next_state, done = self.step_buffer[idx]
         state = torch.from_numpy(state.astype(np.int64)).to(self.device)
         action = torch.from_numpy(np.array(action, dtype=np.int64)).to(self.device)
         reward = torch.from_numpy(np.array(reward, dtype=np.int64)).to(self.device)
-        return state, action, reward
+        next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
+        done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
+        return state, action, reward, next_state, done
 
 
 def train_on_buffer(model, data_loader, n_batches, writer, current_batch_i):
     model.train()
-    for i, (state_batch, action_batch, reward_batch) in enumerate(data_loader):
+    for i, (state_batch, action_batch, reward_batch, next_state_batch, done_batch) in enumerate(data_loader):
+        batch_loss = dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
         batch_loss = vpg_step(model, state_batch, action_batch, reward_batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)

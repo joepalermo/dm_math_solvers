@@ -37,6 +37,8 @@ else:
 # batch_i = train_on_buffer(model, buffer, writer, batch_i, batches_per_train)
 # run_eval(model, envs, writer, batch_i, 100)
 
+# TODO: store s_t+1? or handle that in extraction? (for DQN)
+
 # training loop
 batch_i = 0
 last_eval_batch_i = 0
