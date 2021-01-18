@@ -203,7 +203,7 @@ class MathEnv(gym.Env):
         action_index = np.random.choice(choices, p=masked_normed_policy_vector)
         return action_index
 
-    def mask_invalid_types(self, policy_vector):
+    def mask_invalid_types(self, model_output):
         if not self.compute_graph.current_node:
             # first action must be an operator
             mask = np.concatenate(
@@ -227,7 +227,7 @@ class MathEnv(gym.Env):
                     ),
                 ]
             )
-        return mask * policy_vector
+        return mask * model_output
 
     def render(self):
         pass

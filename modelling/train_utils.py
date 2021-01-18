@@ -69,21 +69,40 @@ def step_all(envs, action_batch):
     return obs_batch, step_batch
 
 
-def get_action_batch(obs_batch, envs, model=None):
+def action_batch(obs_batch, envs, model=None):
+    # get model output
     if model:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
-        logits_batch = model(obs_batch.to(model.device)).detach().cpu().numpy()
+        output_batch = model(obs_batch.to(model.device)).detach().cpu().numpy()
+        model_type = model.model_type
     else:
-        logits_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
-    policy_batch = softmax(logits_batch, axis=1)
+        output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
+        model_type = 'policy'
+    if model_type == 'policy':
+        output_batch = softmax(output_batch, axis=1)
     actions = []
     for i, env in enumerate(envs):
-        masked_policy_vector = env.mask_invalid_types(policy_batch[i])
-        # if all actions are masked, then let the policy vector be uniform
-        masked_policy_vector = masked_policy_vector if np.sum(masked_policy_vector) != 0 else np.ones(len(masked_policy_vector))
-        masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
-        action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
-        actions.append(action_index)
+        # mask the corresponding model output
+        masked_output = env.mask_invalid_types(output_batch[i])
+        assert np.sum(masked_output) != 0
+        if model_type == 'policy':
+            # normalize and sample
+            # TODO: remove conditional if assert never triggered?
+            masked_policy_vector = masked_output if np.sum(masked_output) != 0 else np.ones(
+                len(masked_output))
+            masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
+            action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
+        elif model_type == 'value':
+            eps_ = random.random()
+            if eps_ < model.epsilon:
+                # take random action
+                # TODO: remove conditional if assert never triggered?
+                available_actions = [i for i in env.action_indices if masked_output[i] != 0] if np.sum(masked_output) != 0 else np.ones(
+                    len(masked_output))
+                action_index = random.choice(available_actions)
+            else:
+                action_index = np.argmax(masked_output)
+            actions.append(action_index)
     return actions
 
 
@@ -135,11 +154,6 @@ def get_policy(model, obs):
     from torch.distributions.categorical import Categorical
     logits = model(obs)
     return Categorical(logits=logits)
-
-
-# make action selection function (outputs int actions, sampled from policy)
-def get_action(model, obs):
-    return get_policy(model, obs).sample().item()
 
 
 # make loss function whose gradient, for the right data, is policy gradient
