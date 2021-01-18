@@ -25,28 +25,29 @@ class PositionalEncoding(torch.nn.Module):
 
 
 class TransformerEncoderModel(torch.nn.Module):
-    def __init__(self, ntoken, nhead, nhid, nlayers, num_outputs, dropout, device, lr, max_grad_norm, batch_size):
+    def __init__(self, ntoken, num_outputs, device):
         super().__init__()
         torch.nn.Module.__init__(self)
+        self.max_grad_norm = hparams.train.max_grad_norm
+        self.batch_size = hparams.train.batch_size
+        self.epsilon = hparams.train.epsilon
         # ntoken is vocab_size + 1 and vocab_size is index of padding_token, thus need to decrement ntoken by 1
         self.padding_token = ntoken - 1
         # define layers
-        self.token_embedding = torch.nn.Embedding(ntoken, nhid)
-        self.pos_encoder = PositionalEncoding(nhid, dropout)
+        self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
+        self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
         self.transformer_encoder = TransformerEncoder(
-            TransformerEncoderLayer(d_model=nhid, nhead=nhead), nlayers
+            TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.policy_output = torch.nn.Linear(nhid, num_outputs)
+        self.policy_output = torch.nn.Linear(hparams.model.nhid, num_outputs)
         # set other things
         self.device = device
         self.to(device)
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=lr)
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=1)
         # self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=hparams.train.factor, patience=hparams.train.patience,
         #                                                        threshold=0.001, threshold_mode='rel', cooldown=0,
         #                                                        min_lr=hparams.train.min_lr, eps=1e-08, verbose=False)
-        self.max_grad_norm = max_grad_norm
-        self.batch_size = batch_size
 
     def forward(self, token_idxs):
         # embed the tokens

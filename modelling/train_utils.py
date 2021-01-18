@@ -102,7 +102,7 @@ def action_batch(obs_batch, envs, model=None):
                 action_index = random.choice(available_actions)
             else:
                 action_index = np.argmax(masked_output)
-            actions.append(action_index)
+        actions.append(action_index)
     return actions
 
 

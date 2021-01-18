@@ -27,10 +27,7 @@ if hparams.model.model_filepath is not None:
     model = torch.load(hparams.model.model_filepath)
 else:
     dummy_model = None
-    model = TransformerEncoderModel(ntoken=ntoken, nhead=hparams.model.nhead, nhid=hparams.model.nhid,
-                                    nlayers=hparams.model.nlayers, num_outputs=num_outputs,
-                                    dropout=hparams.model.dropout, device=device, lr=hparams.train.lr,
-                                    max_grad_norm=hparams.train.max_grad_norm, batch_size=hparams.train.batch_size)
+    model = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
 
 # bootstrap
 # buffer = load_buffer('mathematics_dataset-v1.0/differentiate_50_buffers.pkl')
