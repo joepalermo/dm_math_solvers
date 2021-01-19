@@ -6,6 +6,8 @@ What does end-state look like?
 
 - Use an off-policy algorithm with a parameter to control exploration/exploitation tradeoff
 
+- Design a procedure for testing new RL algorithms with simple environments
+
 - Maintain a database of rewarded graphs:
     - Map each problem id (module_name + index) to set of rewarded graphs for that problem
     - Persist between runs so that it keeps growing
