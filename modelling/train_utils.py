@@ -133,13 +133,13 @@ def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_
                  'difficulty': difficulty}
 
 
-def extract_buffer_trajectory(raw_trajectory):
+def align_trajectory(raw_trajectory):
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
-    buffer_trajectory = [(state, action, reward, next_state, done)
+    aligned_trajectory = [(state, action, reward, next_state, done)
                          for state, (next_state, action, reward, done)
                          in zip(states, everything_else)]
-    return buffer_trajectory
+    return aligned_trajectory
 
 
 def inspect_performance(trajectories, rewarded_trajectory_statistics):
@@ -311,15 +311,15 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 if (mode == 'positive_only' and reward == 1) or \
                    (mode == 'balanced' and buffer_positives / buffer_negatives <= positive_to_negative_ratio and \
                         reward == 1):
-                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'])
-                    trajectory_buffer.append(buffer_trajectory)
-                    cached_steps += len(buffer_trajectory)
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    trajectory_buffer.append(aligned_trajectory)
+                    cached_steps += len(aligned_trajectory)
                     buffer_positives += 1
                 elif mode == 'balanced' and buffer_positives / buffer_negatives > positive_to_negative_ratio and \
                         reward == -1:
-                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'])
-                    trajectory_buffer.append(buffer_trajectory)
-                    cached_steps += len(buffer_trajectory)
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    trajectory_buffer.append(aligned_trajectory)
+                    cached_steps += len(aligned_trajectory)
                     buffer_negatives += 1
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
@@ -340,6 +340,6 @@ def load_buffer(trajectories_filepath):
         trajectories_ = trajectories[(module_name, difficulty)]
         for trajectory in trajectories_:
             reward = trajectory[-1][2]
-            processed_trajectory = extract_buffer_trajectory(trajectory, reward)
+            processed_trajectory = align_trajectory(trajectory, reward)
             buffer.extend(processed_trajectory)
     return buffer
