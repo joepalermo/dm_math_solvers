@@ -6,9 +6,10 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train_on_buffer, run_eval, fill_buffer, \
-    load_buffer, get_logdir, visualize_buffer, StepDataset
+    load_buffer, get_logdir, visualize_buffer, StepDataset, visualize_trajectory_cache
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
+from sqlitedict import SqliteDict
 
 torch.manual_seed(hparams.run.seed)
 np.random.seed(seed=hparams.run.seed)
@@ -46,7 +47,7 @@ last_eval_batch_i = 0
 replay_buffer = []
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
     trajectory_buffer = fill_buffer(dummy_model, envs, hparams.train.buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
-                         rewarded_trajectory_statistics, mode=hparams.train.mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=True)
+                         rewarded_trajectory_statistics, mode=hparams.train.mode, max_num_steps=hparams.train.fill_buffer_max_steps, verbose=False)
     # trajectory_buffer = fill_buffer(model, envs, hparams.train.buffer_threshold, hparams.train.positive_to_negative_ratio, rewarded_trajectories,
     #                      rewarded_trajectory_statistics, mode=hparams.train.mode, max_num_steps=hparams.train.fill_buffer_max_steps)
     # construct dataset
@@ -65,6 +66,8 @@ for buffer_i in tqdm(range(hparams.train.num_buffers)):
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
         run_eval(model, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+    mydict = SqliteDict('./my_db.sqlite', autocommit=True)
+    visualize_trajectory_cache(envs[0].decode, mydict)
 
 # from utils import write_pickle
 # write_pickle('mathematics_dataset-v1.0/trajectories.pkl', rewarded_trajectories)

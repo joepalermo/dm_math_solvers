@@ -276,6 +276,38 @@ def visualize_buffer(buffer, env):
     print()
 
 
+def visualize_trajectory_cache(decoder, trajectory_cache):
+    for key, trajectories in trajectory_cache.items():
+        for trajectory in trajectories:
+            last_state = trajectory[-1][3]
+            print("\t", decoder(last_state))
+
+
+def same_problem_trajectory_equals(trajectory1, trajectory2):
+    '''
+    Since MathEnv is a deterministic environment, then if both trajectories are for the same problem and they have
+    the same action sequence, they must be equal trajectories.
+
+    Steps have the format: (state, action, reward, next_state, done)
+    Therefore, actions can be accessed by indexing a step at position 1.
+    '''
+    return all([step1[1] == step2[1] for step1, step2 in zip(trajectory1, trajectory2)])
+
+
+def cache_trajectory(key, aligned_trajectory, trajectory_cache):
+    if not key in trajectory_cache:
+        trajectory_cache[key] = [aligned_trajectory]
+    else:
+        # if the key already exists in the trajectory_cache, then only cache the trajectory if it's not already present
+        for aligned_trajectory_ in trajectory_cache[key]:
+            if same_problem_trajectory_equals(aligned_trajectory_, aligned_trajectory):
+                return
+        # append the new trajectory
+        trajectories = trajectory_cache[key]
+        trajectories.append(aligned_trajectory)
+        trajectory_cache[key] = trajectories
+
+
 def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
                 rewarded_trajectory_statistics, verbose=False, mode='positive_only', max_num_steps=1000):
     '''
@@ -294,6 +326,9 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     trajectory_buffer = []
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
+    # init trajectory cache from storage
+    from sqlitedict import SqliteDict
+    trajectory_cache = SqliteDict('./my_db.sqlite', autocommit=True)
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
     # take steps in all environments num_parallel_steps times
     for _ in range(max_num_steps):
@@ -310,13 +345,17 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                 if reward == 1:
                     # cache trajectory
-                    pass
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    raw_key = (envs_info[env_i]['module_name'], str(envs_info[env_i]['difficulty']),
+                        str(envs_info[env_i]['module_difficulty_index']))
+                    key = '-'.join(raw_key)
+                    cache_trajectory(key, aligned_trajectory, trajectory_cache)
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
                 if (mode == 'positive_only' and reward == 1) or \
                    (mode == 'balanced' and buffer_positives / buffer_negatives <= positive_to_negative_ratio and \
                         reward == 1):
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    # aligned trajectory already computed (since reward == 1)
                     trajectory_buffer.append(aligned_trajectory)
                     cached_steps += len(aligned_trajectory)
                     buffer_positives += 1
@@ -334,6 +373,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
         if cached_steps > buffer_threshold:
             break
+    trajectory_cache.close()
     return trajectory_buffer
 
 
