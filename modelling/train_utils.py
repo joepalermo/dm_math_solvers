@@ -1,12 +1,12 @@
 import copy
-import math
 import random
 from tqdm import tqdm
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from scipy.special import softmax
 from environment.envs import MathEnv
-import os
+from utils import flatten
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
 # from train import batch_size, model, device, optimizer, max_grad_norm, writer
@@ -70,19 +70,38 @@ def step_all(envs, action_batch):
 
 
 def get_action_batch(obs_batch, envs, model=None):
+    # get model output
     if model:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
-        logits_batch = model(obs_batch.to(model.device)).detach().cpu().numpy()
+        output_batch = model(obs_batch.to(model.device)).detach().cpu().numpy()
+        model_type = hparams.model.model_type
     else:
-        logits_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
-    policy_batch = softmax(logits_batch, axis=1)
+        output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
+        model_type = 'policy'
+    if model_type == 'policy':
+        output_batch = softmax(output_batch, axis=1)
     actions = []
     for i, env in enumerate(envs):
-        masked_policy_vector = env.mask_invalid_types(policy_batch[i])
-        # if all actions are masked, then let the policy vector be uniform
-        masked_policy_vector = masked_policy_vector if np.sum(masked_policy_vector) != 0 else np.ones(len(masked_policy_vector))
-        masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
-        action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
+        # mask the corresponding model output
+        masked_output = env.mask_invalid_types(output_batch[i])
+        # assert np.sum(masked_output) != 0
+        if model_type == 'policy':
+            # normalize and sample
+            # TODO: remove conditional if assert never triggered?
+            masked_policy_vector = masked_output if np.sum(masked_output) != 0 else np.ones(
+                len(masked_output), dtype=np.int64)
+            masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
+            action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
+        elif model_type == 'value':
+            eps_ = random.random()
+            if eps_ < model.epsilon:
+                # take random action
+                # TODO: remove conditional if assert never triggered?
+                available_actions = [i for i in env.action_indices if masked_output[i] != 0] if np.sum(masked_output) != 0 else np.ones(
+                    len(masked_output), dtype=np.int64)
+                action_index = random.choice(available_actions)
+            else:
+                action_index = np.argmax(masked_output)
         actions.append(action_index)
     return actions
 
@@ -114,10 +133,12 @@ def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_
                  'difficulty': difficulty}
 
 
-def extract_buffer_trajectory(raw_trajectory, reward):
-    states = [state for state, _, _, _, _ in raw_trajectory[0:-1]]
-    action_reward = [(action, reward) for _, action, _, _, _ in raw_trajectory[1:]]
-    buffer_trajectory = [(state, action, reward) for state, (action, reward) in zip(states, action_reward)]
+def extract_buffer_trajectory(raw_trajectory):
+    states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
+    everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
+    buffer_trajectory = [(state, action, reward, next_state, done)
+                         for state, (next_state, action, reward, done)
+                         in zip(states, everything_else)]
     return buffer_trajectory
 
 
@@ -135,51 +156,66 @@ def get_policy(model, obs):
     return Categorical(logits=logits)
 
 
-# make action selection function (outputs int actions, sampled from policy)
-def get_action(model, obs):
-    return get_policy(model, obs).sample().item()
-
-
 # make loss function whose gradient, for the right data, is policy gradient
-def compute_loss(model, obs, act, weights):
+def vpg_loss(model, obs, act, weights):
     logp = get_policy(model, obs).log_prob(act)
     return -(logp * weights).mean()
 
 
-def train_on_buffer(model, replay_buffer, writer, current_batch_i, max_n_batches):
-    model.train()
-    random.shuffle(replay_buffer)
-    n_available_batches = len(replay_buffer) // model.batch_size
-    n_batches = min(n_available_batches, max_n_batches)
-    for buffer_batch_i in tqdm(range(n_batches)):
-        batch = replay_buffer[buffer_batch_i * model.batch_size: (buffer_batch_i + 1) * model.batch_size]
-        state_batch = torch.from_numpy(
-            np.concatenate([np.expand_dims(step[0], 0) for step in batch]).astype(np.int64)).to(model.device)
-        action_batch = torch.from_numpy(
-            np.concatenate([np.expand_dims(step[1], 0) for step in batch]).astype(np.int64)).to(model.device)
-        reward_batch = torch.from_numpy(
-            np.concatenate([np.expand_dims(step[2], 0) for step in batch]).astype(np.int64)).to(model.device)
+def vpg_step(model, state_batch, action_batch, reward_batch):
+    # take a single policy gradient update step
+    model.optimizer.zero_grad()
+    batch_loss = vpg_loss(model=model, obs=state_batch, act=action_batch, weights=reward_batch)
+    batch_loss.backward()
+    # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
+    model.optimizer.step()
+    return batch_loss
 
-        # take a single policy gradient update step
-        model.optimizer.zero_grad()
-        batch_loss = compute_loss(model=model, obs=state_batch, act=action_batch, weights=reward_batch)
-        batch_loss.backward()
-        # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
-        model.optimizer.step()
-        
-        # batch_probs = torch.softmax(batch_logits, axis=1)
-        # # loss is given by -mean(log(model(a=a_t|s_t)) * R_t)
-        # loss = -torch.mean(torch.log(batch_probs[:, action_batch]) * reward_batch)
-        # # backprop + gradient descent
-        # model.optimizer.zero_grad()
-        # loss.backward()
-        # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
-        # model.optimizer.step()
-        
-        # increment the batch index + track the loss and gradients
-        current_batch_i += 1
+
+def dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch):
+    # Take a single deep Q learning update step
+    targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(model(next_state_batch), dim=1)[0]
+    model.optimizer.zero_grad()
+    batch_output = model(state_batch)
+    batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
+    batch_loss = torch.nn.MSELoss()(batch_output, targets)
+    batch_loss.backward()
+    # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
+    model.optimizer.step()
+    return batch_loss
+
+
+class StepDataset(torch.utils.data.Dataset):
+    """Step Dataset"""
+
+    def __init__(self, trajectory_buffer, device):
+        self.step_buffer = flatten(trajectory_buffer)
+        self.device = device
+
+    def __len__(self):
+        return len(self.step_buffer)
+
+    def __getitem__(self, idx):
+        # return only the (state, action, reward)?
+        state, action, reward, next_state, done = self.step_buffer[idx]
+        state = torch.from_numpy(state.astype(np.int64)).to(self.device)
+        action = torch.from_numpy(np.array(action, dtype=np.int64)).to(self.device)
+        reward = torch.from_numpy(np.array(reward, dtype=np.int64)).to(self.device)
+        next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
+        done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
+        return state, action, reward, next_state, done
+
+
+def train_on_buffer(model, data_loader, n_batches, writer, current_batch_i):
+    model.train()
+    for i, (state_batch, action_batch, reward_batch, next_state_batch, done_batch) in enumerate(data_loader):
+        batch_loss = dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
+        # batch_loss = vpg_step(model, state_batch, action_batch, reward_batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
+        current_batch_i += 1
+        if i >= n_batches:
+            break
     return current_batch_i
 
 
@@ -241,7 +277,6 @@ def visualize_buffer(buffer, env):
 def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
                 rewarded_trajectory_statistics, verbose=False, mode='positive_only', max_num_steps=1000):
     '''
-
     :param model:
     :param envs:
     :param buffer_threshold:
@@ -253,8 +288,8 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     :return:
     '''
     # reset all environments
-    buffer = []
-    logdir = get_logdir()
+    cached_steps = 0
+    trajectory_buffer = []
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
@@ -266,23 +301,25 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
-            # if episode is complete, check if trajectory should be kept in buffer and reset environment
+            # if episode is complete, check if trajectory should be kept in trajectory_buffer and reset environment
             if done:
                 update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
-                with open(f'{logdir}/training_graphs.txt', 'a') as f:
+                with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
                 if (mode == 'positive_only' and reward == 1) or \
                    (mode == 'balanced' and buffer_positives / buffer_negatives <= positive_to_negative_ratio and \
                         reward == 1):
-                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
-                    buffer.extend(buffer_trajectory)
+                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'])
+                    trajectory_buffer.append(buffer_trajectory)
+                    cached_steps += len(buffer_trajectory)
                     buffer_positives += 1
                 elif mode == 'balanced' and buffer_positives / buffer_negatives > positive_to_negative_ratio and \
                         reward == -1:
-                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'], reward)
-                    buffer.extend(buffer_trajectory)
+                    buffer_trajectory = extract_buffer_trajectory(envs_info[env_i]['trajectory'])
+                    trajectory_buffer.append(buffer_trajectory)
+                    cached_steps += len(buffer_trajectory)
                     buffer_negatives += 1
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
@@ -290,9 +327,9 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 # # append first state of trajectory after reset
                 # info_dict = {'raw_observation': envs_info[env_i]['problem_statement']}
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
-        if len(buffer) > buffer_threshold:
+        if cached_steps > buffer_threshold:
             break
-    return buffer
+    return trajectory_buffer
 
 
 def load_buffer(trajectories_filepath):
