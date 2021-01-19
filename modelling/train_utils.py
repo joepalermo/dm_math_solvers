@@ -47,11 +47,11 @@ def reset_all(envs, rewarded_trajectory_statistics=None, train=True):
             obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
         else:
             obs, info = env.reset(train=train)
-            module_name, difficulty = env.module_name, env.difficulty
         envs_info.append({'question': info['raw_observation'],
                           'trajectory': [(obs, None, None, None, info)],
-                          'module_name': module_name,
-                          'difficulty': difficulty})
+                          'module_name': env.module_name,
+                          'difficulty': env.difficulty,
+                          'module_difficulty_index': env.module_difficulty_index})
         obs_batch.append(np.expand_dims(obs, 0))
     obs_batch = np.concatenate(obs_batch)
     return obs_batch, envs_info
@@ -121,7 +121,8 @@ def reset_environment(env, train=True):
     return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': env.module_name,
-                 'difficulty': env.difficulty}
+                 'difficulty': env.difficulty,
+                 'module_difficulty_index': env.module_difficulty_index}
 
 
 def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_statistics, train=True):
@@ -130,7 +131,8 @@ def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_
     return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
-                 'difficulty': difficulty}
+                 'difficulty': difficulty,
+                 'module_difficulty_index': env.module_difficulty_index}
 
 
 def align_trajectory(raw_trajectory):
@@ -306,6 +308,9 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
                 with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
+                if reward == 1:
+                    # cache trajectory
+                    pass
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
                 if (mode == 'positive_only' and reward == 1) or \
