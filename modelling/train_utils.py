@@ -48,7 +48,7 @@ def reset_all(envs, rewarded_trajectory_statistics=None, train=True):
         else:
             obs, info = env.reset(train=train)
             module_name, difficulty = env.module_name, env.difficulty
-        envs_info.append({'problem_statement': info['raw_observation'],
+        envs_info.append({'question': info['raw_observation'],
                           'trajectory': [(obs, None, None, None, info)],
                           'module_name': module_name,
                           'difficulty': difficulty})
@@ -118,7 +118,7 @@ def update_trajectory_data_structures(env_info, rewarded_trajectories, rewarded_
 
 def reset_environment(env, train=True):
     obs, info = env.reset(train=train)
-    return obs, {'problem_statement': info['raw_observation'],
+    return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': env.module_name,
                  'difficulty': env.difficulty}
@@ -127,7 +127,7 @@ def reset_environment(env, train=True):
 def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_statistics, train=True):
     module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
     obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
-    return obs, {'problem_statement': info['raw_observation'],
+    return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
                  'difficulty': difficulty}
@@ -325,7 +325,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
                                                                        train=True)
                 # # append first state of trajectory after reset
-                # info_dict = {'raw_observation': envs_info[env_i]['problem_statement']}
+                # info_dict = {'raw_observation': envs_info[env_i]['question']}
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
         if cached_steps > buffer_threshold:
             break

@@ -30,8 +30,8 @@ class Node:
 
 
 class ComputeGraph:
-    def __init__(self, problem_statement):
-        self.formal_elements = extract_formal_elements(problem_statement)
+    def __init__(self, question):
+        self.formal_elements = extract_formal_elements(question)
         self.formal_element_types = [type(f) for f in self.formal_elements]
         self.root = None
         self.current_node = None  # reference to the first node (breadth-first) that requires one or more arguments

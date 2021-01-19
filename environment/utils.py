@@ -8,9 +8,9 @@ def is_numeric(string):
     return all([x.isnumeric() or x == "." for x in string] + [string.count(".") <= 1])
 
 
-def extract_formal_elements_as_annotations(problem_statement):
+def extract_formal_elements_as_annotations(question):
     pattern = "\$f\[(.+?)\]"
-    return re.findall(pattern, problem_statement)
+    return re.findall(pattern, question)
 
 
 def extract_formal_elements(question, cast=True):
@@ -58,16 +58,16 @@ def cast_formal_element(f):
 
 
 def guess_until_problem_solved(
-    env, problem_index, verbose=False, max_episode_index=1000
+    env, module_difficulty_index, verbose=False, max_episode_index=1000
 ):
     episode_i = 0
     graph_guessed_correctly = False
-    encoded_problem_statement, _ = env.reset_with_specific_problem(
-        "short_problems", 0, problem_index
+    encoded_question, _ = env.reset_with_specific_problem(
+        "short_problems", 0, module_difficulty_index
     )
-    print(f"\nproblem statement: {env.decode(encoded_problem_statement)}")
+    print(f"\nquestion: {env.decode(encoded_question)}")
     while not graph_guessed_correctly and episode_i < max_episode_index:
-        _, _ = env.reset_with_specific_problem("short_problems", 0, problem_index)
+        _, _ = env.reset_with_specific_problem("short_problems", 0, module_difficulty_index)
         done = False
         step_i = 0
         if verbose:
@@ -82,7 +82,7 @@ def guess_until_problem_solved(
             step_i += 1
         episode_i += 1
     print(f'graph: {info["raw_observation"].split(";")[1]}')
-    print(f"trials taken to guess problem #{problem_index}: {episode_i}")
+    print(f"trials taken to guess problem #{module_difficulty_index}: {episode_i}")
 
 
 def filter_univariate(examples):
@@ -110,6 +110,7 @@ def load_training_data(config):
     train = {}
     print("loading problems")
     problem_filepaths = [os.path.join(config.data_dirpath, filename) for filename in config.selected_filenames]
+    problem_counts = {}
     for filepath in tqdm(problem_filepaths):
         with open(filepath, "r") as f:
             lines = f.readlines()
@@ -127,13 +128,22 @@ def load_training_data(config):
             if difficulty > config.max_difficulty:
                 continue
             module_name = get_module_name_from_filepath(filepath)
+            # increment problem count for (module_name, difficulty)
+            if (module_name, difficulty) in problem_counts:
+                problem_counts[(module_name, difficulty)] += 1
+            else:
+                problem_counts[(module_name, difficulty)] = 1
+            # store problem
+            problem_dict = {'module_difficulty_index': problem_counts[(module_name, difficulty)],
+                            'question': question,
+                            'answer': answer}
             if module_name in train:
                 if difficulty in train[module_name]:
-                    train[module_name][difficulty].append((question, answer))
+                    train[module_name][difficulty].append(problem_dict)
                 else:
-                    train[module_name][difficulty] = [(question, answer)]
+                    train[module_name][difficulty] = [problem_dict]
             else:
-                train[module_name] = {difficulty: [(question, answer)]}
+                train[module_name] = {difficulty: [problem_dict]}
     if config.univariate_differentiation:
         train['calculus__differentiate'][0] = filter_univariate(train['calculus__differentiate'][0])
     return train

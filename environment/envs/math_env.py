@@ -82,7 +82,7 @@ class MathEnv(gym.Env):
         :return: observation, reward, done, info
 
         An action fills the next element in the compute graph.
-        -observation: problem statement + interim compute graph
+        -observation: question + interim compute graph
         -reward: 0 if the compute doesn't evaluate correctly, 1 if it does
         -done: True if the graph is complete, False if it isn't
         -info: None
@@ -92,7 +92,7 @@ class MathEnv(gym.Env):
         self.compute_graph.add(action)
         output = self.compute_graph.eval()
         compute_graph = str(self.compute_graph)
-        raw_observation = f"{self.problem_statement}; {compute_graph}"
+        raw_observation = f"{self.question}; {compute_graph}"
         observation = self.encode(raw_observation)
         done = (
             self.compute_graph.current_node is None
@@ -134,43 +134,46 @@ class MathEnv(gym.Env):
 
     def reset(self, train=True):
         # randomly sample a module and difficulty level
-        self.module_name = sample(list(self.train.keys()), 1)[0]
-        self.difficulty = sample(list(self.train[self.module_name].keys()), 1)[0]
-        return self.reset_by_module_and_difficulty(self.module_name, self.difficulty, train=train)
+        module_name = sample(list(self.train.keys()), 1)[0]
+        difficulty = sample(list(self.train[self.module_name].keys()), 1)[0]
+        return self.reset_by_module_and_difficulty(module_name, difficulty, train=train)
 
     def reset_with_same_problem(self):
-        self.compute_graph = ComputeGraph(self.problem_statement)
-        return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
+        self.compute_graph = ComputeGraph(self.question)
+        return self.encode(self.question), {'raw_observation': self.question}
 
     def reset_with_specific_problem(
-        self, module_name, difficulty, problem_index, train=True
+        self, module_name, difficulty, module_difficulty_index, train=True
     ):
         self.module_name = module_name
         self.difficulty = difficulty
         if train:
-            self.problem_statement, self.answer = self.train[module_name][difficulty][
-                problem_index
-            ]
+
+            problem_dict = self.train[module_name][difficulty][module_difficulty_index]
         else:
-            self.problem_statement, self.answer = self.val[module_name][difficulty][
-                problem_index
-            ]
-        self.compute_graph = ComputeGraph(self.problem_statement)
-        return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
+            problem_dict = self.val[module_name][difficulty][module_difficulty_index]
+        self.question = problem_dict['question']
+        self.answer = problem_dict['answer']
+        self.module_difficulty_index = problem_dict['module_difficulty_index']
+        self.compute_graph = ComputeGraph(self.question)
+        return self.encode(self.question), {'raw_observation': self.question}
 
     def reset_by_module_and_difficulty(self, module_name, difficulty, train=True):
         self.module_name = module_name
         self.difficulty = difficulty
         if train:
-            self.problem_statement, self.answer = sample(
+            problem_dict = sample(
                 self.train[module_name][difficulty], 1
             )[0]
         else:
-            self.problem_statement, self.answer = sample(
+            problem_dict = sample(
                 self.val[module_name][difficulty], 1
             )[0]
-        self.compute_graph = ComputeGraph(self.problem_statement)
-        return self.encode(self.problem_statement), {'raw_observation': self.problem_statement}
+        self.question = problem_dict['question']
+        self.answer = problem_dict['answer']
+        self.module_difficulty_index = problem_dict['module_difficulty_index']
+        self.compute_graph = ComputeGraph(self.question)
+        return self.encode(self.question), {'raw_observation': self.question}
 
     # utilities to sample actions --------------------------------------------------------------------------------------
 

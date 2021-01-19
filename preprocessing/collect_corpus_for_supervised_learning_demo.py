@@ -27,7 +27,7 @@ all_observations = []
 for _ in tqdm(range(int(10 ** 4))):
     done = False
     _, _ = env.reset()
-    episode_observations = [env.problem_statement + '; ']
+    episode_observations = [env.question + '; ']
     while not done:
         # action = env.sample_masked_action_index()
         action = env.sample_action_index()
