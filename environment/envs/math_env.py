@@ -128,7 +128,7 @@ class MathEnv(gym.Env):
     def reset(self, train=True):
         # randomly sample a module and difficulty level
         module_name = sample(list(self.train.keys()), 1)[0]
-        difficulty = sample(list(self.train[self.module_name].keys()), 1)[0]
+        difficulty = sample(list(self.train[module_name].keys()), 1)[0]
         return self.reset_by_module_and_difficulty(module_name, difficulty, train=train)
 
     def reset_with_same_problem(self):
