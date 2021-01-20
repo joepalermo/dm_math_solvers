@@ -7,6 +7,7 @@ from environment.typed_operators import *
 from utils import read_text_file
 import unittest
 
+
 class Test(unittest.TestCase):
     def test_problem_0_fail_1(self):
         env = MathEnv(hparams.env)

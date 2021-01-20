@@ -58,7 +58,7 @@ def cast_formal_element(f):
 
 
 def guess_until_problem_solved(
-    env, module_difficulty_index, verbose=False, max_episode_index=1000
+    env, module_difficulty_index, verbose=True, max_episode_index=1000
 ):
     episode_i = 0
     graph_guessed_correctly = False
@@ -75,8 +75,8 @@ def guess_until_problem_solved(
         while not done:
             action_index = env.sample_masked_action_index()
             observation, reward, done, info = env.step(action_index)
-            # if verbose:
-            #     print(f"\t\tS': {observation}, R: {reward}, done: {done}")
+            if verbose:
+                print(f"\t\tS': {observation}, R: {reward}, done: {done}")
             if reward == 1:
                 graph_guessed_correctly = True
             step_i += 1

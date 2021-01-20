@@ -6,9 +6,7 @@ import gym
 import numpy as np
 from gym import spaces
 from scipy.special import softmax
-from tokenizers import Tokenizer
-from tokenizers.models import BPE
-from tokenizers.trainers import BpeTrainer
+import sentencepiece as spm
 
 from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
@@ -71,10 +69,10 @@ class MathEnv(gym.Env):
         # load data
         self.train = load_training_data(config)
         self.val = split_validation_data(config, self.train)
-        # build tokenizer
-        self.padding_token = self.vocab_size
-        self.special_tokens = [operator.__name__ for operator in self.operators] + ["'p_0'", "'p_1'"]
-        self.tokenizer = self.build_tokenizer()
+        # load tokenizer
+        self.padding_token = config.vocab_size
+        self.tokenizer = spm.SentencePieceProcessor(model_file=config.tokenizer_filepath)
+
 
     def step(self, action_index):
         """
@@ -110,25 +108,18 @@ class MathEnv(gym.Env):
 
     # tokenization utilities -------------------------------------------------------------------------------------------
 
-    def build_tokenizer(self):
-        tokenizer = Tokenizer(BPE())
-        trainer = BpeTrainer(vocab_size=self.vocab_size, special_tokens=self.special_tokens)
-        print(self.config.corpus_filepath)
-        tokenizer.train(trainer, [str(Path(self.config.corpus_filepath).resolve())])
-        return tokenizer
-
     def encode(self, raw_observation):
-        encoded_ids = self.tokenizer.encode(raw_observation).ids
+        encoded_ids = self.tokenizer.encode(raw_observation)
         # pad the encoded ids up to a maximum length
         encoded_ids.extend(
             [self.padding_token for _ in range(self.config.max_sequence_length - len(encoded_ids))]
         )
         return np.array(encoded_ids)
 
-    def decode(self, ids):
+    def decode(self, encoded_ids):
         # filter out padding tokens before decoding
-        ids = [id_ for id_ in ids if id_ != self.padding_token]
-        return "".join([self.tokenizer.id_to_token(id_) for id_ in ids]).strip()
+        encoded_ids = [id_ for id_ in encoded_ids.tolist() if id_ != self.padding_token]
+        return self.tokenizer.decode(encoded_ids)
 
     # utilities to reset the environment -------------------------------------------------------------------------------
 
@@ -194,6 +185,9 @@ class MathEnv(gym.Env):
         masked_normed_policy_vector = masked_policy_vector / np.sum(
             masked_policy_vector
         )
+        # # TODO: remove after debugging
+        # if np.isnan(masked_normed_policy_vector).any():
+        #     print()
         return masked_normed_policy_vector
 
     def sample_masked_action_from_model(self, model, obs):
