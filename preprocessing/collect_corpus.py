@@ -1,35 +1,34 @@
-from random import sample
+from random import sample, shuffle
 from utils import read_text_file
-from environment.envs.math_env import MathEnv
 from tqdm import tqdm
 
-filenames = read_text_file("environment/module_lists/composed.txt").split("\n")
+filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
 filepaths = [
     f"mathematics_dataset-v1.0/train-easy/{filename}" for filename in filenames
 ]
-env_config = {
-    "problem_filepaths": filepaths[:1],  # TODO: increase
-    "corpus_filepath": "environment/corpus/10k_corpus.txt",
-    "num_problems_per_module": 10 ** 5,
-    "validation_percentage": 0,
-    "max_sequence_length": 100,
-    "vocab_size": 200
-}
-env = MathEnv(env_config)
-all_observations = []
-# TODO: why does it get stuck
-for _ in tqdm(range(int(10 ** 4))):
-    done = False
-    episode_observations = [env.reset()]
-    while not done:
-        action = env.sample_masked_action_index()
-        observation, reward, done, info = env.step(action)
-        episode_observations.append(info["raw_observation"])
-        if reward == 1:
-            break
-    random_episode_observation = sample(episode_observations, 1)[0]
-    all_observations.append(random_episode_observation)
 
-all_observations = "\n".join(all_observations)
-with open("environment/corpus/corpus.txt", "w") as f:
-    f.write(all_observations)
+num_problems = 50000
+num_problems_per_module = num_problems // len(filepaths)
+p_val = 0.2
+questions = []
+
+for filepath in filepaths:
+    with open(filepath, "r") as f:
+        lines = f.readlines()
+    num_pairs = min(len(lines) // 2, num_problems_per_module)
+    for i in range(0, 2 * num_pairs, 2):
+        question = lines[i].strip()
+        answer = lines[i + 1].strip()
+        questions.append(question + ';')
+
+shuffle(questions)
+val_questions = questions[:int(len(questions)*p_val)]
+train_questions = questions[int(len(questions)*p_val):]
+train_questions = list(set(train_questions)-set(val_questions))
+assert len(set(val_questions).intersection(set(train_questions))) == 0
+print(f'# training questions: {len(train_questions)}')
+print(f'# validation questions: {len(val_questions)}')
+with open("environment/tokenization/question_corpus_train.txt", "w") as f:
+    f.write("\n".join(train_questions))
+with open("environment/tokenization/question_corpus_val.txt", "w") as f:
+    f.write("\n".join(val_questions))

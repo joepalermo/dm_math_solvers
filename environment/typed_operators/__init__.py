@@ -282,7 +282,6 @@ def ip(x: Val) -> bool:
 
 def lcm(x: Val, y: Val) -> Val:
     import math
-
     assert int(x.value) == x.value and int(y.value) == y.value
     x, y = int(x.value), int(y.value)
     return Val(abs(x * y) // math.gcd(x, y))

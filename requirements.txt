@@ -6,4 +6,4 @@ tensorboard==2.3.0
 tokenizers==0.9.4
 torch==1.7.1
 tqdm==4.52.0
-
+sentencepiece

@@ -6,9 +6,9 @@ from environment.compute_graph import ComputeGraph, Node
 
 class Test(unittest.TestCase):
     def test_easy_algebra__linear_1d(self):
-        problem_statement = "Solve 0 = 4*b + b + 15 for b."
-        f = extract_formal_elements(problem_statement)
-        cg = ComputeGraph(problem_statement)
+        question = "Solve 0 = 4*b + b + 15 for b."
+        f = extract_formal_elements(question)
+        cg = ComputeGraph(question)
         lookup_value_node = Node(lv)
         solve_system_node = Node(ss)
         append_to_empty_list_node = Node(ape)
@@ -20,11 +20,11 @@ class Test(unittest.TestCase):
         assert cg.eval() == Val(-3)
 
     def test_incomplete_compute_graph(self):
-        problem_statement = "Solve 0 = 4*b + b + 15 for b."
-        cg = ComputeGraph(problem_statement)
+        question = "Solve 0 = 4*b + b + 15 for b."
+        cg = ComputeGraph(question)
         lookup_value_node = Node(lv)
         solve_system_node = Node(ss)
         lookup_value_node.set_arg(solve_system_node)
         cg.root = lookup_value_node
-        assert str(cg) == "lv(ss('param_0'),'param_1')"
+        assert str(cg) == "lv(ss('p_0'),'p_1')"
         assert cg.eval() == None

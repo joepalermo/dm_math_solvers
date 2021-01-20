@@ -47,11 +47,11 @@ def reset_all(envs, rewarded_trajectory_statistics=None, train=True):
             obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
         else:
             obs, info = env.reset(train=train)
-            module_name, difficulty = env.module_name, env.difficulty
-        envs_info.append({'problem_statement': info['raw_observation'],
+        envs_info.append({'question': info['raw_observation'],
                           'trajectory': [(obs, None, None, None, info)],
-                          'module_name': module_name,
-                          'difficulty': difficulty})
+                          'module_name': env.module_name,
+                          'difficulty': env.difficulty,
+                          'module_difficulty_index': env.module_difficulty_index})
         obs_batch.append(np.expand_dims(obs, 0))
     obs_batch = np.concatenate(obs_batch)
     return obs_batch, envs_info
@@ -84,21 +84,16 @@ def get_action_batch(obs_batch, envs, model=None):
     for i, env in enumerate(envs):
         # mask the corresponding model output
         masked_output = env.mask_invalid_types(output_batch[i])
-        # assert np.sum(masked_output) != 0
         if model_type == 'policy':
             # normalize and sample
-            # TODO: remove conditional if assert never triggered?
-            masked_policy_vector = masked_output if np.sum(masked_output) != 0 else np.ones(
-                len(masked_output), dtype=np.int64)
+            masked_policy_vector = masked_output
             masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
             action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         elif model_type == 'value':
             eps_ = random.random()
             if eps_ < model.epsilon:
-                # take random action
-                # TODO: remove conditional if assert never triggered?
-                available_actions = [i for i in env.action_indices if masked_output[i] != 0] if np.sum(masked_output) != 0 else np.ones(
-                    len(masked_output), dtype=np.int64)
+                # take random action from among unmasked actions
+                available_actions = [i for i in env.action_indices if masked_output[i] != 0]
                 action_index = random.choice(available_actions)
             else:
                 action_index = np.argmax(masked_output)
@@ -118,19 +113,21 @@ def update_trajectory_data_structures(env_info, rewarded_trajectories, rewarded_
 
 def reset_environment(env, train=True):
     obs, info = env.reset(train=train)
-    return obs, {'problem_statement': info['raw_observation'],
+    return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': env.module_name,
-                 'difficulty': env.difficulty}
+                 'difficulty': env.difficulty,
+                 'module_difficulty_index': env.module_difficulty_index}
 
 
 def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_statistics, train=True):
     module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
     obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
-    return obs, {'problem_statement': info['raw_observation'],
+    return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
-                 'difficulty': difficulty}
+                 'difficulty': difficulty,
+                 'module_difficulty_index': env.module_difficulty_index}
 
 
 def align_trajectory(raw_trajectory):
@@ -274,6 +271,38 @@ def visualize_buffer(buffer, env):
     print()
 
 
+def visualize_trajectory_cache(decoder, trajectory_cache):
+    for key, trajectories in trajectory_cache.items():
+        for trajectory in trajectories:
+            last_state = trajectory[-1][3]
+            print("\t", decoder(last_state))
+
+
+def same_problem_trajectory_equals(trajectory1, trajectory2):
+    '''
+    Since MathEnv is a deterministic environment, then if both trajectories are for the same problem and they have
+    the same action sequence, they must be equal trajectories.
+
+    Steps have the format: (state, action, reward, next_state, done)
+    Therefore, actions can be accessed by indexing a step at position 1.
+    '''
+    return all([step1[1] == step2[1] for step1, step2 in zip(trajectory1, trajectory2)])
+
+
+def cache_trajectory(key, aligned_trajectory, trajectory_cache):
+    if not key in trajectory_cache:
+        trajectory_cache[key] = [aligned_trajectory]
+    else:
+        # if the key already exists in the trajectory_cache, then only cache the trajectory if it's not already present
+        for aligned_trajectory_ in trajectory_cache[key]:
+            if same_problem_trajectory_equals(aligned_trajectory_, aligned_trajectory):
+                return
+        # append the new trajectory
+        trajectories = trajectory_cache[key]
+        trajectories.append(aligned_trajectory)
+        trajectory_cache[key] = trajectories
+
+
 def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
                 rewarded_trajectory_statistics, verbose=False, mode='positive_only', max_num_steps=1000):
     '''
@@ -292,6 +321,9 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     trajectory_buffer = []
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
+    # init trajectory cache from storage
+    from sqlitedict import SqliteDict
+    trajectory_cache = SqliteDict('./my_db.sqlite', autocommit=True)
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
     # take steps in all environments num_parallel_steps times
     for _ in range(max_num_steps):
@@ -306,12 +338,19 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
                 with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
+                if reward == 1:
+                    # cache trajectory
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    raw_key = (envs_info[env_i]['module_name'], str(envs_info[env_i]['difficulty']),
+                        str(envs_info[env_i]['module_difficulty_index']))
+                    key = '-'.join(raw_key)
+                    cache_trajectory(key, aligned_trajectory, trajectory_cache)
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
                 if (mode == 'positive_only' and reward == 1) or \
                    (mode == 'balanced' and buffer_positives / buffer_negatives <= positive_to_negative_ratio and \
                         reward == 1):
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    # aligned trajectory already computed (since reward == 1)
                     trajectory_buffer.append(aligned_trajectory)
                     cached_steps += len(aligned_trajectory)
                     buffer_positives += 1
@@ -325,10 +364,11 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
                                                                        train=True)
                 # # append first state of trajectory after reset
-                # info_dict = {'raw_observation': envs_info[env_i]['problem_statement']}
+                # info_dict = {'raw_observation': envs_info[env_i]['question']}
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
         if cached_steps > buffer_threshold:
             break
+    trajectory_cache.close()
     return trajectory_buffer
 
 
