@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from utils import read_text_file
 
 # train tokenizer on question corpus
-hardcoded_symbols = hparams.env.operators + hparams.env.types + ["'p_0'", "'p_1'", "'"]
+hardcoded_symbols = hparams.env.operators + hparams.env.types + ["'p_0'", "'p_1'", "'", 'G']  # why is 'G' needed?
 spm.SentencePieceTrainer.train(input='environment/tokenization/question_corpus.txt',
                                model_prefix='environment/tokenization/tokenizer',
-                               vocab_size=200,
+                               vocab_size=2000,
                                user_defined_symbols=hardcoded_symbols)
 
 # load tokenizer
@@ -20,12 +20,10 @@ assert sp.decode(id_tokens) == example_state, sp.decode(id_tokens)
 assert sp.decode(string_tokens) == example_state, sp.decode(string_tokens)
 
 # visualize encoded lengths using trained tokenizer on graph corpus
-validation_corpus = read_text_file('environment/tokenization/graph_corpus.txt')
-val_state = validation_corpus.split('\n')
-for vs in val_state:
-    print(vs)
-    print(sp.decode(sp.encode(vs)))
-    assert vs == sp.decode(sp.encode(vs))
+graph_corpus = read_text_file('environment/tokenization/graph_corpus.txt')
+raw_observations = graph_corpus.split('\n')
+for raw_obs in raw_observations:
+    assert raw_obs == sp.decode(sp.encode(raw_obs))
 
 # val_length_dist = [len(sp.encode(vs)) for vs in val_state]
 # plt.hist(val_length_dist, density=True, bins=100)  # density=False would make counts
