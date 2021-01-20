@@ -1,16 +1,25 @@
 from hparams import HParams
 hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
-from environment.envs.math_env import MathEnv
 from random import shuffle
-from tqdm import tqdm
+from utils import read_text_file
+
+filenames = read_text_file("environment/module_lists/most_natural_composed_for_program_synthesis.txt").split("\n")
+filepaths = [
+    f"mathematics_dataset-v1.0/train-easy/{filename}" for filename in filenames
+]
 
 num_problems = 50000
-env = MathEnv(hparams.env)
-
+num_problems_per_module = num_problems // len(filepaths)
 questions = []
-for _ in tqdm(range(num_problems)):
-    question = env.reset(train=True)[1]['raw_observation'] + ';'  # append semicolon delimiter
-    questions.append(question)
+
+for filepath in filepaths:
+    with open(filepath, "r") as f:
+        lines = f.readlines()
+    num_pairs = min(len(lines) // 2, num_problems_per_module)
+    for i in range(0, 2 * num_pairs, 2):
+        question = lines[i].strip()
+        answer = lines[i + 1].strip()
+        questions.append(question + ';')
 
 shuffle(questions)
 with open("environment/tokenization/question_corpus.txt", "w") as f:

@@ -4,13 +4,15 @@ from environment.envs.math_env import MathEnv
 from random import sample
 from tqdm import tqdm
 
-num_problems = 10000
+num_problems = 50000
 env = MathEnv(hparams.env)
 
 all_observations = []
-for _ in tqdm(range(num_problems)):
+for i in range(num_problems):
+    print(i)
     done = False
     episode_observations = [env.reset(train=False)[1]['raw_observation']]
+    # TODO: ensure that questions from question_corpus aren't used
     while not done:
         action = env.sample_masked_action_index()
         observation, reward, done, info = env.step(action)

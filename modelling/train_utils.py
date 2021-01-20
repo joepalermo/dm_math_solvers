@@ -29,10 +29,10 @@ def init_trajectory_data_structures(env):
     return rewarded_trajectories, rewarded_trajectory_statistics
 
 
-def init_envs(env_config, num_environments=10):
+def init_envs(env_config):
     env = MathEnv(env_config)
     envs = [env]
-    envs.extend([copy.copy(env) for _ in range(1, num_environments)])
+    envs.extend([copy.copy(env) for _ in range(1, env_config.num_environments)])
     return envs
 
 
