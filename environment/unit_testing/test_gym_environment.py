@@ -44,9 +44,6 @@ class Test(unittest.TestCase):
         )
         assert reward == 0
         assert not done
-        # assert that lv & ap are the only actions not masked
-        # policy_vector = env.sample_masked_policy_vector()
-        # np.testing.assert_equal(np.ceil(policy_vector), np.array([1,0,1,1,0,0]))
         # next action
         action = "f0"
         action_index = env.get_action_index(action)
@@ -91,10 +88,6 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert not done
         assert env.compute_graph.current_node == env.compute_graph.root
-        # assert that lv & ss are the only actions not masked
-        # because dict: is object, is dict, is not list, is not Eq, is not Var
-        # policy_vector = env.sample_masked_policy_vector()
-        # np.testing.assert_equal(np.ceil(policy_vector), np.array([1, 1, 0, 0, 0, 0]))
         # next action
         action = ss
         action_index = env.get_action_index(action)

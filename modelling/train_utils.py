@@ -84,21 +84,16 @@ def get_action_batch(obs_batch, envs, model=None):
     for i, env in enumerate(envs):
         # mask the corresponding model output
         masked_output = env.mask_invalid_types(output_batch[i])
-        # assert np.sum(masked_output) != 0
         if model_type == 'policy':
             # normalize and sample
-            # TODO: remove conditional if assert never triggered?
-            masked_policy_vector = masked_output if np.sum(masked_output) != 0 else np.ones(
-                len(masked_output), dtype=np.int64)
+            masked_policy_vector = masked_output
             masked_normed_policy_vector = masked_policy_vector / np.sum(masked_policy_vector)
             action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         elif model_type == 'value':
             eps_ = random.random()
             if eps_ < model.epsilon:
-                # take random action
-                # TODO: remove conditional if assert never triggered?
-                available_actions = [i for i in env.action_indices if masked_output[i] != 0] if np.sum(masked_output) != 0 else np.ones(
-                    len(masked_output), dtype=np.int64)
+                # take random action from among unmasked actions
+                available_actions = [i for i in env.action_indices if masked_output[i] != 0]
                 action_index = random.choice(available_actions)
             else:
                 action_index = np.argmax(masked_output)

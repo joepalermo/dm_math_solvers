@@ -92,9 +92,11 @@ class MathEnv(gym.Env):
         compute_graph = str(self.compute_graph)
         raw_observation = f"{self.question}; {compute_graph}"
         observation = self.encode(raw_observation)
+        next_mask = self.compute_mask()
         done = (
             self.compute_graph.current_node is None
             or self.compute_graph.n_nodes >= self.max_num_nodes
+            or np.array_equal(next_mask, np.zeros(len(next_mask)))
         )
         # get reward
         if done and str(output) == self.answer:
@@ -185,9 +187,6 @@ class MathEnv(gym.Env):
         masked_normed_policy_vector = masked_policy_vector / np.sum(
             masked_policy_vector
         )
-        # # TODO: remove after debugging
-        # if np.isnan(masked_normed_policy_vector).any():
-        #     print()
         return masked_normed_policy_vector
 
     def sample_masked_action_from_model(self, model, obs):
@@ -200,7 +199,7 @@ class MathEnv(gym.Env):
         action_index = np.random.choice(choices, p=masked_normed_policy_vector)
         return action_index
 
-    def mask_invalid_types(self, model_output):
+    def compute_mask(self):
         if not self.compute_graph.current_node:
             # first action must be an operator
             mask = np.concatenate(
@@ -224,7 +223,12 @@ class MathEnv(gym.Env):
                     ),
                 ]
             )
-        return mask * model_output
+        return mask
+
+    def mask_invalid_types(self, model_output):
+        mask = self.compute_mask()
+        masked_output = mask * model_output
+        return masked_output
 
     def render(self):
         pass
