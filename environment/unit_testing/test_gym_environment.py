@@ -369,3 +369,24 @@ class Test(unittest.TestCase):
         )
         assert reward == 0
         assert not done
+
+    def test_max_nodes_failure(self):
+        env = MathEnv(hparams.env)
+        encoded_question, _ = env.reset_with_specific_problem(
+            "short_problems", 0, 9
+        )
+        question = env.decode(encoded_question)
+        assert question == "Is 66574 a composite number?"
+        nt_action_index = env.get_action_index(nt)
+        for i in range(9):
+            # take action
+            observation, reward, done, info = env.step(nt_action_index)
+            print(f"action #{i}", info["raw_observation"], done)
+            assert reward == 0
+            assert not done
+        # take final action
+        i += 1
+        observation, reward, done, info = env.step(nt_action_index)
+        print(f"action #{i}", info["raw_observation"], done)
+        assert reward == -1
+        assert done
