@@ -271,8 +271,10 @@ def visualize_buffer(buffer, env):
     print()
 
 
-def visualize_trajectory_cache(decoder, trajectory_cache):
-    for key, trajectories in trajectory_cache.items():
+def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):
+    key_trajectory_pairs = random.sample(list(trajectory_cache.items()), min(num_to_sample, len(trajectory_cache)))
+    print(f'size of trajectory cache: {len(trajectory_cache)}')
+    for key, trajectories in key_trajectory_pairs:
         for trajectory in trajectories:
             last_state = trajectory[-1][3]
             print("\t", decoder(last_state))
@@ -324,9 +326,10 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     # init trajectory cache from storage
     from sqlitedict import SqliteDict
     trajectory_cache = SqliteDict('./my_db.sqlite', autocommit=True)
+    visualize_trajectory_cache(envs[0].decode, trajectory_cache)
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
     # take steps in all environments num_parallel_steps times
-    for _ in range(max_num_steps):
+    for xyz in range(max_num_steps):
         # take a step in each environment in "parallel"
         action_batch = get_action_batch(obs_batch, envs, model=model)
         obs_batch, step_batch = step_all(envs, action_batch)

@@ -8,7 +8,7 @@ from utils import read_text_file
 hardcoded_symbols = hparams.env.operators + hparams.env.types + ["'p_0'", "'p_1'", "'", 'G']  # why is 'G' needed?
 spm.SentencePieceTrainer.train(input='environment/tokenization/question_corpus.txt',
                                model_prefix='environment/tokenization/tokenizer',
-                               vocab_size=2000,
+                               vocab_size=250,
                                user_defined_symbols=hardcoded_symbols)
 
 # load tokenizer
@@ -24,8 +24,8 @@ graph_corpus = read_text_file('environment/tokenization/graph_corpus.txt')
 raw_observations = graph_corpus.split('\n')
 for raw_obs in raw_observations:
     assert raw_obs == sp.decode(sp.encode(raw_obs))
-
-# val_length_dist = [len(sp.encode(vs)) for vs in val_state]
-# plt.hist(val_length_dist, density=True, bins=100)  # density=False would make counts
-# plt.show()
+val_length_dist = [len(sp.encode(raw_obs)) for raw_obs in raw_observations]
+print('max length: ', max(val_length_dist))
+plt.hist(val_length_dist, density=True, bins=100)  # density=False would make counts
+plt.show()
 

@@ -7,7 +7,7 @@ from utils import read_text_file
 question_corpus = read_text_file("environment/tokenization/question_corpus.txt")
 question_set = set(question_corpus.split('\n'))
 
-target_corpus_size = 10000
+target_corpus_size = 25000
 env = MathEnv(hparams.env)
 
 all_observations = []
