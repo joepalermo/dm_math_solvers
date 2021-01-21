@@ -329,7 +329,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     visualize_trajectory_cache(envs[0].decode, trajectory_cache)
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
     # take steps in all environments num_parallel_steps times
-    for xyz in range(max_num_steps):
+    for _ in range(max_num_steps):
         # take a step in each environment in "parallel"
         action_batch = get_action_batch(obs_batch, envs, model=model)
         obs_batch, step_batch = step_all(envs, action_batch)

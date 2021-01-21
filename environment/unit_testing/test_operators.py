@@ -57,3 +57,7 @@ class Test(unittest.TestCase):
 
     def test_lcd(self):
         assert lcd(Rat('2/3'), Rat('3/5')) == Val('15')
+
+    def this_hangs_unless_timedout(self):
+        system = [Eq('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
+        ss(system)
