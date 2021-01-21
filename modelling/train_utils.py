@@ -271,12 +271,15 @@ def visualize_buffer(buffer, env):
     print()
 
 
-def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):
-    key_trajectory_pairs = random.sample(list(trajectory_cache.items()), min(num_to_sample, len(trajectory_cache)))
-    print(f'size of trajectory cache: {len(trajectory_cache)}')
-    for key, trajectories in key_trajectory_pairs:
-        for trajectory in trajectories:
-            last_state = trajectory[-1][3]
+def visualize_trajectory_cache(decoder, trajectory_cache, max_num_to_sample_per_problem=5):
+    print(f'total trajectories: {sum([len(trajectory_cache[key]) for key in trajectory_cache])}')
+    for module_difficulty in trajectory_cache:
+        print(module_difficulty, '# problems with trajectories: ', len(trajectory_cache[module_difficulty]))
+        problems = random.sample(list(trajectory_cache[module_difficulty].values()),
+                                     min(max_num_to_sample_per_problem, len(trajectory_cache[module_difficulty])))
+        for problem in problems:
+            first_trajectory = problem[0]
+            last_state = first_trajectory[-1][3]
             print("\t", decoder(last_state))
 
 
@@ -291,18 +294,32 @@ def same_problem_trajectory_equals(trajectory1, trajectory2):
     return all([step1[1] == step2[1] for step1, step2 in zip(trajectory1, trajectory2)])
 
 
-def cache_trajectory(key, aligned_trajectory, trajectory_cache):
-    if not key in trajectory_cache:
-        trajectory_cache[key] = [aligned_trajectory]
+def cache_trajectory(module_name, difficulty, module_difficulty_index, aligned_trajectory, trajectory_cache):
+    module_difficulty = '-'.join([module_name, str(difficulty)])
+    module_difficulty_index = str(module_difficulty_index)
+    if not module_difficulty in trajectory_cache:
+        # if the module-difficulty pair is not already present, then add a dict corresponding to it
+        trajectory_cache[module_difficulty] = {module_difficulty_index: [aligned_trajectory]}
     else:
-        # if the key already exists in the trajectory_cache, then only cache the trajectory if it's not already present
-        for aligned_trajectory_ in trajectory_cache[key]:
-            if same_problem_trajectory_equals(aligned_trajectory_, aligned_trajectory):
-                return
-        # append the new trajectory
-        trajectories = trajectory_cache[key]
-        trajectories.append(aligned_trajectory)
-        trajectory_cache[key] = trajectories
+        trajectory_added = False  # used for assert statement at end
+        # extract the dict corresponding to this module-difficulty pair
+        module_difficulty_dict = trajectory_cache[module_difficulty]
+        # if the module-difficulty pair already exists, then check to see if this problem is present
+        if not module_difficulty_index in module_difficulty_dict:
+            # if not then add the trajectory as the first corresponding to this problem
+            module_difficulty_dict[module_difficulty_index] = [aligned_trajectory]
+            trajectory_added = True
+        else:
+            # is the trajectory we're attempting to cache is already present in the list corresponding to this problem?
+            for aligned_trajectory_ in module_difficulty_dict[module_difficulty_index]:
+                if same_problem_trajectory_equals(aligned_trajectory_, aligned_trajectory):
+                    return
+            # it's not already present then append it
+            module_difficulty_dict[module_difficulty_index].append(aligned_trajectory)
+            trajectory_added = True
+        # if code path reaches here then it must be the case that a trajectory was just added, so set the modified dict
+        assert trajectory_added
+        trajectory_cache[module_difficulty] = module_difficulty_dict
 
 
 def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
@@ -326,7 +343,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     # init trajectory cache from storage
     from sqlitedict import SqliteDict
     trajectory_cache = SqliteDict('./my_db.sqlite', autocommit=True)
-    visualize_trajectory_cache(envs[0].decode, trajectory_cache)
+    visualize_trajectory_cache(envs[0].decode, trajectory_cache, max_num_to_sample_per_problem=1)
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
     # take steps in all environments num_parallel_steps times
     for _ in range(max_num_steps):
@@ -344,10 +361,11 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
                 if reward == 1:
                     # cache trajectory
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
-                    raw_key = (envs_info[env_i]['module_name'], str(envs_info[env_i]['difficulty']),
-                        str(envs_info[env_i]['module_difficulty_index']))
-                    key = '-'.join(raw_key)
-                    cache_trajectory(key, aligned_trajectory, trajectory_cache)
+                    module_name = envs_info[env_i]['module_name']
+                    difficulty = envs_info[env_i]['difficulty']
+                    module_difficulty_index = envs_info[env_i]['module_difficulty_index']
+                    cache_trajectory(module_name, difficulty, module_difficulty_index, aligned_trajectory, 
+                                     trajectory_cache)
                 if reward == 1 and verbose:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
                 if (mode == 'positive_only' and reward == 1) or \
