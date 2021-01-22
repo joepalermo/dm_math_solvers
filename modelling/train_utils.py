@@ -9,7 +9,7 @@ from environment.envs import MathEnv
 from utils import flatten
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
-# from train import batch_size, model, device, optimizer, max_grad_norm, writer
+from sqlitedict import SqliteDict
 
 
 def get_logdir():
@@ -305,6 +305,15 @@ def cache_trajectory(key, aligned_trajectory, trajectory_cache):
         trajectory_cache[key] = trajectories
 
 
+def extract_all_steps_from_trajectory_cache(filepath):
+    steps = []
+    trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
+    for key in trajectory_cache:
+        trajectories = trajectory_cache[key]
+        steps.extend(flatten(trajectories))
+    return steps
+
+
 def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
                 rewarded_trajectory_statistics, verbose=False, mode='positive_only', max_num_steps=1000):
     '''
@@ -324,8 +333,7 @@ def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewar
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
     # init trajectory cache from storage
-    from sqlitedict import SqliteDict
-    trajectory_cache = SqliteDict('./my_db.sqlite', autocommit=True)
+    trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
     visualize_trajectory_cache(envs[0].decode, trajectory_cache)
     obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
     # take steps in all environments num_parallel_steps times

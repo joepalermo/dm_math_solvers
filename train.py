@@ -66,7 +66,7 @@ for buffer_i in tqdm(range(hparams.train.num_buffers)):
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
         run_eval(model, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
-    mydict = SqliteDict('./my_db.sqlite', autocommit=True)
+    mydict = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
     visualize_trajectory_cache(envs[0].decode, mydict)
 
 # from utils import write_pickle
