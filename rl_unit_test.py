@@ -34,7 +34,7 @@ class StepDataset(torch.utils.data.Dataset):
         return state, action, reward, next_state, done
 
 
-def generate_trajectories(num_episodes=20, episode_timeout=100):
+def generate_trajectories(epsilon, num_episodes=1, episode_timeout=100):
     trajectories = list()
     env = gym.make('CartPole-v0')
     for i_episode in range(num_episodes):
@@ -43,7 +43,7 @@ def generate_trajectories(num_episodes=20, episode_timeout=100):
         for t in range(episode_timeout):
             #env.render()
             torch_state = torch.from_numpy(state.astype(np.float32)).to(model.device)
-            if np.random.random() < 0.1:
+            if np.random.random() < epsilon:
                 action = env.action_space.sample()
             else:
                 action = torch.argmax(model(torch_state)).item()
@@ -98,19 +98,30 @@ class MLP(nn.Module):
 model = MLP(device)
 loss_fn = nn.CrossEntropyLoss()
 
-
+num_epochs = 200
+initial_epsilon =
+final_epsilon = 0.02
 batch_size = 32
-batches_per_train = 5
+batches_per_train = 1
 batches_per_eval = 10
 last_eval_batch_i = 0
 batch_i = 0
+replay_buffer = []
+min_buffer_size = 50
+max_buffer_size = 100
 
-for _ in range(1000):
+for epsilon in np.linspace(initial_epsilon, final_epsilon, num_epochs):
     # gather data
-    trajectories = generate_trajectories()
-    step_dataset = StepDataset(trajectories, model.device)
+    trajectories = generate_trajectories(epsilon, num_episodes=1)
+    replay_buffer.extend(trajectories)
+    if len(replay_buffer) > max_buffer_size:
+        replay_buffer = replay_buffer[len(replay_buffer)-max_buffer_size:]
+    step_dataset = StepDataset(replay_buffer, model.device)
     data_loader = DataLoader(step_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    print(f'#trajectories: {len(replay_buffer)}, #steps: {len(step_dataset)}, epsilon: {epsilon}')
     # train
+    if len(step_dataset) < min_buffer_size:
+        continue
     batches_in_dataset = len(step_dataset) // model.batch_size
     batches_to_train = min(batches_in_dataset, batches_per_train)
     batch_i = train_on_buffer(model, data_loader, batches_to_train, writer, batch_i)
