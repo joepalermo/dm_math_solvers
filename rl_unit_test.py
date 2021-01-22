@@ -51,7 +51,6 @@ def generate_trajectories(num_episodes=20, episode_timeout=100):
             trajectory.append((state, action, reward, next_state, done))
             state = next_state
             if done:
-                trajectory[-1] = (trajectory[-1][0], trajectory[-1][1], -1, trajectory[-1][3], trajectory[-1][4])
                 #print("Episode finished after {} timesteps".format(t+1))
                 trajectories.append(trajectory)
                 break
@@ -83,12 +82,13 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.device = device
         self.layers = nn.Sequential(
-            nn.Linear(4, 10),
+            nn.Linear(4, 64),
             nn.ReLU(),
-            nn.Linear(10, 2)
+            nn.Linear(64, 2)
         )
         self.optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
         self.batch_size = 32
+        # self.max_grad_norm = 1
 
     def forward(self, x):
         x = self.layers(x)
