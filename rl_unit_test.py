@@ -97,7 +97,7 @@ class MLP(nn.Module):
 
 
 model = MLP(device)
-loss_fn = nn.CrossEntropyLoss()
+
 
 num_epochs = 2000
 initial_epsilon = 0.5
