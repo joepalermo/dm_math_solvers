@@ -82,13 +82,14 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.device = device
         self.layers = nn.Sequential(
-            nn.Linear(4, 64),
+            nn.Linear(4, 256),
             nn.ReLU(),
-            nn.Linear(64, 2)
+            nn.Linear(256, 2),
+            nn.ReLU(),
         )
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.0005)
         self.batch_size = 32
-        # self.max_grad_norm = 1
+        self.max_grad_norm = 0.5
 
     def forward(self, x):
         x = self.layers(x)
@@ -98,8 +99,8 @@ class MLP(nn.Module):
 model = MLP(device)
 loss_fn = nn.CrossEntropyLoss()
 
-num_epochs = 200
-initial_epsilon =
+num_epochs = 2000
+initial_epsilon = 0.5
 final_epsilon = 0.02
 batch_size = 32
 batches_per_train = 1
@@ -107,20 +108,21 @@ batches_per_eval = 10
 last_eval_batch_i = 0
 batch_i = 0
 replay_buffer = []
-min_buffer_size = 50
-max_buffer_size = 100
+min_buffer_trajectories = 100
+max_buffer_trajectories = 100
+num_eval_episodes = 200
 
 for epsilon in np.linspace(initial_epsilon, final_epsilon, num_epochs):
     # gather data
     trajectories = generate_trajectories(epsilon, num_episodes=1)
     replay_buffer.extend(trajectories)
-    if len(replay_buffer) > max_buffer_size:
-        replay_buffer = replay_buffer[len(replay_buffer)-max_buffer_size:]
+    if len(replay_buffer) > max_buffer_trajectories:
+        replay_buffer = replay_buffer[len(replay_buffer)-max_buffer_trajectories:]
     step_dataset = StepDataset(replay_buffer, model.device)
     data_loader = DataLoader(step_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     print(f'#trajectories: {len(replay_buffer)}, #steps: {len(step_dataset)}, epsilon: {epsilon}')
     # train
-    if len(step_dataset) < min_buffer_size:
+    if len(replay_buffer) < min_buffer_trajectories:
         continue
     batches_in_dataset = len(step_dataset) // model.batch_size
     batches_to_train = min(batches_in_dataset, batches_per_train)
@@ -128,4 +130,4 @@ for epsilon in np.linspace(initial_epsilon, final_epsilon, num_epochs):
     # eval
     if batch_i - last_eval_batch_i >= batches_per_eval:
         last_eval_batch_i = batch_i
-        run_eval(model)
+        run_eval(model, num_episodes=num_eval_episodes)
