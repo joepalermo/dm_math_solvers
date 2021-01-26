@@ -20,7 +20,7 @@ class ReplayBuffer:
     def __init__(self, obs_dim, act_dim, size):
         self.obs_buf = np.zeros(core.combined_shape(size, obs_dim), dtype=np.float32)
         self.obs2_buf = np.zeros(core.combined_shape(size, obs_dim), dtype=np.float32)
-        self.act_buf = np.zeros(core.combined_shape(size, act_dim), dtype=np.float32)
+        self.act_buf = np.zeros(size, dtype=np.int64)
         self.rew_buf = np.zeros(size, dtype=np.float32)
         self.done_buf = np.zeros(size, dtype=np.float32)
         self.ptr, self.size, self.max_size = 0, 0, size
@@ -36,12 +36,12 @@ class ReplayBuffer:
 
     def sample_batch(self, batch_size=32):
         idxs = np.random.randint(0, self.size, size=batch_size)
-        batch = dict(obs=self.obs_buf[idxs],
-                     obs2=self.obs2_buf[idxs],
-                     act=self.act_buf[idxs],
-                     rew=self.rew_buf[idxs],
-                     done=self.done_buf[idxs])
-        return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
+        return {'obs': torch.as_tensor(self.obs_buf[idxs], dtype=torch.float32),
+                'obs2': torch.as_tensor(self.obs2_buf[idxs], dtype=torch.float32),
+                'act': torch.as_tensor(self.act_buf[idxs], dtype=torch.int64),
+                'rew': torch.as_tensor(self.rew_buf[idxs], dtype=torch.float32),
+                'done': torch.as_tensor(self.done_buf[idxs], dtype=torch.float32),
+                }
 
 
 
@@ -179,8 +179,8 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
     def compute_loss_q(data):
         o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
 
-        q1 = ac.q1(o).gather(1, a)
-        q2 = ac.q2(o).gather(1, a)
+        q1 = ac.q1(o).gather(1, a.view(-1,1))
+        q2 = ac.q2(o).gather(1, a.view(-1,1))
 
         # Bellman backup for Q functions
         with torch.no_grad():
