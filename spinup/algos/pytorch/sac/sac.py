@@ -214,9 +214,15 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         q1_pi = ac.q1(o, pi)
         q2_pi = ac.q2(o, pi)
         q_pi = torch.min(q1_pi, q2_pi)
+        probs, log_probs = ac.pi.get_probs(o)
 
         # Entropy-regularized policy loss
-        loss_pi = (alpha * logp_pi - q_pi).mean()
+        # loss_pi = (alpha * logp_pi - q_pi).mean()
+
+        # discrete policy loss
+        criterion = torch.nn.KLDivLoss()
+        loss_pi = criterion(probs, torch.exp(q_pi)).mean()
+        # loss_pi = torch.sum(probs * (log_probs - q_pi)).mean()
 
         # Useful info for logging
         pi_info = dict(LogPi=logp_pi.detach().numpy())

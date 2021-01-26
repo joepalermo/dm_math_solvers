@@ -67,6 +67,48 @@ class SquashedGaussianMLPActor(nn.Module):
         return pi_action, logp_pi
 
 
+# make function to compute action distribution
+def get_policy(model, obs):
+    from torch.distributions.categorical import Categorical
+    logits = model(obs)
+    return Categorical(logits=logits)
+
+
+# make action selection function (outputs int actions, sampled from policy)
+def get_action(obs):
+    return get_policy(obs).sample().item()
+
+
+class DiscreteMLPActor(nn.Module):
+
+    def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
+        super().__init__()
+        self.hidden_layers = mlp([obs_dim] + list(hidden_sizes), activation, activation)
+        self.output_layer = nn.Linear(hidden_sizes[-1], act_dim)
+
+    def forward(self, obs, deterministic=False, with_logprob=True):
+        from torch.distributions.categorical import Categorical
+        hidden_activations = self.hidden_layers(obs)
+        logits = self.output_layer(hidden_activations)
+        categorical = Categorical(logits=logits)
+
+        if deterministic:
+            # Only used for evaluating policy at test time.
+            pi_action = torch.argmax(logits, dim=1)
+        else:
+            pi_action = categorical.sample().item()
+        logp_pi = categorical.log_prob(pi_action)
+
+        return pi_action, logp_pi
+
+    def get_probs(self, obs):
+        hidden_activations = self.hidden_layers(obs)
+        logits = self.output_layer(hidden_activations)
+        probs = torch.nn.softmax(logits)
+        log_probs = torch.log(probs)
+        return probs, log_probs
+
+
 class MLPQFunction(nn.Module):
 
     def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
@@ -88,7 +130,7 @@ class MLPActorCritic(nn.Module):
         act_limit = action_space.high[0]
 
         # build policy and value functions
-        self.pi = SquashedGaussianMLPActor(obs_dim, act_dim, hidden_sizes, activation, act_limit)
+        self.pi = DiscreteMLPActor(obs_dim, act_dim, hidden_sizes, activation)
         self.q1 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
         self.q2 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
 

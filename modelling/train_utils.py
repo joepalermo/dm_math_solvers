@@ -153,6 +153,11 @@ def get_policy(model, obs):
     return Categorical(logits=logits)
 
 
+# make action selection function (outputs int actions, sampled from policy)
+def get_action(obs):
+    return get_policy(obs).sample().item()
+
+
 # make loss function whose gradient, for the right data, is policy gradient
 def vpg_loss(model, obs, act, weights):
     logp = get_policy(model, obs).log_prob(act)
