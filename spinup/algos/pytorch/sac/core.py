@@ -126,8 +126,7 @@ class MLPActorCritic(nn.Module):
         super().__init__()
 
         obs_dim = observation_space.shape[0]
-        act_dim = action_space.shape[0]
-        act_limit = action_space.high[0]
+        act_dim = action_space.n
 
         # build policy and value functions
         self.pi = DiscreteMLPActor(obs_dim, act_dim, hidden_sizes, activation)
