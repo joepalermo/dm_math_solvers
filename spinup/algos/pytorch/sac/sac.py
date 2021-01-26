@@ -188,8 +188,8 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
             a2, logp_a2 = ac.pi(o2)
 
             # Target Q-values
-            q1_pi_targ = ac_targ.q1(o2).gather(1, a2)
-            q2_pi_targ = ac_targ.q2(o2).gather(1, a2)
+            q1_pi_targ = ac_targ.q1(o2).gather(1, a2.view(-1,1))
+            q2_pi_targ = ac_targ.q2(o2).gather(1, a2.view(-1,1))
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
             backup = r + gamma * (1 - d) * (q_pi_targ - alpha * logp_a2)
 
@@ -208,8 +208,8 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
     def compute_loss_pi(data):
         o = data['obs']
         pi, logp_pi = ac.pi(o)
-        q1_pi = ac.q1(o).gather(1, pi)  # pi shape should be (BS, 1)
-        q2_pi = ac.q2(o).gather(1, pi)
+        q1_pi = ac.q1(o).gather(1, pi.view(-1,1))  # pi shape should be (BS, 1)
+        q2_pi = ac.q2(o).gather(1, pi.view(-1,1))
         q_pi = torch.min(q1_pi, q2_pi)
         probs, log_probs = ac.pi.get_probs(o)
 
@@ -217,9 +217,9 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         # loss_pi = (alpha * logp_pi - q_pi).mean()
 
         # discrete policy loss
-        criterion = torch.nn.KLDivLoss()
-        loss_pi = criterion(probs, torch.exp(q_pi)).mean()
-        # loss_pi = torch.sum(probs * (log_probs - q_pi)).mean()
+        # criterion = torch.nn.KLDivLoss()q
+        # loss_pi = criterion(probs, torch.exp(q_pi)).mean()
+        loss_pi = torch.sum(probs * (log_probs - q_pi)).mean()
 
         # Useful info for logging
         pi_info = dict(LogPi=logp_pi.detach().numpy())

@@ -96,7 +96,7 @@ class DiscreteMLPActor(nn.Module):
             # Only used for evaluating policy at test time.
             pi_action = torch.argmax(logits, dim=1)
         else:
-            pi_action = categorical.sample().item()
+            pi_action = categorical.sample()
         logp_pi = categorical.log_prob(pi_action)
 
         return pi_action, logp_pi
@@ -104,7 +104,7 @@ class DiscreteMLPActor(nn.Module):
     def get_probs(self, obs):
         hidden_activations = self.hidden_layers(obs)
         logits = self.output_layer(hidden_activations)
-        probs = torch.nn.softmax(logits)
+        probs = torch.nn.Softmax(dim=1)(logits)
         log_probs = torch.log(probs)
         return probs, log_probs
 
