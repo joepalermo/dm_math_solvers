@@ -1,3 +1,5 @@
+from hparams import HParams
+hparams = HParams.get_hparams_by_name('rl_math')
 import torch
 from torch.optim import Adam
 import torch.nn.functional as F
@@ -6,6 +8,7 @@ from agents.Base_Agent import Base_Agent
 from utilities.data_structures.Replay_Buffer import Replay_Buffer
 from agents.actor_critic_agents.SAC import SAC
 from utilities.Utility_Functions import create_actor_distribution
+from modelling.transformer_encoder import TransformerEncoderModel
 
 class SAC_Discrete(SAC):
     """The Soft Actor Critic for discrete actions. It inherits from SAC for continuous actions and only changes a few
@@ -16,23 +19,35 @@ class SAC_Discrete(SAC):
         assert self.action_types == "DISCRETE", "Action types must be discrete. Use SAC instead for continuous actions"
         assert self.config.hyperparameters["Actor"]["final_layer_activation"] == "Softmax", "Final actor layer must be softmax"
         self.hyperparameters = config.hyperparameters
-        self.critic_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Critic")
-        self.critic_local_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
-                                           key_to_use="Critic", override_seed=self.config.seed + 1)
+        # define dependent params
+        ntoken = hparams.env.vocab_size + 1
+        num_outputs = len(hparams.env.operators) + hparams.env.max_formal_elements
+        device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
+        # self.critic_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Critic")
+        # self.critic_local_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
+        #                                    key_to_use="Critic", override_seed=self.config.seed + 1)
+        # copy
+        self.critic_local = TransformerEncoderModel(ntoken, num_outputs, device)
+        self.critic_local_2 = TransformerEncoderModel(ntoken, num_outputs, device)
         self.critic_optimizer = torch.optim.Adam(self.critic_local.parameters(),
                                                  lr=self.hyperparameters["Critic"]["learning_rate"], eps=1e-4)
         self.critic_optimizer_2 = torch.optim.Adam(self.critic_local_2.parameters(),
                                                    lr=self.hyperparameters["Critic"]["learning_rate"], eps=1e-4)
-        self.critic_target = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
-                                           key_to_use="Critic")
-        self.critic_target_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
-                                            key_to_use="Critic")
+        # self.critic_target = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
+        #                                    key_to_use="Critic")
+        # self.critic_target_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
+        #                                     key_to_use="Critic")
+        # copy
+        self.critic_target = TransformerEncoderModel(ntoken, num_outputs, device)
+        self.critic_target_2 = TransformerEncoderModel(ntoken, num_outputs, device)
         Base_Agent.copy_model_over(self.critic_local, self.critic_target)
         Base_Agent.copy_model_over(self.critic_local_2, self.critic_target_2)
         self.memory = Replay_Buffer(self.hyperparameters["Critic"]["buffer_size"], self.hyperparameters["batch_size"],
                                     self.config.seed, device=self.device)
 
-        self.actor_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Actor")
+        # self.actor_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Actor")
+        # copy
+        self.actor_local = TransformerEncoderModel(ntoken, num_outputs, device)
         self.actor_optimizer = torch.optim.Adam(self.actor_local.parameters(),
                                           lr=self.hyperparameters["Actor"]["learning_rate"], eps=1e-4)
         self.automatic_entropy_tuning = self.hyperparameters["automatically_tune_entropy_hyperparameter"]

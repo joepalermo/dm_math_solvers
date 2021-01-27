@@ -112,9 +112,14 @@ class SAC(Base_Agent):
         an action that has partly been randomly sampled 2) If eval = True then we pick the action that comes directly
         from the network and so did not involve any random sampling"""
         if state is None: state = self.state
-        state = torch.FloatTensor([state]).to(self.device)
+        # TODO: fix hardcode to LongTensor
+        # state = torch.FloatTensor([state]).to(self.device)
+        state = torch.LongTensor([state]).to(self.device)
         if len(state.shape) == 1: state = state.unsqueeze(0)
-        if eval == False: action, _, _ = self.produce_action_and_action_info(state)
+        # TODO: fix (state has ndim == 2), so flatten() is added
+        # state = state.flatten()
+        if eval == False:
+            action, _, _ = self.produce_action_and_action_info(state)
         else:
             with torch.no_grad():
                 _, z, action = self.produce_action_and_action_info(state)

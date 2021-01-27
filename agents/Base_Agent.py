@@ -20,7 +20,9 @@ class Base_Agent(object):
         self.config = config
         self.set_random_seeds(config.seed)
         self.environment = config.environment
-        self.environment_title = self.get_environment_title()
+        # TODO: fix
+        # self.environment_title = self.get_environment_title()
+        self.environment_title = 'MathEnv'
         self.action_types = "DISCRETE" if self.environment.action_space.dtype == np.int64 else "CONTINUOUS"
         self.action_size = int(self.get_action_size())
         self.config.action_size = self.action_size
@@ -29,8 +31,12 @@ class Base_Agent(object):
 
         self.state_size =  int(self.get_state_size())
         self.hyperparameters = config.hyperparameters
-        self.average_score_required_to_win = self.get_score_required_to_win()
-        self.rolling_score_window = self.get_trials()
+        # TODO: fix
+        # self.average_score_required_to_win = self.get_score_required_to_win()
+        self.average_score_required_to_win = 1
+        # TODO: fix
+        # self.rolling_score_window = self.get_trials()
+        self.rolling_score_window = 100
         # self.max_steps_per_episode = self.environment.spec.max_episode_steps
         self.total_episode_score_so_far = 0
         self.game_full_episode_scores = []
@@ -83,7 +89,8 @@ class Base_Agent(object):
 
     def get_state_size(self):
         """Gets the state_size for the gym env into the correct shape for a neural network"""
-        random_state = self.environment.reset()
+        # TODO: fix (2 return values from reset)
+        random_state, _ = self.environment.reset()
         if isinstance(random_state, dict):
             state_size = random_state["observation"].shape[0] + random_state["desired_goal"].shape[0]
             return state_size
@@ -155,7 +162,8 @@ class Base_Agent(object):
     def reset_game(self):
         """Resets the game information so we are ready to play a new episode"""
         self.environment.seed(self.config.seed)
-        self.state = self.environment.reset()
+        # TODO: fix (reset returns tuple)
+        self.state, _ = self.environment.reset()
         self.next_state = None
         self.action = None
         self.reward = None
