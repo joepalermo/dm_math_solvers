@@ -94,7 +94,8 @@ class DiscreteMLPActor(nn.Module):
 
         if deterministic:
             # Only used for evaluating policy at test time.
-            pi_action = torch.argmax(logits, dim=1)
+            assert logits.ndim == 1
+            pi_action = torch.argmax(logits)
         else:
             pi_action = categorical.sample()
         logp_pi = categorical.log_prob(pi_action)

@@ -217,9 +217,10 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         # loss_pi = (alpha * logp_pi - q_pi).mean()
 
         # discrete policy loss
-        # criterion = torch.nn.KLDivLoss()q
+        # criterion = torch.nn.KLDivLoss()
         # loss_pi = criterion(probs, torch.exp(q_pi)).mean()
-        loss_pi = torch.sum(probs * (log_probs - q_pi)).mean()
+        loss_pi = torch.sum(probs * (alpha * log_probs - q_pi), dim=1)
+        loss_pi = loss_pi.mean()
 
         # Useful info for logging
         pi_info = dict(LogPi=logp_pi.detach().numpy())
