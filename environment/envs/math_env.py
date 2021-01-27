@@ -12,6 +12,7 @@ from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
 from environment.utils import load_training_data, split_validation_data
 from hparams import HParams
+import torch
 
 hparams = HParams.get_hparams_by_name('rl_math')
 
@@ -227,6 +228,8 @@ class MathEnv(gym.Env):
 
     def mask_invalid_types(self, model_output):
         mask = self.compute_mask()
+        if torch.is_tensor(model_output):
+            mask = torch.from_numpy(mask).type(torch.FloatTensor)
         masked_output = mask * model_output
         return masked_output
 

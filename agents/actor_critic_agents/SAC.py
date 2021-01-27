@@ -78,6 +78,7 @@ class SAC(Base_Agent):
         """Runs an episode on the game, saving the experience and running a learning step if appropriate"""
         eval_ep = self.episode_number % TRAINING_EPISODES_PER_EVAL_EPISODE == 0 and self.do_evaluation_iterations
         self.episode_step_number_val = 0
+        self.trajectory = []  # NOTE: added
         while not self.done:
             self.episode_step_number_val += 1
             self.action = self.pick_action(eval_ep)
@@ -86,9 +87,19 @@ class SAC(Base_Agent):
                 for _ in range(self.hyperparameters["learning_updates_per_learning_session"]):
                     self.learn()
             mask = False if self.episode_step_number_val >= self.environment._max_episode_steps else self.done
-            if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
+            # NOTE: don't save all experience, track trajectory then possibly save when done == True
+            # if not eval_ep: self.save_experience(experience=(self.state, self.action, self.reward, self.next_state, mask))
+            if not eval_ep:
+                self.trajectory.append((self.state, self.action, self.reward, self.next_state, mask))
             self.state = self.next_state
             self.global_step_number += 1
+        # NOTE: added this code block
+        # if reward is positive, then save current trajectory
+        if self.reward == 1:
+            for step in self.trajectory:
+                self.save_experience(experience=step)
+        del self.trajectory
+        # NOTE - END
         print(self.total_episode_score_so_far)
         if eval_ep: self.print_summary_of_latest_evaluation_episode()
         self.episode_number += 1
