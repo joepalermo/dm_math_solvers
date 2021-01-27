@@ -20,7 +20,7 @@ class MathEnv(gym.Env):
         self.compute_graph = None
         # load config
         self.config = config
-        self.max_num_nodes = config.max_num_nodes
+        self.max_num_nodes = self._max_episode_steps = config.max_num_nodes
         self.max_formal_elements = config.max_formal_elements
         self.max_difficulty = config.max_difficulty
         self.vocab_size = config.vocab_size
