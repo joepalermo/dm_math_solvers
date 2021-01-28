@@ -179,8 +179,9 @@ class MathEnv(gym.Env):
 
     def sample_masked_action_index(self):
         choices = np.arange(len(self.actions))
-        masked_policy_vector = self.sample_masked_policy_vector()
-        return np.random.choice(choices, p=masked_policy_vector)
+        mask = self.compute_mask()
+        valid_choices = np.array([x for x, m in zip(choices, mask) if m != 0])
+        return np.random.choice(valid_choices)
 
     def sample_masked_policy_vector(self):
         policy_vector = np.random.uniform(size=len(self.actions))

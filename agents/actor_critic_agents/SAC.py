@@ -112,7 +112,9 @@ class SAC(Base_Agent):
         if state is None: state = self.state
         if eval_ep: action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
-            action = self.environment.action_space.sample()
+            # NOTE: sample from unmasked actions not directly from action_space
+            # action = self.environment.action_space.sample()
+            action = self.environment.sample_masked_action_index()
             print("Picking random action ", action)
         else: action = self.actor_pick_action(state=state)
         if self.add_extra_noise:
