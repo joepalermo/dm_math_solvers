@@ -166,6 +166,7 @@ class SAC(Base_Agent):
                  self.enough_experiences_to_learn_from() and self.global_step_number % self.hyperparameters["update_every_n_steps"] == 0
         # NOTE: if time to learn is true set flag
         if result and not self.started_learning:
+            print('starting learning...')
             self.started_learning = True
         return result
 

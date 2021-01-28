@@ -202,8 +202,9 @@ class Base_Agent(object):
             # NOTE: don't save and print unless start learning, however can print episode #
             if save_and_print_results and self.started_learning:
                 self.save_and_print_result()
-            elif self.episode_number % 100 == 0:
-                print(f"episode number #{self.episode_number}")
+            elif save_and_print_results and self.episode_number % 100 == 0:
+                print(f"bootstrap progress"
+                      f" {round(self.global_step_number/self.hyperparameters['min_steps_before_learning']*100,1)}%")
         time_taken = time.time() - start
         if show_whether_achieved_goal: self.show_whether_achieved_goal()
         if self.config.save_model: self.locally_save_policy()
