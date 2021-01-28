@@ -95,7 +95,8 @@ class SAC(Base_Agent):
             self.global_step_number += 1
         # NOTE: added this code block
         # if reward is positive, then save current trajectory
-        if self.reward == 1:
+        if (self.reward == 1 and self.next_trajectory == 'positive') or \
+           (self.reward == -1 and self.next_trajectory == 'negative'):
             for step in self.trajectory:
                 self.save_experience(experience=step)
         del self.trajectory

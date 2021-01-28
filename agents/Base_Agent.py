@@ -50,6 +50,8 @@ class Base_Agent(object):
         self.turn_off_exploration = False
         gym.logger.set_level(40)  # stops it from printing an unnecessary warning
         self.log_game_info()
+        # NOTE: adding flag to indicate whether next example to be added is positive or negative
+        self.next_trajectory = 'positive'
 
     def step(self):
         """Takes a step in the game. This method must be overriden by any agent"""
@@ -195,6 +197,8 @@ class Base_Agent(object):
         while self.episode_number < num_episodes:
             self.reset_game()
             self.step()
+            # NOTE: flip positive to negative or vice versa, so that experience collection alternates
+            self.next_trajectory = 'negative' if self.next_trajectory == 'positive' else 'positive'
             if save_and_print_results: self.save_and_print_result()
         time_taken = time.time() - start
         if show_whether_achieved_goal: self.show_whether_achieved_goal()
