@@ -9,7 +9,7 @@ import numpy as np
 
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
-TRAINING_EPISODES_PER_EVAL_EPISODE = 10
+TRAINING_EPISODES_PER_EVAL_EPISODE = 100  # NOTE: increase from 10
 EPSILON = 1e-6
 
 class SAC(Base_Agent):
@@ -99,10 +99,15 @@ class SAC(Base_Agent):
            (self.reward == -1 and self.next_trajectory == 'negative'):
             for step in self.trajectory:
                 self.save_experience(experience=step)
+            # NOTE: flip positive to negative or vice versa, so that experience collection alternates
+            self.next_trajectory = 'negative' if self.next_trajectory == 'positive' else 'positive'
         del self.trajectory
         # NOTE - END
-        print(self.total_episode_score_so_far)
-        if eval_ep: self.print_summary_of_latest_evaluation_episode()
+
+        # NOTE don't print total episode score
+        # print(self.total_episode_score_so_far)
+        if eval_ep and self.started_learning:
+            self.print_summary_of_latest_evaluation_episode()
         self.episode_number += 1
 
     def pick_action(self, eval_ep, state=None):
@@ -112,10 +117,11 @@ class SAC(Base_Agent):
         if state is None: state = self.state
         if eval_ep: action = self.actor_pick_action(state=state, eval=True)
         elif self.global_step_number < self.hyperparameters["min_steps_before_learning"]:
-            # NOTE: sample from unmasked actions not directly from action_space
+            # NOTE: sample from unmasked actions, not directly from action_space
             # action = self.environment.action_space.sample()
             action = self.environment.sample_masked_action_index()
-            print("Picking random action ", action)
+            # NOTE: don't print random actions
+            # print("Picking random action ", action)
         else: action = self.actor_pick_action(state=state)
         if self.add_extra_noise:
             action += self.noise.sample()
@@ -156,8 +162,12 @@ class SAC(Base_Agent):
     def time_for_critic_and_actor_to_learn(self):
         """Returns boolean indicating whether there are enough experiences to learn from and it is time to learn for the
         actor and critic"""
-        return self.global_step_number > self.hyperparameters["min_steps_before_learning"] and \
-               self.enough_experiences_to_learn_from() and self.global_step_number % self.hyperparameters["update_every_n_steps"] == 0
+        result = self.global_step_number > self.hyperparameters["min_steps_before_learning"] and \
+                 self.enough_experiences_to_learn_from() and self.global_step_number % self.hyperparameters["update_every_n_steps"] == 0
+        # NOTE: if time to learn is true set flag
+        if result and not self.started_learning:
+            self.started_learning = True
+        return result
 
     def learn(self):
         """Runs a learning iteration for the actor, both critics and (if specified) the temperature parameter"""

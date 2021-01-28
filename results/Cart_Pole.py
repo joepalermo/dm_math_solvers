@@ -25,7 +25,7 @@ config.seed = 1
 # config.environment = gym.make("CartPole-v0")
 from environment.envs.math_env import MathEnv
 config.environment = MathEnv(hparams.env)
-config.num_episodes_to_run = 450
+config.num_episodes_to_run = 100000  # NOTE: changed from 450
 config.file_to_save_data_results = "results/data_and_graphs/Cart_Pole_Results_Data.pkl"
 config.file_to_save_results_graph = "results/data_and_graphs/Cart_Pole_Results_Graph.png"
 config.show_solution_score = False
@@ -122,9 +122,8 @@ config.hyperparameters = {
             "initialiser": "Xavier"
         },
 
-        "min_steps_before_learning": 400,
-        # TODO: Changed batch_size from 256 to 2
-        "batch_size": 32,
+        "min_steps_before_learning": 80000,  # NOTE: changed from 400
+        "batch_size": 32,  # NOTE: changed from 256 to 2
         "discount_rate": 0.99,
         "mu": 0.0, #for O-H noise
         "theta": 0.15, #for O-H noise

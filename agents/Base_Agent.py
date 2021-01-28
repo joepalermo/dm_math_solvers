@@ -52,6 +52,8 @@ class Base_Agent(object):
         self.log_game_info()
         # NOTE: adding flag to indicate whether next example to be added is positive or negative
         self.next_trajectory = 'positive'
+        # NOTE: adding a flag to indicate if learning has started
+        self.started_learning = False
 
     def step(self):
         """Takes a step in the game. This method must be overriden by any agent"""
@@ -197,9 +199,11 @@ class Base_Agent(object):
         while self.episode_number < num_episodes:
             self.reset_game()
             self.step()
-            # NOTE: flip positive to negative or vice versa, so that experience collection alternates
-            self.next_trajectory = 'negative' if self.next_trajectory == 'positive' else 'positive'
-            if save_and_print_results: self.save_and_print_result()
+            # NOTE: don't save and print unless start learning, however can print episode #
+            if save_and_print_results and self.started_learning:
+                self.save_and_print_result()
+            elif self.episode_number % 100 == 0:
+                print(f"episode number #{self.episode_number}")
         time_taken = time.time() - start
         if show_whether_achieved_goal: self.show_whether_achieved_goal()
         if self.config.save_model: self.locally_save_policy()
