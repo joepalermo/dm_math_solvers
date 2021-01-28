@@ -124,7 +124,7 @@ config.hyperparameters = {
 
         "min_steps_before_learning": 400,
         # TODO: Changed batch_size from 256 to 2
-        "batch_size": 2,
+        "batch_size": 32,
         "discount_rate": 0.99,
         "mu": 0.0, #for O-H noise
         "theta": 0.15, #for O-H noise
