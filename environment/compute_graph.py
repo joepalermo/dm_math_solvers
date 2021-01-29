@@ -79,7 +79,7 @@ class ComputeGraph:
         """
         return self.build_string(self.root)
 
-    def eval(self, eval_timeout_in_seconds=5):
+    def eval(self):
         """
         evaluate the compute graph
         :return: the output of the compute graph
@@ -88,13 +88,6 @@ class ComputeGraph:
             string_to_eval = str(self)
             if "\'p_" in string_to_eval:
                 raise Exception("unreplaced params are in arb, e.g. 'p_0'")
-            # define a function to interrupt execution, should eval go on too long
-            def timeout_handler(signum, frame):
-                raise Exception()
-            # TODO: fix - this triggers timeout in other areas of the code
-            # signal.signal(signal.SIGALRM, timeout_handler)
-            # signal.alarm(eval_timeout_in_seconds)
-            # run in try-except so that execution continues if timeout handler raises an Exception
             try:
                 output = eval(string_to_eval)
             except:
