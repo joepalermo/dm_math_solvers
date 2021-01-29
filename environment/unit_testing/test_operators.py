@@ -47,6 +47,10 @@ class Test(unittest.TestCase):
         system = [Eq("-3*h**2/2 - 24*h - 45/2 = 0")]
         assert ss(system) == {Var("h"): {Val(-15.0), Val(-1.0)}}
 
+        # unsolvable equation / infinite loop without timeout
+        system = [Eq('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
+        self.assertRaises(Exception, ss, system)
+
     def test_is_prime(self):
         assert ip(Val('19373'))
         assert nt(ip(Val('19374')))
@@ -57,7 +61,3 @@ class Test(unittest.TestCase):
 
     def test_lcd(self):
         assert lcd(Rat('2/3'), Rat('3/5')) == Val('15')
-
-    def this_hangs_unless_timedout(self):
-        system = [Eq('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
-        ss(system)
