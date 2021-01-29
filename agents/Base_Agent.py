@@ -239,10 +239,13 @@ class Base_Agent(object):
 
     def print_rolling_result(self):
         """Prints out the latest episode results"""
-        text = """"\r Episode {0}, Score: {3: .2f}, Max score seen: {4: .2f}, Rolling score: {1: .2f}, Max rolling score seen: {2: .2f}"""
-        sys.stdout.write(text.format(len(self.game_full_episode_scores), self.rolling_results[-1], self.max_rolling_score_seen,
-                                     self.game_full_episode_scores[-1], self.max_episode_score_seen))
-        sys.stdout.flush()
+        try:
+            text = """"\r Episode {0}, Score: {3: .2f}, Max score seen: {4: .2f}, Rolling score: {1: .2f}, Max rolling score seen: {2: .2f}"""
+            sys.stdout.write(text.format(len(self.game_full_episode_scores), self.rolling_results[-1], self.max_rolling_score_seen,
+                                         self.game_full_episode_scores[-1], self.max_episode_score_seen))
+            sys.stdout.flush()
+        except:
+            print('rolling result empty')
 
     def show_whether_achieved_goal(self):
         """Prints out whether the agent achieved the environment target goal"""
