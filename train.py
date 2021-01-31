@@ -6,11 +6,11 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, fill_buffer, \
-    get_logdir, StepDataset, visualize_trajectory_cache
+    get_logdir, StepDataset
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from sqlitedict import SqliteDict
-from modelling.train_utils import extract_trajectory_cache
+from modelling.cache_utils import extract_trajectory_cache, visualize_trajectory_cache
 
 # basic setup and checks
 torch.manual_seed(hparams.run.seed)
@@ -21,7 +21,7 @@ writer = SummaryWriter(log_dir=get_logdir())
 
 # initialize all environments
 envs = init_envs(hparams.env)
-rewarded_trajectories, rewarded_trajectory_statistics = init_trajectory_data_structures(envs[0])
+rewarded_trajectories, trajectory_statistics = init_trajectory_data_structures(envs[0])
 
 # load or init model
 ntoken = hparams.env.vocab_size + 1
@@ -38,10 +38,7 @@ last_eval_batch_i = 0
 replay_buffer = extract_trajectory_cache(hparams.env.trajectory_cache_filepath)
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
     model_to_use = None if len(replay_buffer) < hparams.train.min_saved_trajectories_until_training else model
-    latest_buffer = fill_buffer(model_to_use, envs, hparams.train.buffer_threshold,
-                                hparams.train.positive_to_negative_ratio, rewarded_trajectories,
-                                rewarded_trajectory_statistics, mode=hparams.train.mode,
-                                max_num_steps=hparams.train.fill_buffer_max_steps)
+    latest_buffer = fill_buffer(model_to_use, envs, trajectory_statistics, mode=hparams.train.mode)
     replay_buffer.extend(latest_buffer)
     if len(replay_buffer) > hparams.train.min_saved_trajectories_until_training:
         # construct dataset

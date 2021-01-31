@@ -1,12 +1,11 @@
 import copy
-import pprint
 import random
-from tqdm import tqdm
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from scipy.special import softmax
 from environment.envs import MathEnv
+from modelling.cache_utils import align_trajectory, cache_trajectory
 from utils import flatten
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
@@ -19,15 +18,12 @@ def get_logdir():
 
 def init_trajectory_data_structures(env):
     '''define data structures to track correct graphs'''
-    rewarded_trajectories = {}
-    rewarded_trajectory_statistics = {}
+    trajectory_statistics = {}
     for module_name in env.train.keys():
         for difficulty in env.train[module_name].keys():
-            if (module_name, difficulty) not in rewarded_trajectories:
-                rewarded_trajectories[(module_name, difficulty)] = []
-            if (module_name, difficulty) not in rewarded_trajectory_statistics:
-                rewarded_trajectory_statistics[(module_name, difficulty)] = 0
-    return rewarded_trajectories, rewarded_trajectory_statistics
+            if (module_name, difficulty) not in trajectory_statistics:
+                trajectory_statistics[(module_name, difficulty)] = 0
+    return trajectory_statistics
 
 
 def init_envs(env_config):
@@ -37,14 +33,14 @@ def init_envs(env_config):
     return envs
 
 
-def reset_all(envs, rewarded_trajectory_statistics=None, train=True):
-    '''if rewarded_trajectory_statistics is not None then select the module_name and difficulty which has been
+def reset_all(envs, trajectory_statistics=None, train=True):
+    '''if trajectory_statistics is not None then select the module_name and difficulty which has been
     least rewarded thus far, else select module_name and difficulty randomly.'''
     envs_info = []
     obs_batch = []
     for env in envs:
-        if rewarded_trajectory_statistics is not None:
-            module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
+        if trajectory_statistics is not None:
+            module_name, difficulty = min(trajectory_statistics, key=trajectory_statistics.get)
             obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
         else:
             obs, info = env.reset(train=train)
@@ -102,16 +98,6 @@ def get_action_batch(obs_batch, envs, model=None):
     return actions
 
 
-def update_trajectory_data_structures(env_info, rewarded_trajectories, rewarded_trajectory_statistics):
-    module_name = env_info['module_name']
-    difficulty = env_info['difficulty']
-    trajectory = env_info['trajectory']
-    reward = trajectory[-1][2]
-    if reward == 1:
-        rewarded_trajectories[(module_name, difficulty)].append(trajectory)
-        rewarded_trajectory_statistics[(module_name, difficulty)] += 1
-
-
 def reset_environment(env, train=True):
     obs, info = env.reset(train=train)
     return obs, {'question': info['raw_observation'],
@@ -121,30 +107,14 @@ def reset_environment(env, train=True):
                  'module_difficulty_index': env.module_difficulty_index}
 
 
-def reset_environment_with_least_rewarded_problem_type(env, rewarded_trajectory_statistics, train=True):
-    module_name, difficulty = min(rewarded_trajectory_statistics, key=rewarded_trajectory_statistics.get)
+def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistics, train=True):
+    module_name, difficulty = min(trajectory_statistics, key=trajectory_statistics.get)
     obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
     return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
                  'difficulty': difficulty,
                  'module_difficulty_index': env.module_difficulty_index}
-
-
-def align_trajectory(raw_trajectory):
-    states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
-    everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
-    aligned_trajectory = [(state, action, reward, next_state, done)
-                         for state, (next_state, action, reward, done)
-                         in zip(states, everything_else)]
-    return aligned_trajectory
-
-
-def inspect_performance(trajectories, rewarded_trajectory_statistics):
-    for module_name, difficulty in trajectories.keys():
-        if len(trajectories[(module_name,difficulty)]) > 0:
-            percentage_correct = rewarded_trajectory_statistics[(module_name,difficulty)] / len(trajectories[(module_name,difficulty)]) * 100
-            print(f"{module_name}@{difficulty}: {rewarded_trajectory_statistics[(module_name,difficulty)]} / {len(trajectories[(module_name,difficulty)])} = {round(percentage_correct, 5)}%")
 
 
 # make function to compute action distribution
@@ -154,8 +124,8 @@ def get_policy(model, obs):
     return Categorical(logits=logits)
 
 
-# make loss function whose gradient, for the right data, is policy gradient
 def vpg_loss(model, obs, act, weights):
+    # make loss function whose gradient, for the right data, is policy gradient
     logp = get_policy(model, obs).log_prob(act)
     return -(logp * weights).mean()
 
@@ -202,6 +172,64 @@ class StepDataset(torch.utils.data.Dataset):
         next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
         done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
         return state, action, reward, next_state, done
+
+
+def fill_buffer(model, envs, trajectory_statistics):
+    '''
+    :param model:
+    :param envs:
+    :param trajectory_statistics:
+    :return:
+    '''
+    assert hparams.train.mode == 'positive_only' or hparams.train.mode == 'balanced'
+    # reset all environments
+    cached_steps = 0
+    trajectory_buffer = []
+    buffer_positives = 1
+    buffer_negatives = 1  # init to 1 to prevent division by zero
+    # init trajectory cache from storage
+    trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
+    obs_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, train=True)
+    # take steps in all environments until the number of cached steps
+    while cached_steps < hparams.train.buffer_threshold:
+        # take a step in each environment in "parallel"
+        action_batch = get_action_batch(obs_batch, envs, model=model)
+        obs_batch, step_batch = step_all(envs, action_batch)
+        # for each environment process the most recent step
+        for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
+            envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
+            # if episode is complete, check if trajectory should be kept in trajectory_buffer and reset environment
+            if done:
+                with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
+                    f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
+                if reward == 1:
+                    # cache trajectory
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
+                    trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
+                if (hparams.train.mode == 'positive_only' and reward == 1) or \
+                   (hparams.train.mode == 'balanced' and \
+                        buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
+                        reward == 1):
+                    # aligned trajectory already computed (since reward == 1)
+                    trajectory_buffer.append(aligned_trajectory)
+                    cached_steps += len(aligned_trajectory)
+                    buffer_positives += 1
+                elif hparams.train.mode == 'balanced' and \
+                        buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
+                        reward == -1:
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    trajectory_buffer.append(aligned_trajectory)
+                    cached_steps += len(aligned_trajectory)
+                    buffer_negatives += 1
+                obs_batch[env_i], envs_info[env_i] = \
+                    reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
+                                                                       train=True)
+                # # append first state of trajectory after reset
+                # info_dict = {'raw_observation': envs_info[env_i]['question']}
+                # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
+    trajectory_cache.close()
+    return trajectory_buffer
 
 
 def train(model, data_loader, n_batches, writer, current_batch_i):
@@ -261,150 +289,3 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()
-
-
-def visualize_buffer(buffer, env):
-    states = [state for state, _, _ in buffer]
-    actions = [action for _, action, _ in buffer]
-    decoded_states = [env.decode(state) for state in states]
-    for d, a in zip(decoded_states, actions):
-        print(d, a)
-    print()
-
-
-def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):
-    key_trajectory_pairs = random.sample(list(trajectory_cache.items()), min(num_to_sample, len(trajectory_cache)))
-    print(f'size of trajectory cache: {len(trajectory_cache)}')
-    for key, trajectories in key_trajectory_pairs:
-        for trajectory in trajectories:
-            last_state = trajectory[-1][3]
-            print("\t", decoder(last_state))
-
-
-def same_problem_trajectory_equals(trajectory1, trajectory2):
-    '''
-    Since MathEnv is a deterministic environment, then if both trajectories are for the same problem and they have
-    the same action sequence, they must be equal trajectories.
-
-    Steps have the format: (state, action, reward, next_state, done)
-    Therefore, actions can be accessed by indexing a step at position 1.
-    '''
-    return all([step1[1] == step2[1] for step1, step2 in zip(trajectory1, trajectory2)])
-
-
-def cache_trajectory(env_info, aligned_trajectory, trajectory_cache):
-    raw_key = (env_info['module_name'], str(env_info['difficulty']),
-               str(env_info['module_difficulty_index']))
-    key = '-'.join(raw_key)
-    if not key in trajectory_cache:
-        trajectory_cache[key] = [aligned_trajectory]
-    else:
-        # if the key already exists in the trajectory_cache, then only cache the trajectory if it's not already present
-        for aligned_trajectory_ in trajectory_cache[key]:
-            if same_problem_trajectory_equals(aligned_trajectory_, aligned_trajectory):
-                return
-        # append the new trajectory
-        trajectories = trajectory_cache[key]
-        trajectories.append(aligned_trajectory)
-        trajectory_cache[key] = trajectories
-
-
-def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
-    all_trajectories = []
-    module_difficulty_trajectory_counts = {}
-    try:
-        trajectory_cache = SqliteDict(trajectory_cache_filepath, autocommit=True)
-        for key in trajectory_cache:
-            trajectories = trajectory_cache[key]
-            if verbose:
-                module_difficulty = '-'.join(key.split('-')[:-1])
-                if module_difficulty not in module_difficulty_trajectory_counts:
-                    module_difficulty_trajectory_counts[module_difficulty] = 1
-                else:
-                    module_difficulty_trajectory_counts[module_difficulty] += 1
-            all_trajectories.extend(trajectories)
-        if verbose:
-            pprint.pprint(module_difficulty_trajectory_counts)
-            print(f"# trajectories: {len(all_trajectories)}")
-            print(f"# steps: {len(flatten(all_trajectories))}")
-    except:
-        print(f"reading trajectory cache at {trajectory_cache_filepath} failed; trajectory cache may not exist.")
-    return all_trajectories
-
-
-def fill_buffer(model, envs, buffer_threshold, positive_to_negative_ratio, rewarded_trajectories,
-                rewarded_trajectory_statistics, verbose=False, mode='positive_only', max_num_steps=1000):
-    '''
-    :param model:
-    :param envs:
-    :param buffer_threshold:
-    :param positive_to_negative_ratio:
-    :param rewarded_trajectories:
-    :param rewarded_trajectory_statistics:
-    :param verbose:
-    :param mode: can be 'positive_only' and 'balanced'
-    :return:
-    '''
-    # reset all environments
-    cached_steps = 0
-    trajectory_buffer = []
-    buffer_positives = 1
-    buffer_negatives = 1  # init to 1 to prevent division by zero
-    # init trajectory cache from storage
-    trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
-    obs_batch, envs_info = reset_all(envs, rewarded_trajectory_statistics=rewarded_trajectory_statistics, train=True)
-    # take steps in all environments num_parallel_steps times
-    for _ in range(max_num_steps):
-        # take a step in each environment in "parallel"
-        action_batch = get_action_batch(obs_batch, envs, model=model)
-        obs_batch, step_batch = step_all(envs, action_batch)
-        # for each environment process the most recent step
-        for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
-            envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
-            # if episode is complete, check if trajectory should be kept in trajectory_buffer and reset environment
-            if done:
-                update_trajectory_data_structures(envs_info[env_i], rewarded_trajectories, rewarded_trajectory_statistics)
-                with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
-                    f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
-                if reward == 1:
-                    # cache trajectory
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
-                    cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
-                if reward == 1 and verbose:
-                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}")
-                if (mode == 'positive_only' and reward == 1) or \
-                   (mode == 'balanced' and buffer_positives / buffer_negatives <= positive_to_negative_ratio and \
-                        reward == 1):
-                    # aligned trajectory already computed (since reward == 1)
-                    trajectory_buffer.append(aligned_trajectory)
-                    cached_steps += len(aligned_trajectory)
-                    buffer_positives += 1
-                elif mode == 'balanced' and buffer_positives / buffer_negatives > positive_to_negative_ratio and \
-                        reward == -1:
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
-                    trajectory_buffer.append(aligned_trajectory)
-                    cached_steps += len(aligned_trajectory)
-                    buffer_negatives += 1
-                obs_batch[env_i], envs_info[env_i] = \
-                    reset_environment_with_least_rewarded_problem_type(envs[env_i], rewarded_trajectory_statistics,
-                                                                       train=True)
-                # # append first state of trajectory after reset
-                # info_dict = {'raw_observation': envs_info[env_i]['question']}
-                # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
-        if cached_steps > buffer_threshold:
-            break
-    trajectory_cache.close()
-    return trajectory_buffer
-
-
-def load_buffer(trajectories_filepath):
-    from utils import read_pickle
-    buffer = list()
-    trajectories = read_pickle(trajectories_filepath)
-    for module_name, difficulty in trajectories:
-        trajectories_ = trajectories[(module_name, difficulty)]
-        for trajectory in trajectories_:
-            reward = trajectory[-1][2]
-            processed_trajectory = align_trajectory(trajectory, reward)
-            buffer.extend(processed_trajectory)
-    return buffer
