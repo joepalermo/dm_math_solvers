@@ -1,4 +1,5 @@
 import copy
+import pprint
 import random
 from tqdm import tqdm
 import numpy as np
@@ -305,12 +306,24 @@ def cache_trajectory(key, aligned_trajectory, trajectory_cache):
         trajectory_cache[key] = trajectories
 
 
-def extract_all_steps_from_trajectory_cache(filepath):
+def extract_all_steps_from_trajectory_cache(trajectory_cache_filepath, verbose=False):
     steps = []
-    trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
+    module_difficulty_trajectory_counts = {}
+    trajectory_cache = SqliteDict(trajectory_cache_filepath, autocommit=True)
     for key in trajectory_cache:
         trajectories = trajectory_cache[key]
+        if verbose:
+            module_difficulty = '-'.join(key.split('-')[:-1])
+            if module_difficulty not in module_difficulty_trajectory_counts:
+                module_difficulty_trajectory_counts[module_difficulty] = 1
+            else:
+                module_difficulty_trajectory_counts[module_difficulty] += 1
         steps.extend(flatten(trajectories))
+    if verbose:
+        pprint.pprint(module_difficulty_trajectory_counts)
+        print(f"# trajectories: "
+              f"{sum([module_difficulty_trajectory_counts[md] for md in module_difficulty_trajectory_counts])}")
+        print(f"# steps: {len(steps)}")
     return steps
 
 

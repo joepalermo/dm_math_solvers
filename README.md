@@ -4,8 +4,6 @@ ____
 
 What does end-state look like?
 
-- Design a procedure for testing new RL algorithms with simple environments
-
 - Design interfaces to the database of rewarded graphs so that batches can be constructed from it
     - 1 => flatten it into list of steps that can be shuffled and used for training
     - 2 => construct a mapping from module-difficulty to a list of trajectories/steps

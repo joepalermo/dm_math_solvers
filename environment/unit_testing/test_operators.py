@@ -51,6 +51,9 @@ class Test(unittest.TestCase):
         system = [Eq('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
         self.assertRaises(Exception, ss, system)
 
+        system = [Eq('-g**3 - 9*g**2 - g + l(g) - 10 = 0')]
+        self.assertRaises(Exception, ss, system)
+
     def test_is_prime(self):
         assert ip(Val('19373'))
         assert nt(ip(Val('19374')))

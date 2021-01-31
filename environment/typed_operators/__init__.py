@@ -131,8 +131,12 @@ def ss(system: list) -> dict:
     :return: Dict[Var, Val]
     """
     def sympy_solve(system, return_dict):
-        solutions = sym.solve(system)
-        return_dict["solutions"] = solutions
+        # run in try-except to suppress exception logging (must be done here due to use of multiprocess)
+        try:
+            solutions = sym.solve(system)
+            return_dict["solutions"] = solutions
+        except:
+            pass
 
     sympy_equations = []
     for equation in system:
@@ -356,12 +360,3 @@ def nt(x: bool) -> bool:
     assert type(x) == bool
     return not x
 
-
-def common_denominator():
-    pass
-    # TODO
-
-#brb
-
-# def max_arg(x: Ex, y: Ex) -> Ex:
-#     return str(max(eval(str(x)),eval(str(y))))
