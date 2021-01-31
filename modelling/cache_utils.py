@@ -2,6 +2,7 @@ import pprint
 import random
 from sqlitedict import SqliteDict
 from utils import flatten
+import numpy as np
 
 
 def align_trajectory(raw_trajectory):
@@ -70,3 +71,22 @@ def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):
             last_state = trajectory[-1][3]
             reward = trajectory[-1][2]
             print("\t", decoder(last_state), f"reward: {reward}")
+
+
+def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cache, num_to_sample=5):
+    all_trajectories = {}
+    for key in trajectory_cache:
+        trajectories = trajectory_cache[key]
+        module_difficulty = '-'.join(key.split('-')[:-1])
+        if module_difficulty not in all_trajectories:
+            all_trajectories[module_difficulty] = []
+        else:
+            all_trajectories[module_difficulty].extend(trajectories)
+    for module_difficulty in all_trajectories:
+        module_difficulty_trajectories = all_trajectories[module_difficulty]
+
+        sampled_trajectories = [] if len(module_difficulty_trajectories) == 0 else \
+            np.random.choice(module_difficulty_trajectories, size=num_to_sample)
+        print(f"{module_difficulty} samples:")
+        for trajectory in sampled_trajectories:
+            print(f"\t{decoder(trajectory[-1][3])}; reward: {trajectory[-1][2]}")
