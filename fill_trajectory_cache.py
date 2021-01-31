@@ -18,10 +18,7 @@ assert hparams.train.mode == 'positive_only' or hparams.train.mode == 'balanced'
 envs = init_envs(hparams.env)
 trajectory_statistics = init_trajectory_data_structures(envs[0])
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
-    trajectory_buffer = fill_buffer(None, envs, hparams.train.buffer_threshold,
-                                    hparams.train.positive_to_negative_ratio, trajectory_statistics,
-                                    mode=hparams.train.mode, max_num_steps=hparams.train.fill_buffer_max_steps,
-                                    verbose=False)
+    trajectory_buffer = fill_buffer(None, envs, trajectory_statistics)
 
 trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
 visualize_trajectory_cache(envs[0].decode, trajectory_cache, num_to_sample=25)

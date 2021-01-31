@@ -190,38 +190,40 @@ def fill_buffer(model, envs, trajectory_statistics):
     # init trajectory cache from storage
     trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
     obs_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, train=True)
-    # take steps in all environments until the number of cached steps
+    # take steps in all environments until the number of cached steps reaches a threshold
     while cached_steps < hparams.train.buffer_threshold:
         # take a step in each environment in "parallel"
         action_batch = get_action_batch(obs_batch, envs, model=model)
         obs_batch, step_batch = step_all(envs, action_batch)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
+            # cache the latest step from each environment
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
-            # if episode is complete, check if trajectory should be kept in trajectory_buffer and reset environment
             if done:
-                with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
-                    f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
-                if reward == 1:
-                    # cache trajectory
+                def positive_condition(buffer_positives, buffer_negatives, reward):
+                    return (hparams.train.mode == 'positive_only' and reward == 1) or \
+                        (hparams.train.mode == 'balanced' and \
+                        buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
+                        reward == 1)
+                def negative_condition(buffer_positives, buffer_negatives, reward):
+                    return hparams.train.mode == 'balanced' and \
+                        buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
+                        reward == -1
+                # check if conditions to cache the trajectory are met
+                if positive_condition(buffer_positives, buffer_negatives, reward) or \
+                        negative_condition(buffer_positives, buffer_negatives, reward):
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
                     cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
+                    trajectory_buffer.append(aligned_trajectory)
+                    cached_steps += len(aligned_trajectory)
+                    with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
+                        f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                     trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
-                if (hparams.train.mode == 'positive_only' and reward == 1) or \
-                   (hparams.train.mode == 'balanced' and \
-                        buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
-                        reward == 1):
-                    # aligned trajectory already computed (since reward == 1)
-                    trajectory_buffer.append(aligned_trajectory)
-                    cached_steps += len(aligned_trajectory)
+                if positive_condition(buffer_positives, buffer_negatives, reward):
                     buffer_positives += 1
-                elif hparams.train.mode == 'balanced' and \
-                        buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
-                        reward == -1:
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
-                    trajectory_buffer.append(aligned_trajectory)
-                    cached_steps += len(aligned_trajectory)
+                elif negative_condition(buffer_positives, buffer_negatives, reward):
                     buffer_negatives += 1
+                # reset environment
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)

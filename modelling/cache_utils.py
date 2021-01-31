@@ -64,8 +64,9 @@ def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
 
 def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):
     key_trajectory_pairs = random.sample(list(trajectory_cache.items()), min(num_to_sample, len(trajectory_cache)))
-    print(f'size of trajectory cache: {len(trajectory_cache)}')
+    print(f"size of trajectory cache: {len(trajectory_cache)}")
     for key, trajectories in key_trajectory_pairs:
         for trajectory in trajectories:
             last_state = trajectory[-1][3]
-            print("\t", decoder(last_state))
+            reward = trajectory[-1][2]
+            print("\t", decoder(last_state), f"reward: {reward}")
