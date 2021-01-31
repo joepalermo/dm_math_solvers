@@ -1,7 +1,8 @@
 import re
 import sympy as sym
 from typing import List, Dict, Set
-
+import multiprocess as mp
+import time
 # from math import log
 
 
@@ -129,12 +130,27 @@ def ss(system: list) -> dict:
     :param system: List[
     :return: Dict[Var, Val]
     """
+    def sympy_solve(system, return_dict):
+        solutions = sym.solve(system)
+        return_dict["solutions"] = solutions
+
     sympy_equations = []
     for equation in system:
         lhs, rhs = str(equation).split("=")
         sympy_eq = sym.Eq(sym.sympify(lhs), sym.sympify(rhs))
         sympy_equations.append(sympy_eq)
-    solutions = sym.solve(sympy_equations)
+
+    manager = mp.Manager()
+    return_dict = manager.dict()
+    p = mp.Process(target=sympy_solve, args=(sympy_equations, return_dict))
+    p.start()
+    p.join(1)
+
+    if p.is_alive():
+        p.terminate()
+        p.join()
+    solutions = return_dict.get("solutions", [])
+
     # Convert list to dictionary if no solution found.
     if len(solutions) == 0:
         raise Exception("no solution found")
