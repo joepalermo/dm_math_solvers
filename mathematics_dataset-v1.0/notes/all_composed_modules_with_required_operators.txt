@@ -46,5 +46,5 @@ numbers__is_prime_composed.txt
 numbers__lcm_composed.txt
     -core_set + lcm
 numbers__list_prime_factors_composed.txt
-    -core_set + pf
+    -core_set + append
 

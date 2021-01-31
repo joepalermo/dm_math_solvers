@@ -1,7 +1,7 @@
 import os
 import re
 from tqdm import tqdm
-from environment.typed_operators import Eq, Fn, Ex, Var, Val, Rat
+from environment.typed_operators import Equation, Function, Expression, Variable, Value, Rational
 
 
 def is_numeric(string):
@@ -44,30 +44,26 @@ def extract_formal_elements(question, cast=True):
 def cast_formal_element(f):
     if "=" in f:
         try:
-            return Fn(f)
+            return Function(f)
         except:
-            return Eq(f)
+            return Equation(f)
     elif len(f) == 1 and f.isalpha():
-        return Var(f)
+        return Variable(f)
     elif f.isnumeric():
-        return Val(f)
+        return Value(f)
     elif re.compile("([0-9]+[/][0-9]+$)").match(f):
-        return Rat(f)
+        return Rational(f)
     else:
-        return Ex(f)
+        return Expression(f)
 
 
-def guess_until_problem_solved(
-    env, module_difficulty_index, verbose=False, max_episode_index=1000
-):
+def guess_until_problem_solved(env, question, answer, verbose=False, max_episode_index=1000):
     episode_i = 0
     graph_guessed_correctly = False
-    encoded_question, _ = env.reset_with_specific_problem(
-        "short_problems", 0, module_difficulty_index
-    )
+    encoded_question, _ = env.reset_from_text(question, answer)
     print(f"\nquestion: {env.decode(encoded_question)}")
     while not graph_guessed_correctly and episode_i < max_episode_index:
-        _, _ = env.reset_with_specific_problem("short_problems", 0, module_difficulty_index)
+        encoded_question, _ = env.reset_from_text(question, answer)
         done = False
         step_i = 0
         if verbose:
@@ -82,7 +78,7 @@ def guess_until_problem_solved(
             step_i += 1
         episode_i += 1
     print(f'graph: {info["raw_observation"].split(";")[1]}')
-    print(f"trials taken to guess problem #{module_difficulty_index}: {episode_i}")
+    print(f"{episode_i} trials taken to guess: {question}")
 
 
 def filter_univariate(examples):
@@ -103,6 +99,18 @@ def get_module_name_from_filepath(fp):
     else:
         module_name = module_name
     return module_name
+
+
+def load_question_answer_pairs(filepath):
+    qa_pairs = []
+    with open(filepath, "r") as f:
+        lines = f.readlines()
+    num_pairs = len(lines) // 2
+    for i in range(0, 2 * num_pairs, 2):
+        question = lines[i].strip()
+        answer = lines[i + 1].strip()
+        qa_pairs.append((question, answer))
+    return qa_pairs
 
 
 # load train data

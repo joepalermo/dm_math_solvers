@@ -26,29 +26,29 @@ class MathEnv(gym.Env):
         self.vocab_size = config.vocab_size
         # define available operator functions
         self.operators = [
-            lv,
-            ss,
-            ap,
-            ape,
-            meq,
-            lve,
-            eiv,
-            slr,
-            fac,
-            df,
-            dfw,
-            sy,
-            mfn,
-            ra,
+            lookup_value,
+            solve_system,
+            append,
+            append_to_empty_list,
+            make_equation,
+            lookup_value_equation,
+            extract_isolated_variable,
+            substitution_left_to_right,
+            factor,
+            differentiate,
+            differentiate_wrt,
+            simplify,
+            make_function,
+            replace_arg,
             mod,
             gcd,
-            md0,
-            ip,
+            divides,
+            is_prime,
             lcm,
             lcd,
-            pf,
-            fa,
-            nt
+            prime_factors,
+            evaluate_function,
+            not_op
         ]
         # ensure that every operator listed in config.operators is present in the above list
         valid_op_names = [op.__name__ for op in self.operators]
@@ -130,6 +130,15 @@ class MathEnv(gym.Env):
         module_name = sample(list(self.train.keys()), 1)[0]
         difficulty = sample(list(self.train[module_name].keys()), 1)[0]
         return self.reset_by_module_and_difficulty(module_name, difficulty, train=train)
+
+    def reset_from_text(self, question, answer):
+        self.module_name = 'N/A'
+        self.difficulty = 'N/A'
+        self.question = question
+        self.answer = answer
+        self.module_difficulty_index = 'N/A'
+        self.compute_graph = ComputeGraph(self.question)
+        return self.encode(self.question), {'raw_observation': self.question}
 
     def reset_with_same_problem(self):
         self.compute_graph = ComputeGraph(self.question)

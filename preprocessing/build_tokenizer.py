@@ -13,7 +13,7 @@ spm.SentencePieceTrainer.train(input='environment/tokenization/question_corpus.t
 
 # load tokenizer
 sp = spm.SentencePieceProcessor(model_file='environment/tokenization/tokenizer.model')
-example_state = "What is the third derivative of -t**4 - 880*t**3 + 152*t**2 wrt t?; df('p_0')"
+example_state = "What is the third derivative of -t**4 - 880*t**3 + 152*t**2 wrt t?; differentiate('p_0')"
 id_tokens = sp.encode(example_state)
 string_tokens = sp.encode(example_state, out_type=str)
 assert sp.decode(id_tokens) == example_state, sp.decode(id_tokens)

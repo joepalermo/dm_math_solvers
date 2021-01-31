@@ -3,6 +3,7 @@ hparams = HParams('artifacts/.', hparams_filename='hparams', name='rl_math', ask
 from environment.envs.math_env import MathEnv
 from environment.utils import guess_until_problem_solved
 import unittest
+from environment.utils import load_question_answer_pairs
 
 
 class Test(unittest.TestCase):
@@ -10,6 +11,7 @@ class Test(unittest.TestCase):
     def test_guess_until_correct(self):
         """this test only terminates when the graph is correctly guessed or timeout is reached"""
         env = MathEnv(hparams.env)
-        for i in range(0,12):
-            guess_until_problem_solved(env, i, verbose=False, max_episode_index=50000)
+        question_answer_pairs = load_question_answer_pairs('artifacts/short_problems.txt')
+        for question, answer in question_answer_pairs:
+            guess_until_problem_solved(env, question, answer, verbose=False, max_episode_index=50000)
 

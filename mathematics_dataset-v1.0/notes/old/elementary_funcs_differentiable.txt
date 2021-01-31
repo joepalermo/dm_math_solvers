@@ -43,7 +43,7 @@ non-differentiable:
 base
 hcd
 lcm
-pf
+append
 differentiate
 
 polynomial_simplify

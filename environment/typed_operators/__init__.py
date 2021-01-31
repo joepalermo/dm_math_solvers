@@ -9,8 +9,7 @@ import time
 # type definitions --------------------------------------
 
 
-class Arb:
-    """Arbitrary"""
+class Arbitrary:
     def __init__(self, arbitrary: str):
         self.arbitrary = str(arbitrary)
 
@@ -18,8 +17,7 @@ class Arb:
         return self.arbitrary
 
 
-class Eq(Arb):
-    """Equation"""
+class Equation(Arbitrary):
     def __init__(self, equation: str):
         assert len(equation.split("=")) == 2
         self.equation = equation
@@ -34,8 +32,7 @@ class Eq(Arb):
         return self.equation.split(split_on)
 
 
-class Fn(Eq):
-    """Function"""
+class Function(Equation):
     def __init__(self, function: str):
         assert len(function.split("=")) == 2
         function_arg_pattern = "([a-zA-Z0-9\s]+)\(([a-zA-Z0-9\s]+)\)"
@@ -53,8 +50,7 @@ class Fn(Eq):
         return self.function == str(function)
 
 
-class Ex(Arb):
-    """Expression"""
+class Expression(Arbitrary):
     def __init__(self, expression: str):
         assert "=" not in expression
         self.expression = str(expression)
@@ -69,8 +65,7 @@ class Ex(Arb):
         return hash(self.expression)
 
 
-class Var(Ex):
-    """Variable"""
+class Variable(Expression):
     def __init__(self, variable: str):
         self.variable = str(variable)
         assert variable.isalpha()
@@ -85,8 +80,7 @@ class Var(Ex):
         return hash(self.variable)
 
 
-class Val(Ex):
-    """Value"""
+class Value(Expression):
     def __init__(self, value: float):
         self.value = float(value)
 
@@ -108,10 +102,10 @@ class Val(Ex):
     def __gt__(self, other):
         return self.value > other.value
 
-class Rat(Ex):
+class Rational(Expression):
     def __init__(self, rational: str):
         self.rational = str(rational)
-        self.numerator, self.denominator = [Val(x) for x in self.rational.split('/')]
+        self.numerator, self.denominator = [Value(x) for x in self.rational.split('/')]
 
     def __str__(self):
         return self.rational
@@ -121,14 +115,14 @@ class Rat(Ex):
 
 # operator definitions --------------------------------------
 
-# ss(system: List[Eq]) -> Dict[Var, Set[Val]]
-def ss(system: list) -> dict:
+
+# solve_system(system: List[Equation]) -> Dict[Variable, Set[Value]]
+def solve_system(system: list) -> dict:
     """
-    solve_system
     solve a system of linear equations.
 
     :param system: List[
-    :return: Dict[Var, Val]
+    :return: Dict[Variable, Value]
     """
     def sympy_solve(system, return_dict):
         # run in try-except to suppress exception logging (must be done here due to use of multiprocess)
@@ -159,21 +153,20 @@ def ss(system: list) -> dict:
     if len(solutions) == 0:
         raise Exception("no solution found")
     elif type(solutions) is dict:
-        return {Var(str(k)): set([Val(float(v))]) for k, v in solutions.items()}
+        return {Variable(str(k)): set([Value(float(v))]) for k, v in solutions.items()}
     elif type(solutions) is list:
         solutions_dict = {}
         for soln in solutions:
             for k, v in soln.items():
                 if str(k) in solutions_dict.keys():
-                    solutions_dict[Var(str(k))].add(Val(float(v)))
+                    solutions_dict[Variable(str(k))].add(Value(float(v)))
                 else:
-                    solutions_dict[Var(str(k))] = set([Val(float(v))])
+                    solutions_dict[Variable(str(k))] = set([Value(float(v))])
         return solutions_dict
 
 
-# ap(system: List[Eq], equation: Eq) -> List[Eq]
-def ap(system: list, equation: Eq) -> list:
-    """append"""
+# append(system: List[Equation], equation: Equation) -> List[Equation]
+def append(system: list, equation: Equation) -> list:
     if not system:
         return [equation]
     else:
@@ -181,14 +174,12 @@ def ap(system: list, equation: Eq) -> list:
         return system
 
 
-def ape(equation: Eq) -> list:
-    """append_to_empty_list"""
+def append_to_empty_list(equation: Equation) -> list:
     return [equation]
 
 
-# lv(mapping: Dict[Var, Set[Val]], key: Var)
-def lv(mapping: dict, key: Var) -> object:
-    """lookup_value"""
+# lookup_value(mapping: Dict[Variable, Set[Value]], key: Variable)
+def lookup_value(mapping: dict, key: Variable) -> object:
     # TODO: figure out how to constrain output type in this case (multiple output types)
     assert key in mapping
     corresponding_set = mapping[key]
@@ -198,27 +189,23 @@ def lv(mapping: dict, key: Var) -> object:
         return corresponding_set
 
 
-# lve(mapping: Dict[Var, Set[Val]], key: Var) -> Eq:
-def lve(mapping: dict, key: Var) -> Eq:
-    """lookup_value_equation"""
+# lookup_value_equation(mapping: Dict[Variable, Set[Value]], key: Variable) -> Equation:
+def lookup_value_equation(mapping: dict, key: Variable) -> Equation:
     assert key in mapping
     corresponding_set = mapping[key]
     value = corresponding_set.pop()
-    return Eq(f"{key} = {value}")
+    return Equation(f"{key} = {value}")
 
 
-def meq(expression1: Ex, expression2: Ex) -> Eq:
-    """make equation"""
-    return Eq(f"{expression1} = {expression2}")
+def make_equation(expression1: Expression, expression2: Expression) -> Equation:
+    return Equation(f"{expression1} = {expression2}")
 
 
-def mfn(expression1: Ex, expression2: Ex) -> Fn:
-    """make_function"""
-    return Fn(f"{expression1} = {expression2}")
+def make_function(expression1: Expression, expression2: Expression) -> Function:
+    return Function(f"{expression1} = {expression2}")
 
 
-def eiv(equation: Eq) -> Var:
-    """extract_isolated_variable"""
+def extract_isolated_variable(equation: Equation) -> Variable:
     lhs, rhs = str(equation).split("=")
     lhs, rhs = lhs.strip(), rhs.strip()
     if len(lhs) == 1 and lhs.isalpha():
@@ -229,109 +216,97 @@ def eiv(equation: Eq) -> Var:
         raise Exception("there is no isolated variable")
 
 
-def pl(equation: Eq) -> Ex:
-    """project_lhs"""
-    return Ex(str(equation).split("=")[0].strip())
+def project_lhs(equation: Equation) -> Expression:
+    return Expression(str(equation).split("=")[0].strip())
 
 
-def pr(equation: Eq) -> Ex:
-    """project_rhs"""
-    return Ex(str(equation).split("=")[1].strip())
+def project_rhs(equation: Equation) -> Expression:
+    return Expression(str(equation).split("=")[1].strip())
 
 
-def slr(arb: Arb, eq: Eq) -> Arb:
-    """substitution_left_to_right"""
-    return Arb(str(arb).replace(str(pl(eq)), str(pr(eq))))
+def substitution_left_to_right(arb: Arbitrary, eq: Equation) -> Arbitrary:
+    return Arbitrary(str(arb).replace(str(project_lhs(eq)), str(project_rhs(eq))))
 
 
-def srl(arb: Arb, eq: Eq) -> Arb:
+def substitution_right_to_left(arb: Arbitrary, eq: Equation) -> Arbitrary:
     """substitution_right_to_left"""
-    return Arb(str(arb).replace(str(pr(eq)), str(pl(eq))))
+    return Arbitrary(str(arb).replace(str(project_rhs(eq)), str(project_lhs(eq))))
 
 
-def fac(expression: Ex) -> Ex:
-    """factor"""
-    return Ex(str(sym.factor(expression)))
+def factor(expression: Expression) -> Expression:
+    return Expression(str(sym.factor(expression)))
 
 
-def sy(arb: Arb) -> Arb:
-    """dimplify"""
+def simplify(arb: Arbitrary) -> Arbitrary:
     if "=" in str(arb):
         lhs, rhs = str(arb).split("=")
         lhs, rhs = lhs.strip(), rhs.strip()
-        return Eq(f"{sym.simplify(lhs)} = {sym.simplify(rhs)}".strip())
+        return Equation(f"{sym.simplify(lhs)} = {sym.simplify(rhs)}".strip())
     else:
-        return Ex(str(sym.simplify(str(arb))).strip())
+        return Expression(str(sym.simplify(str(arb))).strip())
 
 
-def df(expression: Ex) -> Ex:
-    """diff"""
-    return Ex(str(sym.diff(sym.sympify(str(expression)))))
+def differentiate(expression: Expression) -> Expression:
+    return Expression(str(sym.diff(sym.sympify(str(expression)))))
 
 
-def dfw(expression: Ex, variable: Var) -> Ex:
-    """diff_wrt"""
-    return Ex(str(sym.diff(sym.sympify(str(expression)), sym.sympify(str(variable)))))
+def differentiate_wrt(expression: Expression, variable: Variable) -> Expression:
+    return Expression(str(sym.diff(sym.sympify(str(expression)), sym.sympify(str(variable)))))
 
 
-def ra(function: Fn, var: Var) -> Fn:
-    """replace_arg"""
+def replace_arg(function: Function, var: Variable) -> Function:
     # TODO: make robust to longer names (e.g. max(x), y -> may(y) which is wrong)
-    return Fn(str(function).replace(str(function.parameter), str(var)))
+    return Function(str(function).replace(str(function.parameter), str(var)))
 
 
-def mod(numerator: Val, discriminator: Val) -> Val:
-    return Val(numerator.value % discriminator.value)
+def mod(numerator: Value, discriminator: Value) -> Value:
+    return Value(numerator.value % discriminator.value)
 
 
-def md0(numerator: Val, discriminator: Val) -> bool:
-    """mod_eq_0"""
+def divides(numerator: Value, discriminator: Value) -> bool:
     return numerator.value % discriminator.value == 0
 
 
-def gcd(x: Val, y: Val) -> Val:
+def gcd(x: Value, y: Value) -> Value:
+    """greatest common divisor"""
     from math import gcd
 
-    return Val(gcd(int(x.value), int(y.value)))
+    return Value(gcd(int(x.value), int(y.value)))
 
 
-def ip(x: Val) -> bool:
-    """is_prime"""
+def is_prime(x: Value) -> bool:
     return sym.isprime(int(x.value))
 
 
-def lcm(x: Val, y: Val) -> Val:
+def lcm(x: Value, y: Value) -> Value:
+    """least common multiple"""
     import math
     assert int(x.value) == x.value and int(y.value) == y.value
     x, y = int(x.value), int(y.value)
-    return Val(abs(x * y) // math.gcd(x, y))
+    return Value(abs(x * y) // math.gcd(x, y))
 
-def lcd(x: Rat, y: Rat) -> Val:
-    "least common denominator"
+def lcd(x: Rational, y: Rational) -> Value:
+    """least common denominator"""
     return lcm(x.denominator, y.denominator)
 
 
-def pf(n: Val) -> set:
-    """prime_factors"""
+def prime_factors(n: Value) -> set:
     # https://stackoverflow.com/questions/16996217/prime-factorization-list
     assert int(n.value) == n.value
 
-    if ip(n):
+    if is_prime(n):
         return n
 
     n = int(n.value)
     divisors = [d for d in range(2, n // 2 + 1) if n % d == 0]
 
     return set(
-        [Val(d) for d in divisors if all(d % od != 0 for od in divisors if od != d)]
+        [Value(d) for d in divisors if all(d % od != 0 for od in divisors if od != d)]
     )
 
 
-def fa(
-    function_definition: Fn, function_argument: Ex
-) -> Val:
+def evaluate_function(function_definition: Function, function_argument: Expression) -> Value:
     """
-    function_application
     :param function_definition: e.g. 'f(x) = x + x**3'
     :param function_argument: e.g. either '2' or 'f(2)'
     :return:
@@ -352,11 +327,10 @@ def fa(
         assert function_name_from_definition == function_name_from_argument
     # evaluate function
     rhs_with_arg = rhs.replace(function_parameter, str(function_argument))
-    return Val(eval(rhs_with_arg))
+    return Value(eval(rhs_with_arg))
 
 
-def nt(x: bool) -> bool:
-    """not_op"""
+def not_op(x: bool) -> bool:
     assert type(x) == bool
     return not x
 

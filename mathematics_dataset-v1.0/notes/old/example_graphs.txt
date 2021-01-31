@@ -269,7 +269,7 @@ Is 15 a fac of 720?
 easy
 
 Let k(w) = -w**2 + 13*w - 4. What are the prime factors of k(6)?
-pf(arg1)
+append(arg1)
 arg1 <- fa(arg2, arg3)
 arg2 <- k(w) = -w**2 + 13*w - 4
 arg3 <- 6

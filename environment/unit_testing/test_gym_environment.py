@@ -12,9 +12,7 @@ class Test(unittest.TestCase):
     def test_problem_0_fail_1(self):
         env = MathEnv(hparams.env)
         # reset - then fail after 1st action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 0
-        )
+        encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
         question = env.decode(encoded_question)
         f = extract_formal_elements(question)  # for use below
         assert f == ["0 = 4*b + b + 15", "b"]
@@ -23,7 +21,7 @@ class Test(unittest.TestCase):
         observation_, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; Eq('0 = 4*b + b + 15')"
+            == f"{question}; Equation('0 = 4*b + b + 15')"
         )
         assert reward == -1
         assert done
@@ -31,16 +29,14 @@ class Test(unittest.TestCase):
     def test_problem_0_fail_2(self):
         env = MathEnv(hparams.env)
         # reset - then fail after 2nd action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 0
-        )
+        encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
         question = env.decode(encoded_question)
         assert question == "Solve 0 = 4*b + b + 15 for b."
-        action = ss
+        action = solve_system
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-            info["raw_observation"] == f"{question}; ss('p_0')"
+            info["raw_observation"] == f"{question}; solve_system('p_0')"
         )
         assert reward == 0
         assert not done
@@ -50,7 +46,7 @@ class Test(unittest.TestCase):
         observation_, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; ss(Eq('0 = 4*b + b + 15'))"
+            == f"{question}; solve_system(Equation('0 = 4*b + b + 15'))"
         )
         assert reward == -1
         assert done
@@ -58,9 +54,7 @@ class Test(unittest.TestCase):
     def test_problem_0_fail_3(self):
         env = MathEnv(hparams.env)
         # reset - then fail after 1st action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 0
-        )
+        encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
         question = env.decode(encoded_question)
         f = extract_formal_elements(question)  # for use below
         assert f == ["0 = 4*b + b + 15", "b"]
@@ -73,28 +67,26 @@ class Test(unittest.TestCase):
     def test_problem_0_success_1(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 0
-        )
+        encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
         question = env.decode(encoded_question)
         assert question == "Solve 0 = 4*b + b + 15 for b."
-        action = lv
+        action = lookup_value
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; lv('p_0','p_1')"
+            == f"{question}; lookup_value('p_0','p_1')"
         )
         assert reward == 0
         assert not done
         assert env.compute_graph.current_node == env.compute_graph.root
         # next action
-        action = ss
+        action = solve_system
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; lv(ss('p_0'),'p_1')"
+            == f"{question}; lookup_value(solve_system('p_0'),'p_1')"
         )
         assert reward == 0
         assert not done
@@ -106,19 +98,19 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; lv(ss('p_0'),Var('b'))"
+            == f"{question}; lookup_value(solve_system('p_0'),Variable('b'))"
         )
         assert reward == 0
         assert not done
-        # current node is now the ss node because the lv node has its args set
+        # current node is now the solve_system node because the lookup_value node has its args set
         assert env.compute_graph.current_node == env.compute_graph.root.args[0]
         # next action
-        action = ape
+        action = append_to_empty_list
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; lv(ss(ape('p_0')),Var('b'))"
+            == f"{question}; lookup_value(solve_system(append_to_empty_list('p_0')),Variable('b'))"
         )
         assert reward == 0
         assert not done
@@ -128,7 +120,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; lv(ss(ape(Eq('0 = 4*b + b + 15'))),Var('b'))"
+            == f"{question}; lookup_value(solve_system(append_to_empty_list(Equation('0 = 4*b + b + 15'))),Variable('b'))"
         )
         assert reward == 1
         assert done
@@ -136,17 +128,16 @@ class Test(unittest.TestCase):
     def test_problem_4_success_1_with_masking(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 4
-        )
+        encoded_question, _ = env.reset_from_text("Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d.",
+                                                  "8*d**3 - 70*d")
         question = env.decode(encoded_question)
         assert question == "Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d."
         # take action
-        action = dfw
+        action = differentiate_wrt
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{question}; dfw('p_0','p_1')"
+                info["raw_observation"] == f"{question}; differentiate_wrt('p_0','p_1')"
         )
         # take action
         action = "f0"
@@ -155,7 +146,7 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert not done
         assert (
-                info["raw_observation"] == f"{question}; dfw(Ex('2*d**4 - 35*d**2 - 695'),'p_1')"
+                info["raw_observation"] == f"{question}; differentiate_wrt(Expression('2*d**4 - 35*d**2 - 695'),'p_1')"
         )
         vector = np.ones(len(env.actions))
         masked_vector = env.mask_invalid_types(vector)
@@ -171,17 +162,16 @@ class Test(unittest.TestCase):
     def test_problem_4_success_2_with_masking(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 4
-        )
+        encoded_question, _ = env.reset_from_text("Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d.",
+                                                  "8*d**3 - 70*d")
         question = env.decode(encoded_question)
         assert question == "Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d."
         # take action
-        action = df
+        action = differentiate
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{question}; df('p_0')"
+                info["raw_observation"] == f"{question}; differentiate('p_0')"
         )
         # take action
         action = "f0"
@@ -190,18 +180,16 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
         assert (
-                info["raw_observation"] == f"{question}; df(Ex('2*d**4 - 35*d**2 - 695'))"
+                info["raw_observation"] == f"{question}; differentiate(Expression('2*d**4 - 35*d**2 - 695'))"
         )
 
     def test_problem_5_success(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 5
-        )
+        encoded_question, _ = env.reset_from_text("Calculate the remainder when 93 is divided by 59.", "34")
         question = env.decode(encoded_question)
         assert question == "Calculate the remainder when 93 is divided by 59."
-        assert env.compute_graph.formal_elements == [Val("93"), Val("59")]
+        assert env.compute_graph.formal_elements == [Value("93"), Value("59")]
         # first action
         action = mod
         action_index = env.get_action_index(action)
@@ -217,7 +205,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; mod(Val('93'),'p_1')"
+            == f"{question}; mod(Value('93'),'p_1')"
         )
         assert reward == 0
         assert not done
@@ -227,7 +215,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
             info["raw_observation"]
-            == f"{question}; mod(Val('93'),Val('59'))"
+            == f"{question}; mod(Value('93'),Value('59'))"
         )
         assert reward == 1
         assert done
@@ -235,9 +223,7 @@ class Test(unittest.TestCase):
     def test_problem_6_success(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 6
-        )
+        encoded_question, _ = env.reset_from_text("Calculate the highest common divisor of 1300 and 300.", "100")
         question = env.decode(encoded_question)
         assert question == "Calculate the highest common divisor of 1300 and 300."
         # first action
@@ -255,7 +241,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{question}; gcd(Val('1300'),'p_1')"
+                == f"{question}; gcd(Value('1300'),'p_1')"
         )
         assert reward == 0
         assert not done
@@ -265,7 +251,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{question}; gcd(Val('1300'),Val('300'))"
+                == f"{question}; gcd(Value('1300'),Value('300'))"
         )
         assert reward == 1
         assert done
@@ -273,17 +259,15 @@ class Test(unittest.TestCase):
     def test_problem_8_success_1(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 8
-        )
+        encoded_question, _ = env.reset_from_text("Is 93163 a prime number?", "False")
         question = env.decode(encoded_question)
         assert question == "Is 93163 a prime number?"
         # first action
-        action = ip
+        action = is_prime
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{question}; ip('p_0')"
+                info["raw_observation"] == f"{question}; is_prime('p_0')"
         )
         assert reward == 0
         assert not done
@@ -293,7 +277,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{question}; ip(Val('93163'))"
+                == f"{question}; is_prime(Value('93163'))"
         )
         assert reward == 1
         assert done
@@ -301,27 +285,25 @@ class Test(unittest.TestCase):
     def test_problem_8_success_2(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 9
-        )
+        encoded_question, _ = env.reset_from_text("Is 66574 a composite number?", "True")
         question = env.decode(encoded_question)
         assert question == "Is 66574 a composite number?"
         # first action
-        action = nt
+        action = not_op
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{question}; nt('p_0')"
+                info["raw_observation"] == f"{question}; not_op('p_0')"
         )
         assert reward == 0
         assert not done
         # next action
-        action = ip
+        action = is_prime
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{question}; nt(ip('p_0'))"
+                == f"{question}; not_op(is_prime('p_0'))"
         )
         assert reward == 0
         assert not done
@@ -331,7 +313,7 @@ class Test(unittest.TestCase):
         observation, reward, done, info = env.step(action_index)
         assert (
                 info["raw_observation"]
-                == f"{question}; nt(ip(Val('66574')))"
+                == f"{question}; not_op(is_prime(Value('66574')))"
         )
         assert reward == 1
         assert done
@@ -339,38 +321,34 @@ class Test(unittest.TestCase):
     def test_problem_9_success(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 9
-        )
+        encoded_question, _ = env.reset_from_text("Is 66574 a composite number?", "True")
         question = env.decode(encoded_question)
         assert question == "Is 66574 a composite number?"
         # take action
-        action = nt
+        action = not_op
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{question}; nt('p_0')"
+                info["raw_observation"] == f"{question}; not_op('p_0')"
         )
         assert reward == 0
         assert not done
         # take action
-        action = nt
+        action = not_op
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         assert (
-                info["raw_observation"] == f"{question}; nt(nt('p_0'))"
+                info["raw_observation"] == f"{question}; not_op(not_op('p_0'))"
         )
         assert reward == 0
         assert not done
 
     def test_max_nodes_failure(self):
         env = MathEnv(hparams.env)
-        encoded_question, _ = env.reset_with_specific_problem(
-            "short_problems", 0, 9
-        )
+        encoded_question, _ = env.reset_from_text("Is 66574 a composite number?", "True")
         question = env.decode(encoded_question)
         assert question == "Is 66574 a composite number?"
-        nt_action_index = env.get_action_index(nt)
+        nt_action_index = env.get_action_index(not_op)
         for i in range(9):
             # take action
             observation, reward, done, info = env.step(nt_action_index)
