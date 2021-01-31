@@ -7,7 +7,7 @@ hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_de
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from utils import flatten
-from modelling.train_utils import train_on_buffer, get_logdir
+from modelling.train_utils import train, get_logdir
 device = torch.device(f'cuda:{0}' if torch.cuda.is_available() else 'cpu')
 writer = SummaryWriter(log_dir=get_logdir())
 import numpy as np
@@ -126,7 +126,7 @@ for epsilon in np.linspace(initial_epsilon, final_epsilon, num_epochs):
         continue
     batches_in_dataset = len(step_dataset) // model.batch_size
     batches_to_train = min(batches_in_dataset, batches_per_train)
-    batch_i = train_on_buffer(model, data_loader, batches_to_train, writer, batch_i)
+    batch_i = train(model, data_loader, batches_to_train, writer, batch_i)
     # eval
     if batch_i - last_eval_batch_i >= batches_per_eval:
         last_eval_batch_i = batch_i
