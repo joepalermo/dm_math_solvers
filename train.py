@@ -9,6 +9,8 @@ from modelling.train_utils import init_trajectory_data_structures, init_envs, tr
     get_logdir, StepDataset
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
+import scipy
+from utils import flatten
 from sqlitedict import SqliteDict
 from modelling.cache_utils import extract_trajectory_cache, visualize_trajectory_cache
 
@@ -35,21 +37,25 @@ else:
 batch_i = 0
 last_eval_batch_i = 0
 # init replay buffer from trajectory cache on disk
-replay_buffer = extract_trajectory_cache(hparams.env.trajectory_cache_filepath)
+replay_buffer = np.array(flatten(extract_trajectory_cache(hparams.env.trajectory_cache_filepath)))
+replay_priority = np.ones(len(replay_buffer))
 for buffer_i in range(hparams.train.num_buffers):
     # model_to_use = None if len(replay_buffer) < hparams.train.min_saved_trajectories_until_training else model
     # model_to_use = None
     # latest_buffer = fill_buffer(model_to_use, envs, trajectory_statistics)
     # replay_buffer.extend(latest_buffer)
     if len(replay_buffer) > hparams.train.min_saved_trajectories_until_training:
-        # construct dataset
-        step_dataset = StepDataset(replay_buffer, model.device)
+        # sample from prioritized replay buffer
+        replay_probability = scipy.special.softmax(replay_priority)
+        steps_to_sample = hparams.train.batch_size * hparams.train.batches_per_train
+        sampled_idxs = np.random.choice(np.arange(len(replay_buffer)), size=steps_to_sample, p=replay_probability)
+        sampled_steps = replay_buffer[sampled_idxs]
         # construct data loader
-        data_loader = DataLoader(step_dataset, batch_size=model.batch_size, shuffle=True, drop_last=True)
+        step_dataset = StepDataset(sampled_steps, model.device)
+        data_loader = DataLoader(step_dataset, batch_size=model.batch_size, shuffle=False, drop_last=True)
         # train
-        batches_in_dataset = len(step_dataset) // model.batch_size
-        batches_to_train = min(batches_in_dataset, hparams.train.batches_per_train)
-        batch_i = train(model, data_loader, batches_to_train, writer, batch_i)
+        batch_i, td_error = train(model, data_loader, writer, batch_i)
+        replay_priority[sampled_idxs] = td_error ** hparams.train.prioritization_exponent
         print(batch_i)
         # eval
         if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:

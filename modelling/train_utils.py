@@ -146,27 +146,27 @@ def dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, d
     model.optimizer.zero_grad()
     batch_output = model(state_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
-    # td_error = torch.abs(targets-batch_output)
+    td_error = torch.abs(targets - batch_output)
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
     batch_loss.backward()
     # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
     model.optimizer.step()
-    return batch_loss
+    return batch_loss, td_error
 
 
 class StepDataset(torch.utils.data.Dataset):
     """Step Dataset"""
 
-    def __init__(self, trajectory_buffer, device):
-        self.step_buffer = flatten(trajectory_buffer)
+    def __init__(self, steps, device):
+        self.steps = steps
         self.device = device
 
     def __len__(self):
-        return len(self.step_buffer)
+        return len(self.steps)
 
     def __getitem__(self, idx):
         # return only the (state, action, reward)?
-        state, action, reward, next_state, done = self.step_buffer[idx]
+        state, action, reward, next_state, done = self.steps[idx]
         state = torch.from_numpy(state.astype(np.int64)).to(self.device)
         action = torch.from_numpy(np.array(action, dtype=np.int64)).to(self.device)
         reward = torch.from_numpy(np.array(reward, dtype=np.int64)).to(self.device)
@@ -236,17 +236,18 @@ def fill_buffer(model, envs, trajectory_statistics):
     return trajectory_buffer
 
 
-def train(model, data_loader, n_batches, writer, current_batch_i):
+def train(model, data_loader, writer, current_batch_i):
     model.train()
+    td_errors = list()
     for i, (state_batch, action_batch, reward_batch, next_state_batch, done_batch) in enumerate(data_loader):
-        if i >= n_batches:
-            break
-        batch_loss = dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
+        batch_loss, td_error = dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
         # batch_loss = vpg_step(model, state_batch, action_batch, reward_batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
-    return current_batch_i
+        td_errors.append(td_error)
+    td_error = torch.cat(td_errors)
+    return current_batch_i, td_error
 
 
 def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
