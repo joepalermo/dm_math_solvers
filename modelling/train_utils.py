@@ -66,7 +66,7 @@ def step_all(envs, action_batch):
     return obs_batch, step_batch
 
 
-def get_action_batch(obs_batch, envs, model=None):
+def get_action_batch(obs_batch, envs, model=None, eval=False):
     # get model output
     if model:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
@@ -88,7 +88,7 @@ def get_action_batch(obs_batch, envs, model=None):
             action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         elif model_type == 'value':
             eps_ = random.random()
-            if eps_ < model.epsilon:
+            if eps_ < model.epsilon and not eval:
                 # take random action from among unmasked actions
                 available_actions = [i for i in env.action_indices if masked_output[i] != 0]
                 action_index = random.choice(available_actions)
@@ -146,6 +146,7 @@ def dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, d
     model.optimizer.zero_grad()
     batch_output = model(state_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
+    # td_error = torch.abs(targets-batch_output)
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
     batch_loss.backward()
     # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
@@ -200,6 +201,7 @@ def fill_buffer(model, envs, trajectory_statistics):
             # cache the latest step from each environment
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
             if done:
+                # print(envs_info[env_i]['trajectory'][-1][4]['raw_observation'])
                 def positive_condition(buffer_positives, buffer_negatives, reward):
                     return (hparams.train.mode == 'positive_only' and reward == 1) or \
                         (hparams.train.mode == 'balanced' and \
@@ -237,13 +239,13 @@ def fill_buffer(model, envs, trajectory_statistics):
 def train(model, data_loader, n_batches, writer, current_batch_i):
     model.train()
     for i, (state_batch, action_batch, reward_batch, next_state_batch, done_batch) in enumerate(data_loader):
+        if i >= n_batches:
+            break
         batch_loss = dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
         # batch_loss = vpg_step(model, state_batch, action_batch, reward_batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
-        if i >= n_batches:
-            break
     return current_batch_i
 
 
@@ -256,7 +258,7 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
     while True:
         # take a step in each environment in "parallel"
         with torch.no_grad():
-            action_batch = get_action_batch(obs_batch, envs, model=model)
+            action_batch = get_action_batch(obs_batch, envs, model=model, eval=True)
         obs_batch, step_batch = step_all(envs, action_batch)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):

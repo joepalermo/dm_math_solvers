@@ -56,6 +56,7 @@ def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
             all_trajectories.extend(trajectories)
         if verbose:
             pprint.pprint(module_difficulty_trajectory_counts)
+            print(f"# problems: {len(trajectory_cache)}")
             print(f"# trajectories: {len(all_trajectories)}")
             print(f"# steps: {len(flatten(all_trajectories))}")
     except:

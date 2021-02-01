@@ -21,7 +21,7 @@ writer = SummaryWriter(log_dir=get_logdir())
 
 # initialize all environments
 envs = init_envs(hparams.env)
-rewarded_trajectories, trajectory_statistics = init_trajectory_data_structures(envs[0])
+trajectory_statistics = init_trajectory_data_structures(envs[0])
 
 # load or init model
 ntoken = hparams.env.vocab_size + 1
@@ -36,10 +36,11 @@ batch_i = 0
 last_eval_batch_i = 0
 # init replay buffer from trajectory cache on disk
 replay_buffer = extract_trajectory_cache(hparams.env.trajectory_cache_filepath)
-for buffer_i in tqdm(range(hparams.train.num_buffers)):
-    model_to_use = None if len(replay_buffer) < hparams.train.min_saved_trajectories_until_training else model
-    latest_buffer = fill_buffer(model_to_use, envs, trajectory_statistics, mode=hparams.train.mode)
-    replay_buffer.extend(latest_buffer)
+for buffer_i in range(hparams.train.num_buffers):
+    # model_to_use = None if len(replay_buffer) < hparams.train.min_saved_trajectories_until_training else model
+    # model_to_use = None
+    # latest_buffer = fill_buffer(model_to_use, envs, trajectory_statistics)
+    # replay_buffer.extend(latest_buffer)
     if len(replay_buffer) > hparams.train.min_saved_trajectories_until_training:
         # construct dataset
         step_dataset = StepDataset(replay_buffer, model.device)
@@ -49,10 +50,11 @@ for buffer_i in tqdm(range(hparams.train.num_buffers)):
         batches_in_dataset = len(step_dataset) // model.batch_size
         batches_to_train = min(batches_in_dataset, hparams.train.batches_per_train)
         batch_i = train(model, data_loader, batches_to_train, writer, batch_i)
+        print(batch_i)
         # eval
         if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
             last_eval_batch_i = batch_i
             run_eval(model, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
-    trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
-    visualize_trajectory_cache(envs[0].decode, trajectory_cache)
+    # trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
+    # visualize_trajectory_cache(envs[0].decode, trajectory_cache)
 
