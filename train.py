@@ -38,7 +38,7 @@ batch_i = 0
 last_eval_batch_i = 0
 # init replay buffer from trajectory cache on disk
 replay_buffer = np.array(flatten(extract_trajectory_cache(hparams.env.trajectory_cache_filepath)))
-replay_priority = np.ones(len(replay_buffer))
+replay_priority = np.ones(len(replay_buffer)) * hparams.train.max_td_error
 for buffer_i in range(hparams.train.num_buffers):
     # model_to_use = None if len(replay_buffer) < hparams.train.min_saved_trajectories_until_training else model
     # model_to_use = None
@@ -55,7 +55,10 @@ for buffer_i in range(hparams.train.num_buffers):
         data_loader = DataLoader(step_dataset, batch_size=model.batch_size, shuffle=False, drop_last=True)
         # train
         batch_i, td_error = train(model, data_loader, writer, batch_i)
-        replay_priority[sampled_idxs] = td_error ** hparams.train.prioritization_exponent
+        replay_priority[sampled_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
+        idx_to_print = replay_priority.argsort()[-5:]
+        for x in replay_buffer[idx_to_print]:
+            print(envs[0].decode(x[0]))
         print(batch_i)
         # eval
         if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
