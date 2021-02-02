@@ -66,11 +66,11 @@ def step_all(envs, action_batch):
     return obs_batch, step_batch
 
 
-def get_action_batch(obs_batch, envs, model=None, eval=False):
-    # get model output
-    if model:
+def get_action_batch(obs_batch, envs, network=None, eval=False):
+    # get network output
+    if network:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
-        output_batch = model(obs_batch.to(model.device)).detach().cpu().numpy()
+        output_batch = network(obs_batch.to(network.device)).detach().cpu().numpy()
         model_type = hparams.model.model_type
     else:
         output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
@@ -79,7 +79,7 @@ def get_action_batch(obs_batch, envs, model=None, eval=False):
         output_batch = softmax(output_batch, axis=1)
     actions = []
     for i, env in enumerate(envs):
-        # mask the corresponding model output
+        # mask the corresponding network output
         masked_output = env.mask_invalid_types(output_batch[i])
         if model_type == 'policy':
             # normalize and sample
@@ -88,7 +88,7 @@ def get_action_batch(obs_batch, envs, model=None, eval=False):
             action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         elif model_type == 'value':
             eps_ = random.random()
-            if eps_ < model.epsilon and not eval:
+            if eps_ < network.epsilon and not eval:
                 # take random action from among unmasked actions
                 available_actions = [i for i in env.action_indices if masked_output[i] != 0]
                 action_index = random.choice(available_actions)
@@ -118,39 +118,41 @@ def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistic
 
 
 # make function to compute action distribution
-def get_policy(model, obs):
+def get_policy(network, obs):
     from torch.distributions.categorical import Categorical
-    logits = model(obs)
+    logits = network(obs)
     return Categorical(logits=logits)
 
 
-def vpg_loss(model, obs, act, weights):
+def vpg_loss(network, obs, act, weights):
     # make loss function whose gradient, for the right data, is policy gradient
-    logp = get_policy(model, obs).log_prob(act)
+    logp = get_policy(network, obs).log_prob(act)
     return -(logp * weights).mean()
 
 
-def vpg_step(model, state_batch, action_batch, reward_batch):
+def vpg_step(network, state_batch, action_batch, reward_batch):
     # take a single policy gradient update step
-    model.optimizer.zero_grad()
-    batch_loss = vpg_loss(model=model, obs=state_batch, act=action_batch, weights=reward_batch)
+    network.optimizer.zero_grad()
+    batch_loss = vpg_loss(network=network, obs=state_batch, act=action_batch, weights=reward_batch)
     batch_loss.backward()
-    # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
-    model.optimizer.step()
+    # grad_norm = torch.nn.utils.clip_grad_norm_(network.parameters(), network.max_grad_norm)
+    network.optimizer.step()
     return batch_loss
 
 
-def dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch):
+def dqn_step(network, target_network, state_batch, action_batch, reward_batch, next_state_batch, done_batch):
     # Take a single deep Q learning update step
-    targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(model(next_state_batch), dim=1)[0]
-    model.optimizer.zero_grad()
-    batch_output = model(state_batch)
+    # targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(network(next_state_batch), dim=1)[0]
+    # with torch.no_grad():
+    targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(target_network(next_state_batch), dim=1)[0]
+    network.optimizer.zero_grad()
+    batch_output = network(state_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
     td_error = torch.abs(targets - batch_output)
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
     batch_loss.backward()
-    # grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), model.max_grad_norm)
-    model.optimizer.step()
+    # grad_norm = torch.nn.utils.clip_grad_norm_(network.parameters(), network.max_grad_norm)
+    network.optimizer.step()
     return batch_loss, td_error
 
 
@@ -175,9 +177,9 @@ class StepDataset(torch.utils.data.Dataset):
         return state, action, reward, next_state, done
 
 
-def fill_buffer(model, envs, trajectory_statistics):
+def fill_buffer(network, envs, trajectory_statistics):
     '''
-    :param model:
+    :param network:
     :param envs:
     :param trajectory_statistics:
     :return:
@@ -194,7 +196,7 @@ def fill_buffer(model, envs, trajectory_statistics):
     # take steps in all environments until the number of cached steps reaches a threshold
     while cached_steps < hparams.train.buffer_threshold:
         # take a step in each environment in "parallel"
-        action_batch = get_action_batch(obs_batch, envs, model=model)
+        action_batch = get_action_batch(obs_batch, envs, network=network)
         obs_batch, step_batch = step_all(envs, action_batch)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
@@ -236,22 +238,25 @@ def fill_buffer(model, envs, trajectory_statistics):
     return trajectory_buffer
 
 
-def train(model, data_loader, writer, current_batch_i):
-    model.train()
+def train(network, target_network, data_loader, writer, current_batch_i):
+    network.train()
     td_errors = list()
+    losses = list()
     for i, (state_batch, action_batch, reward_batch, next_state_batch, done_batch) in enumerate(data_loader):
-        batch_loss, td_error = dqn_step(model, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
-        # batch_loss = vpg_step(model, state_batch, action_batch, reward_batch)
+        batch_loss, td_error = dqn_step(network, target_network, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
         td_errors.append(td_error)
+        losses.append(float(batch_loss.detach().cpu().numpy()))
     td_error = torch.cat(td_errors)
+    mean_batch_loss = np.array(losses).mean()
+    print(f'mean_batch_loss: {mean_batch_loss}')
     return current_batch_i, td_error
 
 
-def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
-    model.eval()
+def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
+    network.eval()
     logdir = get_logdir()
     total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
     n_completed_validation_episodes = 0
@@ -259,7 +264,7 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
     while True:
         # take a step in each environment in "parallel"
         with torch.no_grad():
-            action_batch = get_action_batch(obs_batch, envs, model=model, eval=True)
+            action_batch = get_action_batch(obs_batch, envs, network=network, eval=True)
         obs_batch, step_batch = step_all(envs, action_batch)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
@@ -268,7 +273,7 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
             if done:
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
                 # TODO: remove random print
-                if random.random() < 0.1:
+                if random.random() < 0.05:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 with open(f'{logdir}/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
@@ -292,8 +297,46 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
 
     mean_val_reward = all_modules_reward / n_completed_validation_episodes
     # check whether LR should be annealed via ReduceLROnPlateau
-    model.scheduler.step(mean_val_reward)
-    writer.add_scalar('Train/lr', model.optimizer.param_groups[0]['lr'], batch_i)
+    network.scheduler.step(mean_val_reward)
+    writer.add_scalar('Train/lr', network.optimizer.param_groups[0]['lr'], batch_i)
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()
+
+
+def visualize_replay_priority(envs, replay_priority, replay_buffer):
+    num_samples = 1
+    norm = np.sum(replay_priority)
+
+    print('\n\thighest:')
+    highest_priority_idxs = replay_priority.argsort()[-num_samples:]
+    for idx in highest_priority_idxs:
+        print(f"\n\tpriority: {replay_priority[idx]}, probability: {replay_priority[idx] / norm}")
+        print(f"\tstate: {envs[0].decode(replay_buffer[idx][0])}")
+        print(f"\taction: {replay_buffer[idx][1]}")
+        print(f"\treward: {replay_buffer[idx][2]}")
+        print(f"\tnext state: {envs[0].decode(replay_buffer[idx][3])}")
+
+    print('\n\tlowest:')
+    lowest_priority_idxs = replay_priority.argsort()[:num_samples]
+    for idx in lowest_priority_idxs:
+        print(f"\n\tpriority: {replay_priority[idx]}, probability: {replay_priority[idx] / norm}")
+        print(f"\tstate: {envs[0].decode(replay_buffer[idx][0])}")
+        print(f"\taction: {replay_buffer[idx][1]}")
+        print(f"\treward: {replay_buffer[idx][2]}")
+        print(f"\tnext state: {envs[0].decode(replay_buffer[idx][3])}")
+
+    # print('\nrandom:')
+    # random_idxs = np.random.choice(np.arange(len(replay_priority)), size=num_samples)
+    # for idx in random_idxs:
+    #     print(f"\npriority: {replay_priority[idx]}, probability: {replay_priority[idx]/norm}")
+    #     print(f"state: {envs[0].decode(replay_buffer[idx][0])}")
+    #     print(f"action: {replay_buffer[idx][1]}")
+    #     print(f"reward: {replay_buffer[idx][2]}")
+
+    # import seaborn as sns
+    # import matplotlib.pyplot as plt
+    # sns.histplot(replay_priority / np.sum(replay_priority))
+    # sns.histplot(replay_priority)
+    # plt.show()
+    # import time; time.sleep(1000)
