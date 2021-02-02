@@ -37,8 +37,9 @@ else:
 batch_i = 0
 last_eval_batch_i = 0
 # init replay buffer from trajectory cache on disk
+# TODO: remove clip to 5k steps
 replay_buffer = np.array(flatten(extract_trajectory_cache(hparams.env.trajectory_cache_filepath)))
-replay_priority = np.ones(len(replay_buffer)) * hparams.train.max_td_error
+replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 for buffer_i in range(hparams.train.num_buffers):
     # model_to_use = None if len(replay_buffer) < hparams.train.min_saved_trajectories_until_training else model
     # model_to_use = None
@@ -46,7 +47,7 @@ for buffer_i in range(hparams.train.num_buffers):
     # replay_buffer.extend(latest_buffer)
     if len(replay_buffer) > hparams.train.min_saved_trajectories_until_training:
         # sample from prioritized replay buffer
-        replay_probability = scipy.special.softmax(replay_priority)
+        replay_probability = replay_priority / np.sum(replay_priority)
         steps_to_sample = hparams.train.batch_size * hparams.train.batches_per_train
         sampled_idxs = np.random.choice(np.arange(len(replay_buffer)), size=steps_to_sample, p=replay_probability)
         sampled_steps = replay_buffer[sampled_idxs]
@@ -56,9 +57,45 @@ for buffer_i in range(hparams.train.num_buffers):
         # train
         batch_i, td_error = train(model, data_loader, writer, batch_i)
         replay_priority[sampled_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
-        idx_to_print = replay_priority.argsort()[-5:]
-        for x in replay_buffer[idx_to_print]:
-            print(envs[0].decode(x[0]))
+        if np.sum(replay_priority != 100) == len(replay_priority):
+            # import seaborn as sns
+            # import matplotlib.pyplot as plt
+            # sns.histplot(replay_priority / np.sum(replay_priority))
+            # sns.histplot(replay_priority)
+            # plt.show()
+            # import time; time.sleep(1000)
+            num_samples = 2
+            norm = np.sum(replay_priority)
+
+            print('\n\thighest:')
+            highest_priority_idxs = replay_priority.argsort()[-num_samples:]
+            for idx in highest_priority_idxs:
+                print(f"\n\tpriority: {replay_priority[idx]}, probability: {replay_priority[idx]/norm}")
+                print(f"\tstate: {envs[0].decode(replay_buffer[idx][0])}")
+                print(f"\taction: {replay_buffer[idx][1]}")
+                print(f"\treward: {replay_buffer[idx][2]}")
+                print(f"\tnext state: {envs[0].decode(replay_buffer[idx][3])}")
+
+            print('\n\tlowest:')
+            lowest_priority_idxs = replay_priority.argsort()[:num_samples]
+            for idx in lowest_priority_idxs:
+                print(f"\n\tpriority: {replay_priority[idx]}, probability: {replay_priority[idx] / norm}")
+                print(f"\tstate: {envs[0].decode(replay_buffer[idx][0])}")
+                print(f"\taction: {replay_buffer[idx][1]}")
+                print(f"\treward: {replay_buffer[idx][2]}")
+                print(f"\tnext state: {envs[0].decode(replay_buffer[idx][3])}")
+
+            # print('\nrandom:')
+            # random_idxs = np.random.choice(np.arange(len(replay_priority)), size=num_samples)
+            # for idx in random_idxs:
+            #     print(f"\npriority: {replay_priority[idx]}, probability: {replay_priority[idx]/norm}")
+            #     print(f"state: {envs[0].decode(replay_buffer[idx][0])}")
+            #     print(f"action: {replay_buffer[idx][1]}")
+            #     print(f"reward: {replay_buffer[idx][2]}")
+
+
+        else:
+            print(f"{np.sum(replay_priority != 100) / len(replay_priority) * 100} %")
         print(batch_i)
         # eval
         if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:

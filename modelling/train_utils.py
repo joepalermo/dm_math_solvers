@@ -267,6 +267,9 @@ def run_eval(model, envs, writer, batch_i, n_required_validation_episodes):
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
+                # TODO: remove random print
+                if random.random() < 0.1:
+                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 with open(f'{logdir}/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 if k in total_reward:
