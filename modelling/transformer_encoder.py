@@ -39,8 +39,8 @@ class TransformerEncoderModel(torch.nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.policy_output = torch.nn.Linear(hparams.model.nhid, num_outputs)
-        self.softmax = Softmax()
+        self.dense1 = torch.nn.Linear(hparams.model.nhid, hparams.model.nhid)
+        self.dense2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
         # set other things
         self.device = device
         self.to(device)
@@ -63,6 +63,6 @@ class TransformerEncoderModel(torch.nn.Module):
         # encoding = self.transformer_encoder(embedding_with_pos)
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         sliced_encoding = encoding[0]
-        logits = self.policy_output(sliced_encoding)
-        probs = self.softmax(logits)
-        return probs
+        output = self.dense1(sliced_encoding)
+        output = self.dense2(output)
+        return output
