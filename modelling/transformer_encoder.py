@@ -40,6 +40,7 @@ class TransformerEncoderModel(torch.nn.Module):
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
         self.dense1 = torch.nn.Linear(hparams.model.nhid, hparams.model.nhid)
+        self.dropout1 = torch.nn.Dropout(hparams.train.dropout)
         self.dense2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
         # set other things
         self.device = device
@@ -64,5 +65,6 @@ class TransformerEncoderModel(torch.nn.Module):
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         sliced_encoding = encoding[0]
         output = self.dense1(sliced_encoding)
+        output = self.dropout1(output)
         output = self.dense2(output)
         return output
