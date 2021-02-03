@@ -8,8 +8,8 @@ from modelling.cache_utils import visualize_trajectory_cache
 import numpy as np
 from sqlitedict import SqliteDict
 
-torch.manual_seed(hparams.run.seed)
-np.random.seed(seed=hparams.run.seed)
+# torch.manual_seed(hparams.run.seed)
+# np.random.seed(seed=hparams.run.seed)
 
 # basic setup and checks
 assert hparams.train.mode == 'positive_only' or hparams.train.mode == 'balanced'
