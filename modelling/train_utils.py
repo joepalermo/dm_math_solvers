@@ -141,10 +141,12 @@ def vpg_step(network, state_batch, action_batch, reward_batch):
 
 
 def dqn_step(network, target_network, state_batch, action_batch, reward_batch, next_state_batch, done_batch):
-    # Take a single deep Q learning update step
-    # targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(network(next_state_batch), dim=1)[0]
-    # with torch.no_grad():
-    targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(target_network(next_state_batch), dim=1)[0]
+    # compute the target
+    if target_network is None:
+        targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(network(next_state_batch), dim=1)[0]
+    else:
+        with torch.no_grad():
+            targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(target_network(next_state_batch), dim=1)[0]
     network.optimizer.zero_grad()
     batch_output = network(state_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()

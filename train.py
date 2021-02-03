@@ -49,7 +49,10 @@ for buffer_i in range(hparams.train.num_buffers):
         step_dataset = StepDataset(sampled_steps, network.device)
         data_loader = DataLoader(step_dataset, batch_size=network.batch_size, shuffle=False, drop_last=True)
         # train
-        batch_i, td_error = train(network, target_network, data_loader, writer, batch_i)
+        if batch_i > 2000:
+            batch_i, td_error = train(network, target_network, data_loader, writer, batch_i)
+        else:
+            batch_i, td_error = train(network, None, data_loader, writer, batch_i)
         replay_priority[sampled_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
         if np.sum(replay_priority != 100) == len(replay_priority):
             pass
