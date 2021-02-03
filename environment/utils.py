@@ -83,12 +83,13 @@ def guess_until_problem_solved(env, question, answer, verbose=False, max_episode
 
 def filter_univariate(examples):
     univariate_examples = []
-    for question, answer in examples:
+    for example_dict in examples:
+        question = example_dict['question']
         formal_elements = extract_formal_elements(question, cast=False)
         function = formal_elements[0]
         num_vars = len([ch for ch in set(function) if ch.isalpha()])
         if num_vars == 1:
-            univariate_examples.append((question, answer))
+            univariate_examples.append(example_dict)
     return univariate_examples
 
 
