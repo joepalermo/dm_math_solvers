@@ -54,6 +54,10 @@ class Test(unittest.TestCase):
         system = [Equation('-g**3 - 9*g**2 - g + l(g) - 10 = 0')]
         self.assertRaises(Exception, solve_system, system)
 
+        # unsolvable equation / infinite loop without timeout
+        system = [Equation('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
+        self.assertRaises(Exception, solve_system, system)
+
     def test_is_prime(self):
         assert is_prime(Value('19373'))
         assert not_op(is_prime(Value('19374')))
@@ -64,3 +68,5 @@ class Test(unittest.TestCase):
 
     def test_lcd(self):
         assert lcd(Rational('2/3'), Rational('3/5')) == Value('15')
+        assert lcd(Rational('2/3'), Rational('3/5')) == Value('15')
+

@@ -6,7 +6,8 @@ tensorboard==2.3.0
 tokenizers==0.9.4
 torch==1.7.1
 tqdm==4.52.0
+matplotlib==3.0.0
+PyVirtualDisplay==0.2.1
 sentencepiece
-multiprocess
-sqlitedict
-matplotlib
+nn_builder
+tensorflow

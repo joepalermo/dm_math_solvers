@@ -1,6 +1,6 @@
 import math
 import torch
-from torch.nn import TransformerEncoder, TransformerEncoderLayer
+from torch.nn import TransformerEncoder, TransformerEncoderLayer, Softmax
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
 
@@ -40,6 +40,7 @@ class TransformerEncoderModel(torch.nn.Module):
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
         self.policy_output = torch.nn.Linear(hparams.model.nhid, num_outputs)
+        self.softmax = Softmax()
         # set other things
         self.device = device
         self.to(device)
@@ -63,4 +64,5 @@ class TransformerEncoderModel(torch.nn.Module):
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         sliced_encoding = encoding[0]
         logits = self.policy_output(sliced_encoding)
-        return logits
+        probs = self.softmax(logits)
+        return probs
