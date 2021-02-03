@@ -7,6 +7,9 @@ import numpy as np
 
 def align_trajectory(raw_trajectory):
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
+    # TODO: finish logging actions up to each step
+    actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory[1:]))]
+
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
     aligned_trajectory = [(state, action, reward, next_state, done)
                          for state, (next_state, action, reward, done)

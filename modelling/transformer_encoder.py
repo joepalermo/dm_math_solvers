@@ -48,21 +48,31 @@ class TransformerEncoderModel(torch.nn.Module):
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=1)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=hparams.train.factor, patience=hparams.train.patience,
                                                                threshold=0.001, threshold_mode='rel', cooldown=0,
+
                                                                min_lr=hparams.train.min_lr, eps=1e-08, verbose=False)
 
-    def forward(self, token_idxs):
+    def forward(self, question_tokens, action_tokens):
+        # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)
+        # question model --------------
         # embed the tokens
-        embedding = self.token_embedding(token_idxs)
+        embedding = self.token_embedding(question_tokens)
         # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
         embedding = embedding.permute((1, 0, 2))
         # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
-        padding_mask = torch.where(token_idxs == self.padding_token, 1, 0).type(torch.BoolTensor).to(self.device)
+        padding_mask = torch.where(question_tokens == self.padding_token, 1, 0).type(torch.BoolTensor).to(self.device)
         # apply the transformer encoder
         # encoding = self.transformer_encoder(embedding_with_pos)
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
-        sliced_encoding = encoding[0]
-        output = self.dense1(sliced_encoding)
+        question_encoder_output = encoding[0]
+        # action model --------------
+        # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
+        action_embedding = self.action_embedding(action_tokens)
+        # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions * embedding_dim)
+        flattened_action_embedding = torch.flatten(action_embedding, start_dim=1)
+        # output model --------------
+        question_and_actions = torch.cat([question_encoder_output, flattened_action_embedding], dim=1)
+        output = self.dense(question_and_actions)
         output = self.dense2(output)
         return output
