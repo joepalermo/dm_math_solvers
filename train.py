@@ -49,7 +49,7 @@ for buffer_i in range(hparams.train.num_buffers):
         step_dataset = StepDataset(sampled_steps, network.device)
         data_loader = DataLoader(step_dataset, batch_size=network.batch_size, shuffle=False, drop_last=True)
         # train
-        if batch_i > 2000:
+        if hparams.train.use_target_network:
             batch_i, td_error = train(network, target_network, data_loader, writer, batch_i)
         else:
             batch_i, td_error = train(network, None, data_loader, writer, batch_i)
