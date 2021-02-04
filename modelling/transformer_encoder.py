@@ -35,13 +35,14 @@ class TransformerEncoderModel(torch.nn.Module):
         self.padding_token = ntoken - 1
         # define layers
         self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
-        self.action_embedding = torch.nn.Embedding(max_num_nodes, hparams.model.action_embedding_size)
+        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
         self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.dense1 = torch.nn.Linear(hparams.model.nhid + max_num_nodes * hparams.model.action_embedding_size,
-                                      hparams.model.nhid)
+        self.dense = torch.nn.Linear(max_num_nodes * hparams.model.action_embedding_size, hparams.model.nhid)
+        self.dense1 = torch.nn.Linear(2*hparams.model.nhid, hparams.model.nhid)
+        self.dropout = torch.nn.Dropout(hparams.train.dropout)
         self.dense2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
         # set other things
         self.device = device
@@ -67,14 +68,16 @@ class TransformerEncoderModel(torch.nn.Module):
         # apply the transformer encoder
         # encoding = self.transformer_encoder(embedding_with_pos)
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
-        question_encoder_output = encoding[0]
+        question_encoding = encoding[0]
         # action model --------------
         # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
         action_embedding = self.action_embedding(action_tokens)
         # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions * embedding_dim)
         flattened_action_embedding = torch.flatten(action_embedding, start_dim=1)
+        action_encoding = self.dense(flattened_action_embedding)
         # output model --------------
-        question_and_actions = torch.cat([question_encoder_output, flattened_action_embedding], dim=1)
+        question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
         output = self.dense1(question_and_actions)
+        output = self.dropout(output)
         output = self.dense2(output)
         return output

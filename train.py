@@ -33,7 +33,8 @@ target_network.eval()
 # training loop
 batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 # init replay buffer from trajectory cache on disk
-replay_buffer = np.array(flatten(extract_trajectory_cache(hparams.env.trajectory_cache_filepath)))
+# TODO: unclip data
+replay_buffer = np.array(flatten(extract_trajectory_cache(hparams.env.trajectory_cache_filepath)))[:20000]
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 for buffer_i in range(hparams.train.num_buffers):
     # model_to_use = None if len(replay_buffer) < hparams.train.min_saved_trajectories_until_training else network
