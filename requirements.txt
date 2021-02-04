@@ -9,3 +9,4 @@ tqdm==4.52.0
 sentencepiece
 multiprocess
 sqlitedict
+nn_builder

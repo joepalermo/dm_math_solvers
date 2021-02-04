@@ -73,7 +73,7 @@ class MathEnv(gym.Env):
         # load tokenizer
         self.padding_token = config.vocab_size
         self.tokenizer = spm.SentencePieceProcessor(model_file=config.tokenizer_filepath)
-
+        self.device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 
     def step(self, action_index):
         """
@@ -239,7 +239,7 @@ class MathEnv(gym.Env):
     def mask_invalid_types(self, model_output):
         mask = self.compute_mask()
         if torch.is_tensor(model_output):
-            mask = torch.from_numpy(mask).type(torch.FloatTensor)
+            mask = torch.from_numpy(mask).type(torch.FloatTensor).to(self.device)
         masked_output = mask * model_output
         return masked_output
 

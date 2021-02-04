@@ -1,5 +1,6 @@
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
+from torch.utils.tensorboard import SummaryWriter
 import torch
 from torch.optim import Adam
 import torch.nn.functional as F
@@ -22,13 +23,13 @@ class SAC_Discrete(SAC):
         # define dependent params
         ntoken = hparams.env.vocab_size + 1
         num_outputs = len(hparams.env.operators) + hparams.env.max_formal_elements
-        device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
         # self.critic_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Critic")
         # self.critic_local_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
         #                                    key_to_use="Critic", override_seed=self.config.seed + 1)
         # copy
-        self.critic_local = TransformerEncoderModel(ntoken, num_outputs, device)
-        self.critic_local_2 = TransformerEncoderModel(ntoken, num_outputs, device)
+        self.critic_local = TransformerEncoderModel(ntoken, num_outputs, self.device)
+        self.critic_local_2 = TransformerEncoderModel(ntoken, num_outputs, self.device)
         self.critic_optimizer = torch.optim.Adam(self.critic_local.parameters(),
                                                  lr=self.hyperparameters["Critic"]["learning_rate"], eps=1e-4)
         self.critic_optimizer_2 = torch.optim.Adam(self.critic_local_2.parameters(),
@@ -38,8 +39,8 @@ class SAC_Discrete(SAC):
         # self.critic_target_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
         #                                     key_to_use="Critic")
         # copy
-        self.critic_target = TransformerEncoderModel(ntoken, num_outputs, device)
-        self.critic_target_2 = TransformerEncoderModel(ntoken, num_outputs, device)
+        self.critic_target = TransformerEncoderModel(ntoken, num_outputs, self.device)
+        self.critic_target_2 = TransformerEncoderModel(ntoken, num_outputs, self.device)
         Base_Agent.copy_model_over(self.critic_local, self.critic_target)
         Base_Agent.copy_model_over(self.critic_local_2, self.critic_target_2)
         self.memory = Replay_Buffer(self.hyperparameters["Critic"]["buffer_size"], self.hyperparameters["batch_size"],
@@ -47,7 +48,7 @@ class SAC_Discrete(SAC):
 
         # self.actor_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Actor")
         # copy
-        self.actor_local = TransformerEncoderModel(ntoken, num_outputs, device)
+        self.actor_local = TransformerEncoderModel(ntoken, num_outputs, self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor_local.parameters(),
                                           lr=self.hyperparameters["Actor"]["learning_rate"], eps=1e-4)
         self.automatic_entropy_tuning = self.hyperparameters["automatically_tune_entropy_hyperparameter"]
@@ -63,9 +64,13 @@ class SAC_Discrete(SAC):
         self.add_extra_noise = False
         self.do_evaluation_iterations = self.hyperparameters["do_evaluation_iterations"]
 
+        self.logdir = f'logs-{hparams.run.name}'
+        self.tb_writer = SummaryWriter(log_dir=self.logdir)
+
     def produce_action_and_action_info(self, state):
         """Given the state, produces an action, the probability of the action, the log probability of the action, and
         the argmax action"""
+        state = state.to(self.device)
         action_probabilities = self.actor_local(state)
         # NOTE: added masking + normalization
         action_probabilities = self.environment.mask_invalid_types(action_probabilities)
@@ -98,6 +103,8 @@ class SAC_Discrete(SAC):
         qf2 = self.critic_local_2(state_batch).gather(1, action_batch.long())
         qf1_loss = F.mse_loss(qf1, next_q_value)
         qf2_loss = F.mse_loss(qf2, next_q_value)
+        self.tb_writer.add_scalar('Train/value_1_loss', qf1_loss, self.episode_number)
+        self.tb_writer.add_scalar('Train/value_2_loss', qf2_loss, self.episode_number)
         return qf1_loss, qf2_loss
 
     def calculate_actor_loss(self, state_batch):
@@ -109,4 +116,5 @@ class SAC_Discrete(SAC):
         inside_term = self.alpha * log_action_probabilities - min_qf_pi
         policy_loss = (action_probabilities * inside_term).sum(dim=1).mean()
         log_action_probabilities = torch.sum(log_action_probabilities * action_probabilities, dim=1)
+        self.tb_writer.add_scalar('Train/policy_loss', policy_loss, self.episode_number)
         return policy_loss, log_action_probabilities

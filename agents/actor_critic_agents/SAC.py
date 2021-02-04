@@ -1,3 +1,5 @@
+from hparams import HParams
+hparams = HParams.get_hparams_by_name('rl_math')
 from agents.Base_Agent import Base_Agent
 from utilities.OU_Noise import OU_Noise
 from utilities.data_structures.Replay_Buffer import Replay_Buffer
@@ -6,6 +8,7 @@ import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter
 
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
@@ -55,6 +58,9 @@ class SAC(Base_Agent):
                                   self.hyperparameters["theta"], self.hyperparameters["sigma"])
 
         self.do_evaluation_iterations = self.hyperparameters["do_evaluation_iterations"]
+
+        self.logdir = f'logs-{hparams.run.name}'
+        self.tb_writer = SummaryWriter(log_dir=self.logdir)
 
     def save_result(self):
         """Saves the result of an episode of the game. Overriding the method in Base Agent that does this because we only
@@ -239,3 +245,4 @@ class SAC(Base_Agent):
         print("----------------------------")
         print("Episode score {} ".format(self.total_episode_score_so_far))
         print("----------------------------")
+        self.tb_writer.add_scalar('Val/episode_score', self.total_episode_score_so_far, self.episode_number)
