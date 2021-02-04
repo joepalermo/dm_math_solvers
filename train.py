@@ -24,14 +24,15 @@ trajectory_statistics = init_trajectory_data_structures(envs[0])
 # init model
 ntoken = hparams.env.vocab_size + 1
 num_outputs = len(envs[0].actions)
-network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
-target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
+max_num_nodes = envs[0].max_num_nodes
+network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes, device=device)
+target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes,
+                                         device=device)
 target_network.eval()
 
 # training loop
 batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 # init replay buffer from trajectory cache on disk
-# TODO: remove clip to 5k steps
 replay_buffer = np.array(flatten(extract_trajectory_cache(hparams.env.trajectory_cache_filepath)))
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 for buffer_i in range(hparams.train.num_buffers):

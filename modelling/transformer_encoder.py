@@ -25,7 +25,7 @@ class PositionalEncoding(torch.nn.Module):
 
 
 class TransformerEncoderModel(torch.nn.Module):
-    def __init__(self, ntoken, num_outputs, device):
+    def __init__(self, ntoken, num_outputs, max_num_nodes, device):
         super().__init__()
         torch.nn.Module.__init__(self)
         self.max_grad_norm = hparams.train.max_grad_norm
@@ -35,11 +35,13 @@ class TransformerEncoderModel(torch.nn.Module):
         self.padding_token = ntoken - 1
         # define layers
         self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
+        self.action_embedding = torch.nn.Embedding(max_num_nodes, hparams.model.action_embedding_size)
         self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.dense1 = torch.nn.Linear(hparams.model.nhid, hparams.model.nhid)
+        self.dense1 = torch.nn.Linear(hparams.model.nhid + max_num_nodes * hparams.model.action_embedding_size,
+                                      hparams.model.nhid)
         self.dense2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
         # set other things
         self.device = device
@@ -73,6 +75,6 @@ class TransformerEncoderModel(torch.nn.Module):
         flattened_action_embedding = torch.flatten(action_embedding, start_dim=1)
         # output model --------------
         question_and_actions = torch.cat([question_encoder_output, flattened_action_embedding], dim=1)
-        output = self.dense(question_and_actions)
+        output = self.dense1(question_and_actions)
         output = self.dense2(output)
         return output

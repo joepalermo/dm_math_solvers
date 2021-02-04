@@ -38,6 +38,7 @@ def reset_all(envs, trajectory_statistics=None, train=True):
     least rewarded thus far, else select module_name and difficulty randomly.'''
     envs_info = []
     obs_batch = []
+    prev_actions_batch = []
     for env in envs:
         if trajectory_statistics is not None:
             module_name, difficulty = min(trajectory_statistics, key=trajectory_statistics.get)
@@ -50,8 +51,11 @@ def reset_all(envs, trajectory_statistics=None, train=True):
                           'difficulty': env.difficulty,
                           'module_difficulty_index': env.module_difficulty_index})
         obs_batch.append(np.expand_dims(obs, 0))
+        # prev_action_batch is initialized to contain only the padding action
+        prev_actions_batch.append(np.expand_dims([env.max_num_nodes for _ in range(env.max_num_nodes)], 0))
     obs_batch = np.concatenate(obs_batch)
-    return obs_batch, envs_info
+    prev_actions_batch = np.concatenate(prev_actions_batch)
+    return obs_batch, prev_actions_batch, envs_info
 
 
 def step_all(envs, action_batch):
@@ -66,11 +70,12 @@ def step_all(envs, action_batch):
     return obs_batch, step_batch
 
 
-def get_action_batch(obs_batch, envs, network=None, eval=False):
+def get_action_batch(obs_batch, prev_actions_batch, envs, network=None, eval=False):
     # get network output
     if network:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64)).to(network.device)
-        output_batch = network(obs_batch).detach().cpu().numpy()
+        prev_actions_batch = torch.from_numpy(prev_actions_batch.astype(np.int64)).to(network.device)
+        output_batch = network(obs_batch, prev_actions_batch).detach().cpu().numpy()
         model_type = hparams.model.model_type
     else:
         output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
@@ -182,6 +187,13 @@ class StepDataset(torch.utils.data.Dataset):
         return state, action, reward, next_state, prev_actions, done
 
 
+def update_prev_actions(prev_actions_batch, action_batch, padding_action):
+    last_padding_index = np.array([np.where(prev_actions_batch[i] == padding_action)[0].min()
+                            for i in range(len(prev_actions_batch))])
+    prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
+    return prev_actions_batch
+
+
 def fill_buffer(network, envs, trajectory_statistics):
     '''
     :param network:
@@ -197,12 +209,14 @@ def fill_buffer(network, envs, trajectory_statistics):
     buffer_negatives = 1  # init to 1 to prevent division by zero
     # init trajectory cache from storage
     trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
-    obs_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, train=True)
+    obs_batch, prev_actions_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, train=True)
     # take steps in all environments until the number of cached steps reaches a threshold
     while cached_steps < hparams.train.buffer_threshold:
         # take a step in each environment in "parallel"
-        action_batch = get_action_batch(obs_batch, envs, network=network)
+        action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network)
         obs_batch, step_batch = step_all(envs, action_batch)
+        prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
+                                                 padding_action=envs[0].max_num_nodes)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             # cache the latest step from each environment
@@ -236,6 +250,8 @@ def fill_buffer(network, envs, trajectory_statistics):
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)
+                prev_actions_batch[env_i] = np.array([envs[env_i].max_num_nodes
+                                                      for _ in range(envs[env_i].max_num_nodes)])
                 # # append first state of trajectory after reset
                 # info_dict = {'raw_observation': envs_info[env_i]['question']}
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
@@ -265,12 +281,14 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     logdir = get_logdir()
     total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
     n_completed_validation_episodes = 0
-    obs_batch, envs_info = reset_all(envs, train=False)
+    obs_batch, prev_actions_batch, envs_info = reset_all(envs, train=False)
     while True:
         # take a step in each environment in "parallel"
         with torch.no_grad():
-            action_batch = get_action_batch(obs_batch, envs, network=network, eval=True)
+            action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network, eval=True)
         obs_batch, step_batch = step_all(envs, action_batch)
+        prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
+                                                 padding_action=envs[0].max_num_nodes)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
@@ -290,8 +308,10 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
                     total_reward[k]["n_completed_validation_episodes"] = 1
                     total_reward[k]["tot_reward"] = reward
                 n_completed_validation_episodes += 1
-
+                # reset environment
                 obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
+                prev_actions_batch[env_i] = np.array([envs[env_i].max_num_nodes
+                                                      for _ in range(envs[env_i].max_num_nodes)])
         if n_completed_validation_episodes > n_required_validation_episodes:
             break
     all_modules_reward = 0
