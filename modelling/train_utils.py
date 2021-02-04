@@ -69,8 +69,8 @@ def step_all(envs, action_batch):
 def get_action_batch(obs_batch, envs, network=None, eval=False):
     # get network output
     if network:
-        obs_batch = torch.from_numpy(obs_batch.astype(np.int64))
-        output_batch = network(obs_batch.to(network.device)).detach().cpu().numpy()
+        obs_batch = torch.from_numpy(obs_batch.astype(np.int64)).to(network.device)
+        output_batch = network(obs_batch).detach().cpu().numpy()
         model_type = hparams.model.model_type
     else:
         output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
@@ -140,15 +140,18 @@ def vpg_step(network, state_batch, action_batch, reward_batch):
     return batch_loss
 
 
-def dqn_step(network, target_network, state_batch, action_batch, reward_batch, next_state_batch, done_batch):
+def dqn_step(network, target_network, batch):
+    state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
     # compute the target
     if target_network is None:
-        targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(network(next_state_batch), dim=1)[0]
+        targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
+                  torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
     else:
         with torch.no_grad():
-            targets = reward_batch + (1 - done_batch) * hparams.train.gamma * torch.max(target_network(next_state_batch), dim=1)[0]
+            targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
+                      torch.max(target_network(next_state_batch, prev_actions_batch), dim=1)[0]
     network.optimizer.zero_grad()
-    batch_output = network(state_batch)
+    batch_output = network(state_batch, prev_actions_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
     td_error = torch.abs(targets - batch_output)
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
@@ -169,14 +172,14 @@ class StepDataset(torch.utils.data.Dataset):
         return len(self.steps)
 
     def __getitem__(self, idx):
-        # return only the (state, action, reward)?
-        state, action, reward, next_state, done = self.steps[idx]
+        state, action, reward, next_state, prev_actions, done = self.steps[idx]
         state = torch.from_numpy(state.astype(np.int64)).to(self.device)
         action = torch.from_numpy(np.array(action, dtype=np.int64)).to(self.device)
         reward = torch.from_numpy(np.array(reward, dtype=np.int64)).to(self.device)
         next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
+        prev_actions = torch.from_numpy(np.array(prev_actions, dtype=np.int64)).to(self.device)
         done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
-        return state, action, reward, next_state, done
+        return state, action, reward, next_state, prev_actions, done
 
 
 def fill_buffer(network, envs, trajectory_statistics):
@@ -218,7 +221,7 @@ def fill_buffer(network, envs, trajectory_statistics):
                 # check if conditions to cache the trajectory are met
                 if positive_condition(buffer_positives, buffer_negatives, reward) or \
                         negative_condition(buffer_positives, buffer_negatives, reward):
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'])
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].max_num_nodes)
                     cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
                     trajectory_buffer.append(aligned_trajectory)
                     cached_steps += len(aligned_trajectory)
@@ -244,8 +247,8 @@ def train(network, target_network, data_loader, writer, current_batch_i):
     network.train()
     td_errors = list()
     losses = list()
-    for i, (state_batch, action_batch, reward_batch, next_state_batch, done_batch) in enumerate(data_loader):
-        batch_loss, td_error = dqn_step(network, target_network, state_batch, action_batch, reward_batch, next_state_batch, done_batch)
+    for i, batch in enumerate(data_loader):
+        batch_loss, td_error = dqn_step(network, target_network, batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1

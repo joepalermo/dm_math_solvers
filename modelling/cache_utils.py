@@ -5,15 +5,16 @@ from utils import flatten
 import numpy as np
 
 
-def align_trajectory(raw_trajectory):
+def align_trajectory(raw_trajectory, max_num_actions):
+    def pad_actions(actions, max_num_actions):
+        actions.extend([max_num_actions for _ in range(max_num_actions - len(actions))])
+        return actions
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
-    # TODO: finish logging actions up to each step
-    actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory[1:]))]
-
+    actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
-    aligned_trajectory = [(state, action, reward, next_state, done)
-                         for state, (next_state, action, reward, done)
-                         in zip(states, everything_else)]
+    aligned_trajectory = [(state, action, reward, next_state, pad_actions(prev_actions, max_num_actions), done)
+                         for state, prev_actions, (next_state, action, reward, done)
+                         in zip(states, actions_up_to_step, everything_else)]
     return aligned_trajectory
 
 
