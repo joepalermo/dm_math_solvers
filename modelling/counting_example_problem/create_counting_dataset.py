@@ -1,9 +1,9 @@
 import random
 import pickle
 # hparams
-n = 100
-vocab_size = 5 #number of unique characters
-max_count = 10 # largest possible target
+n = 10000
+vocab_size = 1 #number of unique characters
+max_count = 5 # largest possible target
 
 #init stuff
 data = list()
@@ -22,5 +22,5 @@ for i in range(n):
     data.append((input, target))
 
 # pickle data
-with open('counting_dataset.pkl', 'wb') as f:
+with open('../../preprocessing/counting_dataset.pkl', 'wb') as f:
     pickle.dump(data, f)
