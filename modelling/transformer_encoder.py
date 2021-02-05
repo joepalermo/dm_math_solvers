@@ -1,6 +1,6 @@
 import math
 import torch
-from torch.nn import TransformerEncoder, TransformerEncoderLayer, Softmax
+from torch.nn import TransformerEncoder, TransformerEncoderLayer, Softmax, LSTM
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
 
@@ -55,9 +55,10 @@ class TransformerEncoderModel(torch.nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.dense_block_1 = DenseBlock(max_num_nodes * hparams.model.action_embedding_size, hparams.model.nhid)
-        self.dense_block_2 = DenseBlock(2*hparams.model.nhid, hparams.model.nhid)
-        self.dense_3 = torch.nn.Linear(hparams.model.nhid, num_outputs)
+        self.lstm_block = LSTM(input_size=hparams.model.action_embedding_size, hidden_size=hparams.model.lstm_hidden_size,
+                               num_layers=hparams.model.lstm_nlayers, batch_first=True, dropout=hparams.train.dropout)
+        self.dense_block_1 = DenseBlock(hparams.model.nhid + hparams.model.lstm_hidden_size, hparams.model.nhid)
+        self.dense_2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
 
         # define non-tunable layers -------------------
         self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
@@ -94,11 +95,11 @@ class TransformerEncoderModel(torch.nn.Module):
         # action model --------------
         # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
         action_embedding = self.action_embedding(action_tokens)
-        # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions * embedding_dim)
-        flattened_action_embedding = torch.flatten(action_embedding, start_dim=1)
-        action_encoding = self.dense_block_1(flattened_action_embedding)
+        # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
+        lstm_output, _ = self.lstm_block(action_embedding)
+        action_encoding = lstm_output[:,-1,:]
         # output model --------------
         question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
-        output = self.dense_block_2(question_and_actions)
-        output = self.dense_3(self.dropout(output))
+        output = self.dense_block_1(question_and_actions)
+        output = self.dense_2(self.dropout(output))
         return output
