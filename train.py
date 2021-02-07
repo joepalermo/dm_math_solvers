@@ -46,6 +46,7 @@ assert (batch_i >= hparams.train.num_batches_until_fill_buffer) or \
        (len(replay_buffer) >= hparams.train.min_saved_steps_until_training)
 
 for epoch_i in range(hparams.train.num_epochs):
+    print(f'epoch #{epoch_i}')
 
     # fill buffer -----------
     print(f'fresh replay buffer: {round(added_to_replay_buffer / len(replay_buffer) * 100, 2)}%')
