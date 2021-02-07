@@ -71,11 +71,15 @@ class TransformerEncoderModel(torch.nn.Module):
 
         # set optimization
         self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr)
-        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=1)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=hparams.train.factor, patience=hparams.train.patience,
-                                                               threshold=0.001, threshold_mode='rel', cooldown=0,
-
-                                                               min_lr=hparams.train.min_lr, eps=1e-08, verbose=False)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max',
+                                                                    factor=hparams.train.factor,
+                                                                    patience=hparams.train.patience, threshold=0.001,
+                                                                    threshold_mode='rel', cooldown=0,
+                                                                    min_lr=hparams.train.min_lr, eps=1e-08,
+                                                                    verbose=False)
+        # self.scheduler = torch.optim.lr_scheduler.OneCycleLR(self.optimizer, max_lr=hparams.train.max_lr,
+        #                                                      total_steps=hparams.train.total_steps,
+        #                                                      final_div_factor=hparams.train.final_div_factor)
 
     def forward(self, question_tokens, action_tokens):
         # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)

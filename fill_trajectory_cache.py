@@ -11,14 +11,14 @@ from sqlitedict import SqliteDict
 torch.manual_seed(hparams.run.seed)
 np.random.seed(seed=hparams.run.seed)
 
-# basic setup and checks
-assert hparams.train.mode == 'positive_only' or hparams.train.mode == 'balanced'
+assert hparams.train.fill_buffer_mode != 'anything'
 
 # initialize all environments
 envs = init_envs(hparams.env)
 trajectory_statistics = init_trajectory_data_structures(envs[0])
 for buffer_i in tqdm(range(hparams.train.num_buffers)):
-    trajectory_buffer = fill_buffer(None, envs, trajectory_statistics)
+    trajectory_buffer = fill_buffer(None, envs, trajectory_statistics,
+                                    hparams.train.random_exploration_trajectory_cache_filepath)
 
 trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
 visualize_trajectory_cache(envs[0].decode, trajectory_cache, num_to_sample=25)

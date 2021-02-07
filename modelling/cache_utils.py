@@ -68,6 +68,12 @@ def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
     return all_trajectories
 
 
+def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size):
+    replay_buffer = flatten(extract_trajectory_cache(trajectory_cache_filepath))
+    random.shuffle(replay_buffer)
+    return np.array(replay_buffer[:replay_buffer_size])
+
+
 def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):
     key_trajectory_pairs = random.sample(list(trajectory_cache.items()), min(num_to_sample, len(trajectory_cache)))
     print(f"size of trajectory cache: {len(trajectory_cache)}")

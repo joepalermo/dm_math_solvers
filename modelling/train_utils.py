@@ -80,8 +80,6 @@ def get_action_batch(obs_batch, prev_actions_batch, envs, network=None, eval=Fal
     else:
         output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
         model_type = 'policy'
-    if model_type == 'policy':
-        output_batch = softmax(output_batch, axis=1)
     actions = []
     for i, env in enumerate(envs):
         # mask the corresponding network output
@@ -194,26 +192,30 @@ def update_prev_actions(prev_actions_batch, action_batch, padding_action):
     return prev_actions_batch
 
 
-def fill_buffer(network, envs, trajectory_statistics):
+def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath):
     '''
     :param network:
     :param envs:
     :param trajectory_statistics:
     :return:
     '''
-    assert hparams.train.mode == 'positive_only' or hparams.train.mode == 'balanced'
+    assert hparams.train.fill_buffer_mode == 'positive_only' or \
+           hparams.train.fill_buffer_mode == 'balanced' or \
+           hparams.train.fill_buffer_mode == 'anything'
     # reset all environments
     cached_steps = 0
     trajectory_buffer = []
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
-    # init trajectory cache from storage
-    trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
+    if trajectory_cache_filepath is not None:
+        # init trajectory cache from storage
+        trajectory_cache = SqliteDict(trajectory_cache_filepath, autocommit=True)
     obs_batch, prev_actions_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, train=True)
     # take steps in all environments until the number of cached steps reaches a threshold
     while cached_steps < hparams.train.buffer_threshold:
         # take a step in each environment in "parallel"
-        action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network)
+        with torch.no_grad():
+            action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
                                                  padding_action=envs[0].max_num_nodes)
@@ -222,21 +224,25 @@ def fill_buffer(network, envs, trajectory_statistics):
             # cache the latest step from each environment
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
             if done:
+                if random.random() < 0.01:
+                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 # print(envs_info[env_i]['trajectory'][-1][4]['raw_observation'])
                 def positive_condition(buffer_positives, buffer_negatives, reward):
-                    return (hparams.train.mode == 'positive_only' and reward == 1) or \
-                        (hparams.train.mode == 'balanced' and \
-                        buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
-                        reward == 1)
+                    return (hparams.train.fill_buffer_mode == 'positive_only' and reward == 1) or \
+                           (hparams.train.fill_buffer_mode == 'balanced' and \
+                                buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
+                                reward == 1)
                 def negative_condition(buffer_positives, buffer_negatives, reward):
-                    return hparams.train.mode == 'balanced' and \
+                    return hparams.train.fill_buffer_mode == 'balanced' and \
                         buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
                         reward == -1
                 # check if conditions to cache the trajectory are met
                 if positive_condition(buffer_positives, buffer_negatives, reward) or \
-                        negative_condition(buffer_positives, buffer_negatives, reward):
+                        negative_condition(buffer_positives, buffer_negatives, reward) or \
+                        hparams.train.fill_buffer_mode == 'anything':
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].max_num_nodes)
-                    cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
+                    if trajectory_cache_filepath is not None:
+                        cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
                     trajectory_buffer.append(aligned_trajectory)
                     cached_steps += len(aligned_trajectory)
                     with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
@@ -255,7 +261,8 @@ def fill_buffer(network, envs, trajectory_statistics):
                 # # append first state of trajectory after reset
                 # info_dict = {'raw_observation': envs_info[env_i]['question']}
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
-    trajectory_cache.close()
+    if trajectory_cache_filepath is not None:
+        trajectory_cache.close()
     return trajectory_buffer
 
 
@@ -295,7 +302,6 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
-                # TODO: remove random print
                 if random.random() < 0.05:
                     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 with open(f'{logdir}/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
@@ -365,3 +371,4 @@ def visualize_replay_priority(envs, replay_priority, replay_buffer):
     # sns.histplot(replay_priority)
     # plt.show()
     # import time; time.sleep(1000)
+
