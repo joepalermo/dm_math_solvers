@@ -270,6 +270,7 @@ def train(network, target_network, data_loader, writer, current_batch_i):
     network.train()
     td_errors = list()
     losses = list()
+    batches = list()
     for i, batch in enumerate(data_loader):
         batch_loss, td_error = dqn_step(network, target_network, batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
@@ -277,10 +278,11 @@ def train(network, target_network, data_loader, writer, current_batch_i):
         current_batch_i += 1
         td_errors.append(td_error)
         losses.append(float(batch_loss.detach().cpu().numpy()))
+        batches.append(batch[:2])
     td_error = torch.cat(td_errors)
     mean_batch_loss = np.array(losses).mean()
     print(f'mean_batch_loss: {mean_batch_loss}')
-    return current_batch_i, td_error
+    return current_batch_i, td_error, batches
 
 
 def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
@@ -333,6 +335,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()
+    return mean_val_reward
 
 
 def visualize_replay_priority(envs, replay_priority, replay_buffer):

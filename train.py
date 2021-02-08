@@ -11,6 +11,7 @@ from modelling.train_utils import init_trajectory_data_structures, init_envs, tr
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from utils import flatten
+import os
 from modelling.cache_utils import extract_trajectory_cache
 
 # basic setup and checks
@@ -38,6 +39,27 @@ replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
 # training loop --------------------------------------------------------------------------------------------------------
+
+
+def extract_strings_from_batches(batches, env):
+    strings = []
+    for batch in batches:
+        state_batch, action_batch = batch
+        for state, action in zip(state_batch, action_batch):
+            decoded_state = env.decode(state)
+            strings.append(f'{decoded_state}, action: {action}')
+    return "\n".join(strings)
+
+
+def log_to_text_file(string):
+    filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
+    if os.path.isfile(filepath):
+        mode = 'a'
+    else:
+        mode = 'w'
+    with open(filepath, mode) as f:
+        f.writeline(string)
+
 
 added_to_replay_buffer = 0
 batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
@@ -83,9 +105,13 @@ for epoch_i in range(hparams.train.num_epochs):
         # train
         print(f'batch #{batch_i}')
         if hparams.train.use_target_network:
-            batch_i, td_error = train(network, target_network, data_loader, writer, batch_i)
+            batch_i, td_error, batches = train(network, target_network, data_loader, writer, batch_i)
         else:
-            batch_i, td_error = train(network, None, data_loader, writer, batch_i)
+            batch_i, td_error, batches = train(network, None, data_loader, writer, batch_i)
+        # logging
+        batch_string = extract_strings_from_batches(batches, envs[0])
+        log_to_text_file(f'batch #{batch_i}')
+        log_to_text_file(batch_string)
 
         # update replay priority
         replay_priority[sampled_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
@@ -102,5 +128,6 @@ for epoch_i in range(hparams.train.num_epochs):
         # eval
         if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
             last_eval_batch_i = batch_i
-            run_eval(network, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+            mean_val_reward = run_eval(network, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+            log_to_text_file(f'mean val reward: {mean_val_reward}')
 
