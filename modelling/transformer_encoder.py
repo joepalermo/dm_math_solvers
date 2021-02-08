@@ -70,7 +70,7 @@ class TransformerEncoderModel(torch.nn.Module):
         self.to(device)
 
         # set optimization
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr)
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr, weight_decay=hparams.model.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max',
                                                                     factor=hparams.train.factor,
                                                                     patience=hparams.train.patience, threshold=0.001,

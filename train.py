@@ -1,6 +1,6 @@
 from hparams import HParams
-# hparams = HParams('.', hparams_filename='hparams', name='rl_math')
-hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+hparams = HParams('.', hparams_filename='hparams', name='rl_math')
+# hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
 import random
 from torch.utils.data import DataLoader
@@ -58,7 +58,7 @@ def log_to_text_file(string):
     else:
         mode = 'w'
     with open(filepath, mode) as f:
-        f.writeline(string)
+        f.write(string + '\n')
 
 
 added_to_replay_buffer = 0
