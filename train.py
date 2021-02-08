@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
-    fill_buffer
+    fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from utils import flatten
@@ -95,7 +95,10 @@ for epoch_i in range(hparams.train.num_epochs):
         # sample from prioritized replay buffer
         replay_probability = replay_priority / np.sum(replay_priority)
         steps_to_sample = hparams.train.batch_size * hparams.train.batches_per_epoch
-        sampled_idxs = np.random.choice(np.arange(len(replay_buffer)), size=steps_to_sample, p=replay_probability)
+        if batch_i < hparams.train.batches_until_stop_replay_priority:
+            sampled_idxs = np.random.choice(np.arange(len(replay_buffer)), size=steps_to_sample, p=replay_probability)
+        else:
+            sampled_idxs = np.random.choice(np.arange(len(replay_buffer)), size=steps_to_sample)
         sampled_steps = replay_buffer[sampled_idxs]
 
         # construct data loader
@@ -105,13 +108,20 @@ for epoch_i in range(hparams.train.num_epochs):
         # train
         print(f'batch #{batch_i}')
         if hparams.train.use_target_network:
-            batch_i, td_error, batches = train(network, target_network, data_loader, writer, batch_i)
+            batch_i, _, batches = train(network, target_network, data_loader, writer, batch_i)
         else:
-            batch_i, td_error, batches = train(network, None, data_loader, writer, batch_i)
+            batch_i, _, batches = train(network, None, data_loader, writer, batch_i)
         # logging
         batch_string = extract_strings_from_batches(batches, envs[0])
         log_to_text_file(f'batch #{batch_i}')
         log_to_text_file(batch_string)
+
+        #Sample indices for computing td error
+        sampled_idxs = np.random.choice(np.arange(len(replay_buffer)),
+                                        size=hparams.train.n_batch_td_error*hparams.train.sample_td_error_batch_size)
+
+        sampled_steps = replay_buffer[sampled_idxs]
+        td_error = get_td_error(network, sampled_steps)
 
         # update replay priority
         replay_priority[sampled_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent

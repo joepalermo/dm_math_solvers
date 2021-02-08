@@ -163,6 +163,21 @@ def dqn_step(network, target_network, batch):
     network.optimizer.step()
     return batch_loss, td_error
 
+def get_td_error(network, sampled_steps):
+    step_dataset = StepDataset(sampled_steps, network.device)
+    data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False, drop_last=True)
+    td_error_list = list()
+    for batch in data_loader:
+        with torch.no_grad():
+            state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
+            targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
+                      torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
+            batch_output = network(state_batch, prev_actions_batch)
+            batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
+            batch_td_error = torch.abs(targets - batch_output)
+            td_error_list.append(batch_td_error)
+    return torch.cat(td_error_list)
+
 
 class StepDataset(torch.utils.data.Dataset):
     """Step Dataset"""
