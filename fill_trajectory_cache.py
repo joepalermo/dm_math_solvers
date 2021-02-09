@@ -16,11 +16,11 @@ assert hparams.train.fill_buffer_mode != 'anything'
 # initialize all environments
 envs = init_envs(hparams.env)
 trajectory_statistics = init_trajectory_data_structures(envs[0])
-for buffer_i in tqdm(range(hparams.train.num_buffers)):
+for buffer_i in tqdm(range(hparams.train.num_epochs)):
     trajectory_buffer = fill_buffer(None, envs, trajectory_statistics,
                                     hparams.train.random_exploration_trajectory_cache_filepath)
 
-trajectory_cache = SqliteDict(hparams.env.trajectory_cache_filepath, autocommit=True)
+trajectory_cache = SqliteDict(hparams.train.random_exploration_trajectory_cache_filepath, autocommit=True)
 visualize_trajectory_cache(envs[0].decode, trajectory_cache, num_to_sample=25)
 trajectory_cache.close()
 

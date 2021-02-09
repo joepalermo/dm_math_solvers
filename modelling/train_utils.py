@@ -239,8 +239,8 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
             # cache the latest step from each environment
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
             if done:
-                if random.random() < 0.01:
-                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
+                # if random.random() < 0.01:
+                #     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 # print(envs_info[env_i]['trajectory'][-1][4]['raw_observation'])
                 def positive_condition(buffer_positives, buffer_negatives, reward):
                     return (hparams.train.fill_buffer_mode == 'positive_only' and reward == 1) or \
@@ -250,7 +250,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 def negative_condition(buffer_positives, buffer_negatives, reward):
                     return hparams.train.fill_buffer_mode == 'balanced' and \
                         buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
-                        reward == -1
+                        reward == 0
                 # check if conditions to cache the trajectory are met
                 if positive_condition(buffer_positives, buffer_negatives, reward) or \
                         negative_condition(buffer_positives, buffer_negatives, reward) or \
