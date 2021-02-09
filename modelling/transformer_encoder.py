@@ -58,14 +58,21 @@ class TransformerEncoderModel(torch.nn.Module):
 
         # define tunable layers -------------------
         self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
+<<<<<<< HEAD
         self.action_embedding = torch.nn.Embedding(self.num_action_tokens, hparams.model.action_embedding_size)
+||||||| constructed merge base
+        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
+=======
+        self.question_id_embedding = torch.nn.Embedding(4, 32)
+        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
+>>>>>>> setup simple question
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
         self.lstm_block = LSTM(input_size=hparams.model.action_embedding_size, hidden_size=hparams.model.lstm_hidden_size,
                                num_layers=hparams.model.lstm_nlayers, batch_first=True, dropout=hparams.train.dropout)
-        self.dense_block_1 = DenseBlock(hparams.model.nhid + hparams.model.lstm_hidden_size, hparams.model.nhid)
-        self.dense_2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
+        self.dense_block_1 = DenseBlock(32 + hparams.model.lstm_hidden_size, 128)
+        self.dense_2 = torch.nn.Linear(128, num_outputs)
 
         # define non-tunable layers -------------------
         self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
@@ -89,20 +96,9 @@ class TransformerEncoderModel(torch.nn.Module):
         #                                                      final_div_factor=hparams.train.final_div_factor)
 
     def forward(self, question_tokens, action_tokens):
-        # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)
         # question model --------------
-        # embed the tokens
-        embedding = self.token_embedding(question_tokens)
-        # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
-        embedding = embedding.permute((1, 0, 2))
-        # apply positional encoding
-        embedding_with_pos = self.pos_encoder(embedding)
-        # create the padding mask
-        padding_mask = torch.where(question_tokens == self.padding_token, 1, 0).type(torch.BoolTensor).to(self.device)
-        # apply the transformer encoder
-        # encoding = self.transformer_encoder(embedding_with_pos)
-        encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
-        question_encoding = encoding[0]
+        question_id = question_tokens[:, -1]
+        question_encoding = self.question_id_embedding(question_id)
         # action model --------------
         sequence_lens = [torch.where(action_tokens[i] == self.action_padding_token)[0].min()
                          for i in range(len(action_tokens))]

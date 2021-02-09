@@ -116,12 +116,26 @@ class MathEnv(gym.Env):
         encoded_ids.extend(
             [self.padding_token for _ in range(self.config.max_sequence_length - len(encoded_ids))]
         )
+        # add extra
+        if 'first' in raw_observation:
+            encoded_ids.append(0)
+        elif 'second' in raw_observation:
+            encoded_ids.append(1)
+        elif 'third' in raw_observation:
+            encoded_ids.append(2)
+        else:
+            encoded_ids.append(3)
         return np.array(encoded_ids)
 
+
     def decode(self, encoded_ids):
+        # remove extra
+        encoded_ids = encoded_ids[:-1]
         # filter out padding tokens before decoding
         encoded_ids = [id_ for id_ in encoded_ids.tolist() if id_ != self.padding_token]
         return self.tokenizer.decode(encoded_ids)
+
+
 
     # utilities to reset the environment -------------------------------------------------------------------------------
 
