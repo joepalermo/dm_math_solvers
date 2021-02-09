@@ -62,7 +62,7 @@ def log_to_text_file(string):
 
 
 added_to_replay_buffer = 0
-batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
+batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 # assert that one of these is true, otherwise nothing will happen
 assert (batch_i >= hparams.train.num_batches_until_fill_buffer) or \
        (len(replay_buffer) >= hparams.train.min_saved_steps_until_training)
@@ -72,7 +72,9 @@ for epoch_i in range(hparams.train.num_epochs):
 
     # fill buffer -----------
     print(f'fresh replay buffer: {round(added_to_replay_buffer / len(replay_buffer) * 100, 2)}%')
-    if batch_i >= hparams.train.num_batches_until_fill_buffer:
+    if batch_i >= hparams.train.num_batches_until_fill_buffer and \
+            batch_i - last_fill_buffer_batch_i > hparams.train.batches_per_fill_buffer:
+        last_fill_buffer_batch_i = batch_i
         latest_buffer = fill_buffer(network, envs, trajectory_statistics,
                                     hparams.train.model_exploration_trajectory_cache_filepath)
         latest_buffer = np.array(flatten(latest_buffer))
@@ -116,7 +118,7 @@ for epoch_i in range(hparams.train.num_epochs):
         log_to_text_file(f'batch #{batch_i}')
         log_to_text_file(batch_string)
 
-        #Sample indices for computing td error
+        # sample indices for computing td error
         sampled_idxs = np.random.choice(np.arange(len(replay_buffer)),
                                         size=hparams.train.n_batch_td_error*hparams.train.sample_td_error_batch_size)
 
