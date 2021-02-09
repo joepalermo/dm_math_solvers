@@ -1,6 +1,6 @@
 from hparams import HParams
-hparams = HParams('.', hparams_filename='hparams', name='rl_math')
-# hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+# hparams = HParams('.', hparams_filename='hparams', name='rl_math')
+hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -42,10 +42,6 @@ replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buf
 
 added_to_replay_buffer = 0
 batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
-# assert that one of these is true, otherwise nothing will happen
-assert (batch_i >= hparams.train.num_batches_until_fill_buffer) or \
-       (len(replay_buffer) >= hparams.train.min_saved_steps_until_training)
-
 for epoch_i in range(hparams.train.num_epochs):
     print(f'epoch #{epoch_i}')
 
@@ -98,7 +94,7 @@ for epoch_i in range(hparams.train.num_epochs):
         added_to_replay_buffer += len(latest_buffer)
         fill_buffer_idxs = np.arange(len(replay_buffer)-len(latest_buffer), len(replay_buffer))
     else:
-        fill_buffer_idxs = np.array([])  # otherwise there are no indices corresponding to fresh experience
+        fill_buffer_idxs = np.array([], dtype=np.int64)  # otherwise there are no indices corresponding to fresh experience
 
     # update replay priority -----------
 
