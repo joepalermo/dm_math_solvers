@@ -2,23 +2,23 @@ from hparams import HParams
 hparams = HParams('.', hparams_filename='hparams', name='rl_math')
 # hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
-import random
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache
+from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, extract_strings_from_batches, \
+    log_to_text_file
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
     fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from utils import flatten
 import os
-from modelling.cache_utils import extract_trajectory_cache
 
 # basic setup and checks
 torch.manual_seed(hparams.run.seed)
 np.random.seed(seed=hparams.run.seed)
 device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 writer = SummaryWriter(log_dir=get_logdir())
+logging_filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
 
 # initialize all environments
 envs = init_envs(hparams.env)
@@ -39,27 +39,6 @@ replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
 # training loop --------------------------------------------------------------------------------------------------------
-
-
-def extract_strings_from_batches(batches, env):
-    strings = []
-    for batch in batches:
-        state_batch, action_batch = batch
-        for state, action in zip(state_batch, action_batch):
-            decoded_state = env.decode(state)
-            strings.append(f'{decoded_state}, action: {action}')
-    return "\n".join(strings)
-
-
-def log_to_text_file(string):
-    filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
-    if os.path.isfile(filepath):
-        mode = 'a'
-    else:
-        mode = 'w'
-    with open(filepath, mode) as f:
-        f.write(string + '\n')
-
 
 added_to_replay_buffer = 0
 batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
@@ -115,8 +94,8 @@ for epoch_i in range(hparams.train.num_epochs):
             batch_i, _, batches = train(network, None, data_loader, writer, batch_i)
         # logging
         batch_string = extract_strings_from_batches(batches, envs[0])
-        log_to_text_file(f'batch #{batch_i}')
-        log_to_text_file(batch_string)
+        log_to_text_file(f'batch #{batch_i}', logging_filepath)
+        log_to_text_file(batch_string, logging_filepath)
 
         # sample indices for computing td error
         sampled_idxs = np.random.choice(np.arange(len(replay_buffer)),
@@ -141,5 +120,5 @@ for epoch_i in range(hparams.train.num_epochs):
         if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
             last_eval_batch_i = batch_i
             mean_val_reward = run_eval(network, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
-            log_to_text_file(f'mean val reward: {mean_val_reward}')
+            log_to_text_file(f'mean val reward: {mean_val_reward}', logging_filepath)
 

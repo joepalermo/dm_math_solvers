@@ -1,3 +1,4 @@
+import os
 import pprint
 import random
 from sqlitedict import SqliteDict
@@ -101,3 +102,22 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
         print(f"{module_difficulty} samples:")
         for trajectory in sampled_trajectories:
             print(f"\t{decoder(trajectory[-1][3])}; reward: {trajectory[-1][2]}")
+
+
+def extract_strings_from_batches(batches, env):
+    strings = []
+    for batch in batches:
+        state_batch, action_batch = batch
+        for state, action in zip(state_batch, action_batch):
+            decoded_state = env.decode(state)
+            strings.append(f'{decoded_state}, action: {action}')
+    return "\n".join(strings)
+
+
+def log_to_text_file(string, logging_filepath):
+    if os.path.isfile(logging_filepath):
+        mode = 'a'
+    else:
+        mode = 'w'
+    with open(logging_filepath, mode) as f:
+        f.write(string + '\n')
