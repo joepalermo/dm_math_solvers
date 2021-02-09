@@ -75,8 +75,7 @@ for epoch_i in range(hparams.train.num_epochs):
     if batch_i >= hparams.train.num_batches_until_fill_buffer and \
             batch_i - last_fill_buffer_batch_i > hparams.train.batches_per_fill_buffer:
         last_fill_buffer_batch_i = batch_i
-        latest_buffer = fill_buffer(network, envs, trajectory_statistics,
-                                    hparams.train.model_exploration_trajectory_cache_filepath)
+        latest_buffer = fill_buffer(None, envs, trajectory_statistics, None)
         latest_buffer = np.array(flatten(latest_buffer))
         latest_replay_priority = np.ones(len(latest_buffer)) * hparams.train.default_replay_buffer_priority
         # add fresh experience to replay buffer
@@ -114,8 +113,8 @@ for epoch_i in range(hparams.train.num_epochs):
     # drop lowest priority samples -----------
     if len(fill_buffer_idxs) > 0:
         lowest_priority_indices = np.argsort(replay_priority)[:len(fill_buffer_idxs)]
-        replay_buffer = np.delete(replay_buffer, lowest_priority_indices)
-        replay_priority = np.delete(replay_priority, lowest_priority_indices)
+        replay_buffer = np.delete(replay_buffer, lowest_priority_indices, axis=0)
+        replay_priority = np.delete(replay_priority, lowest_priority_indices, axis=0)
 
     # update target network -----------
     if batch_i >= hparams.train.batches_until_target_network and \
