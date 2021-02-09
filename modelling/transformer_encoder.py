@@ -1,8 +1,9 @@
 import math
 import torch
-from torch.nn import TransformerEncoder, TransformerEncoderLayer, Softmax
+from torch.nn import TransformerEncoder, TransformerEncoderLayer, Softmax, LSTM
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
+
 
 class PositionalEncoding(torch.nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
@@ -24,8 +25,22 @@ class PositionalEncoding(torch.nn.Module):
         return self.dropout(x)
 
 
+class DenseBlock(torch.nn.Module):
+    def __init__(self, dim_in, dim_out):
+        super(DenseBlock, self).__init__()
+        self.dropout = torch.nn.Dropout(hparams.train.dropout)
+        self.dense = torch.nn.Linear(dim_in, dim_out)
+        self.relu = torch.nn.ReLU()
+
+    def forward(self, x):
+        x = self.dropout(x)
+        x = self.dense(x)
+        x = self.relu(x)
+        return x
+
+
 class TransformerEncoderModel(torch.nn.Module):
-    def __init__(self, ntoken, num_outputs, device):
+    def __init__(self, ntoken, num_outputs, max_num_nodes, device):
         super().__init__()
         torch.nn.Module.__init__(self)
         self.max_grad_norm = hparams.train.max_grad_norm
@@ -33,38 +48,62 @@ class TransformerEncoderModel(torch.nn.Module):
         self.epsilon = hparams.train.epsilon
         # ntoken is vocab_size + 1 and vocab_size is index of padding_token, thus need to decrement ntoken by 1
         self.padding_token = ntoken - 1
-        # define layers
+
+        # define tunable layers -------------------
         self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
-        self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
+        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.dense1 = torch.nn.Linear(hparams.model.nhid, hparams.model.nhid)
-        self.dropout1 = torch.nn.Dropout(hparams.train.dropout)
-        self.dense2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
-        # set other things
+        self.lstm_block = LSTM(input_size=hparams.model.action_embedding_size, hidden_size=hparams.model.lstm_hidden_size,
+                               num_layers=hparams.model.lstm_nlayers, batch_first=True, dropout=hparams.train.dropout)
+        self.dense_block_1 = DenseBlock(hparams.model.nhid + hparams.model.lstm_hidden_size, hparams.model.nhid)
+        self.dense_2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
+
+        # define non-tunable layers -------------------
+        self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
+        self.dropout = torch.nn.Dropout(hparams.train.dropout)
+        self.relu = torch.nn.ReLU()
+
+        # other
         self.device = device
         self.to(device)
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr)
-        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1.0, gamma=1)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=hparams.train.factor, patience=hparams.train.patience,
-                                                               threshold=0.001, threshold_mode='rel', cooldown=0,
-                                                               min_lr=hparams.train.min_lr, eps=1e-08, verbose=False)
 
-    def forward(self, token_idxs):
+        # set optimization
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr, weight_decay=hparams.model.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max',
+                                                                    factor=hparams.train.factor,
+                                                                    patience=hparams.train.patience, threshold=0.001,
+                                                                    threshold_mode='rel', cooldown=0,
+                                                                    min_lr=hparams.train.min_lr, eps=1e-08,
+                                                                    verbose=False)
+        # self.scheduler = torch.optim.lr_scheduler.OneCycleLR(self.optimizer, max_lr=hparams.train.max_lr,
+        #                                                      total_steps=hparams.train.total_steps,
+        #                                                      final_div_factor=hparams.train.final_div_factor)
+
+    def forward(self, question_tokens, action_tokens):
+        # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)
+        # question model --------------
         # embed the tokens
-        embedding = self.token_embedding(token_idxs)
+        embedding = self.token_embedding(question_tokens)
         # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
         embedding = embedding.permute((1, 0, 2))
         # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
-        padding_mask = torch.where(token_idxs == self.padding_token, 1, 0).type(torch.BoolTensor).to(self.device)
+        padding_mask = torch.where(question_tokens == self.padding_token, 1, 0).type(torch.BoolTensor).to(self.device)
         # apply the transformer encoder
         # encoding = self.transformer_encoder(embedding_with_pos)
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
-        sliced_encoding = encoding[0]
-        output = self.dense1(sliced_encoding)
-        output = self.dropout1(output)
-        output = self.dense2(output)
+        question_encoding = encoding[0]
+        # action model --------------
+        # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
+        action_embedding = self.action_embedding(action_tokens)
+        # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
+        lstm_output, _ = self.lstm_block(action_embedding)
+        action_encoding = lstm_output[:,-1,:]
+        # output model --------------
+        question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
+        output = self.dense_block_1(question_and_actions)
+        output = self.dense_2(self.dropout(output))
         return output

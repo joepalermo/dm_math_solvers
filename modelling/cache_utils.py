@@ -5,12 +5,16 @@ from utils import flatten
 import numpy as np
 
 
-def align_trajectory(raw_trajectory):
+def align_trajectory(raw_trajectory, max_num_actions):
+    def pad_actions(actions, max_num_actions):
+        actions.extend([max_num_actions for _ in range(max_num_actions - len(actions))])
+        return actions
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
+    actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
-    aligned_trajectory = [(state, action, reward, next_state, done)
-                         for state, (next_state, action, reward, done)
-                         in zip(states, everything_else)]
+    aligned_trajectory = [(state, action, reward, next_state, pad_actions(prev_actions, max_num_actions), done)
+                         for state, prev_actions, (next_state, action, reward, done)
+                         in zip(states, actions_up_to_step, everything_else)]
     return aligned_trajectory
 
 
@@ -62,6 +66,12 @@ def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
     except:
         print(f"reading trajectory cache at {trajectory_cache_filepath} failed; trajectory cache may not exist.")
     return all_trajectories
+
+
+def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size):
+    replay_buffer = flatten(extract_trajectory_cache(trajectory_cache_filepath))
+    random.shuffle(replay_buffer)
+    return np.array(replay_buffer[:replay_buffer_size])
 
 
 def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):

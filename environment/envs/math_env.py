@@ -102,8 +102,6 @@ class MathEnv(gym.Env):
         # get reward
         if done and str(output) == self.answer:
             reward = 1
-        elif done:
-            reward = -1
         else:
             reward = 0
         info = {"raw_observation": raw_observation}
