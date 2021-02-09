@@ -256,6 +256,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                         negative_condition(buffer_positives, buffer_negatives, reward) or \
                         hparams.train.fill_buffer_mode == 'anything':
 <<<<<<< HEAD
+<<<<<<< HEAD
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'],
                                                           action_start_token=envs[env_i].num_actions,
                                                           action_padding_token=envs[env_i].num_actions+1,
@@ -265,6 +266,12 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
 =======
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].num_actions)
 >>>>>>> setup simple question
+||||||| constructed merge base
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].num_actions)
+=======
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].num_actions,
+                                                          envs[env_i].max_num_nodes)
+>>>>>>> fix some bugs
                     if trajectory_cache_filepath is not None:
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
                     trajectory_buffer.append(aligned_trajectory)

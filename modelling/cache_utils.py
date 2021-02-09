@@ -9,6 +9,7 @@ import numpy as np
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def align_trajectory(raw_trajectory, action_start_token, action_padding_token, max_num_nodes):
     def pad_actions(actions, action_start_token, action_padding_token, max_num_nodes):
         actions.insert(0, action_start_token)
@@ -22,10 +23,20 @@ def align_trajectory(raw_trajectory, num_actions):
     def pad_actions(actions, num_actions):
         actions.extend([num_actions for _ in range(num_actions - len(actions))])
 >>>>>>> setup simple question
+||||||| constructed merge base
+def align_trajectory(raw_trajectory, num_actions):
+    def pad_actions(actions, num_actions):
+        actions.extend([num_actions for _ in range(num_actions - len(actions))])
+=======
+def align_trajectory(raw_trajectory, num_actions, max_num_nodes):
+    def pad_actions(actions, num_actions, max_num_nodes):
+        actions.extend([num_actions for _ in range(max_num_nodes - len(actions))])
+>>>>>>> fix some bugs
         return actions
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
     actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
+<<<<<<< HEAD
 <<<<<<< HEAD
     aligned_trajectory = [(state, action, reward, next_state,
                            pad_actions(prev_actions, action_start_token, action_padding_token, max_num_nodes), done)
@@ -34,6 +45,12 @@ def align_trajectory(raw_trajectory, num_actions):
 =======
     aligned_trajectory = [(state, action, reward, next_state, pad_actions(prev_actions, num_actions), done)
 >>>>>>> setup simple question
+||||||| constructed merge base
+    aligned_trajectory = [(state, action, reward, next_state, pad_actions(prev_actions, num_actions), done)
+=======
+    aligned_trajectory = [(state, action, reward, next_state, pad_actions(prev_actions, num_actions, max_num_nodes),
+                           done)
+>>>>>>> fix some bugs
                          for state, prev_actions, (next_state, action, reward, done)
                          in zip(states, actions_up_to_step, everything_else)]
     return aligned_trajectory
@@ -123,6 +140,7 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
         for trajectory in sampled_trajectories:
 <<<<<<< HEAD
             print(f"\t{decoder(trajectory[-1][3])}; actions: {trajectory[-1][4]}, reward: {trajectory[-1][2]}")
+<<<<<<< HEAD
         print(f'{module_difficulty}')
         print(f'# trajectories: {len(all_trajectories[module_difficulty])}')
         print(f'# steps: {len(flatten(all_trajectories[module_difficulty]))}')
@@ -131,6 +149,12 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
 =======
             print(f"\t{decoder(trajectory[-1][3])}; actions: {trajectory[-1][4]}, reward: {trajectory[-1][2]}")
 >>>>>>> setup simple question
+||||||| constructed merge base
+=======
+        print(f'{module_difficulty}')
+        print(f'# trajectories: {len(all_trajectories[module_difficulty])}')
+        print(f'# steps: {len(flatten(all_trajectories[module_difficulty]))}')
+>>>>>>> fix some bugs
 
 
 def extract_strings_from_batches(batches, env):

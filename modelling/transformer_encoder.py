@@ -58,14 +58,8 @@ class TransformerEncoderModel(torch.nn.Module):
 
         # define tunable layers -------------------
         self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
-<<<<<<< HEAD
         self.action_embedding = torch.nn.Embedding(self.num_action_tokens, hparams.model.action_embedding_size)
-||||||| constructed merge base
-        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
-=======
         self.question_id_embedding = torch.nn.Embedding(4, 32)
-        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
->>>>>>> setup simple question
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
