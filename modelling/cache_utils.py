@@ -1,3 +1,4 @@
+import os
 import pprint
 import random
 from sqlitedict import SqliteDict
@@ -5,14 +6,18 @@ from utils import flatten
 import numpy as np
 
 
-def align_trajectory(raw_trajectory, max_num_actions):
-    def pad_actions(actions, max_num_actions):
-        actions.extend([max_num_actions for _ in range(max_num_actions - len(actions))])
+def align_trajectory(raw_trajectory, action_start_token, action_padding_token, max_num_nodes):
+    def pad_actions(actions, action_start_token, action_padding_token, max_num_nodes):
+        actions.insert(0, action_start_token)
+        # pad up to length max_num_nodes+1 to ensure there is always at least 1 padding token
+        # since padding tokens are used to indicate sequence length
+        actions.extend([action_padding_token for _ in range(max_num_nodes+1 - len(actions))])
         return actions
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
     actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
-    aligned_trajectory = [(state, action, reward, next_state, pad_actions(prev_actions, max_num_actions), done)
+    aligned_trajectory = [(state, action, reward, next_state,
+                           pad_actions(prev_actions, action_start_token, action_padding_token, max_num_nodes), done)
                          for state, prev_actions, (next_state, action, reward, done)
                          in zip(states, actions_up_to_step, everything_else)]
     return aligned_trajectory
@@ -100,4 +105,26 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
             np.random.choice(module_difficulty_trajectories, size=num_to_sample)
         print(f"{module_difficulty} samples:")
         for trajectory in sampled_trajectories:
-            print(f"\t{decoder(trajectory[-1][3])}; reward: {trajectory[-1][2]}")
+            print(f"\t{decoder(trajectory[-1][3])}; actions: {trajectory[-1][4]}, reward: {trajectory[-1][2]}")
+        print(f'{module_difficulty}')
+        print(f'# trajectories: {len(all_trajectories[module_difficulty])}')
+        print(f'# steps: {len(flatten(all_trajectories[module_difficulty]))}')
+
+
+def extract_strings_from_batches(batches, env):
+    strings = []
+    for batch in batches:
+        state_batch, action_batch = batch
+        for state, action in zip(state_batch, action_batch):
+            decoded_state = env.decode(state)
+            strings.append(f'{decoded_state}, action: {action}')
+    return "\n".join(strings)
+
+
+def log_to_text_file(string, filepath):
+    if os.path.isfile(filepath):
+        mode = 'a'
+    else:
+        mode = 'w'
+    with open(filepath, mode) as f:
+        f.write(string + '\n')
