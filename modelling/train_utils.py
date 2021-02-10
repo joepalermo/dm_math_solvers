@@ -52,7 +52,7 @@ def reset_all(envs, trajectory_statistics=None, train=True):
                           'module_difficulty_index': env.module_difficulty_index})
         obs_batch.append(np.expand_dims(obs, 0))
         # prev_action_batch is initialized to contain only the padding action
-        prev_actions_batch.append(np.expand_dims([env.num_actions for _ in range(env.max_num_nodes)], 0))
+        prev_actions_batch.append(np.expand_dims([env.num_actions+1 for _ in range(env.max_num_nodes)], 0))
     obs_batch = np.concatenate(obs_batch)
     prev_actions_batch = np.concatenate(prev_actions_batch)
     return obs_batch, prev_actions_batch, envs_info
@@ -200,8 +200,8 @@ class StepDataset(torch.utils.data.Dataset):
         return state, action, reward, next_state, prev_actions, done
 
 
-def update_prev_actions(prev_actions_batch, action_batch, padding_action):
-    last_padding_index = np.array([np.where(prev_actions_batch[i] == padding_action)[0].min()
+def update_prev_actions(prev_actions_batch, action_batch, action_padding_token):
+    last_padding_index = np.array([np.where(prev_actions_batch[i] == action_padding_token)[0].min()
                             for i in range(len(prev_actions_batch))])
     prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
     return prev_actions_batch
@@ -233,7 +233,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
             action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
-                                                 padding_action=envs[0].num_actions)
+                                                 action_padding_token=envs[0].num_actions+1)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             # cache the latest step from each environment
@@ -315,7 +315,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
             action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network, eval=True)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
-                                                 padding_action=envs[0].num_actions)
+                                                 action_padding_token=envs[0].num_actions+1)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
@@ -336,7 +336,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
                 n_completed_validation_episodes += 1
                 # reset environment
                 obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
-                prev_actions_batch[env_i] = np.array([envs[env_i].max_actions
+                prev_actions_batch[env_i] = np.array([envs[env_i].num_actions+1
                                                       for _ in range(envs[env_i].max_num_nodes)])
         if n_completed_validation_episodes > n_required_validation_episodes:
             break
