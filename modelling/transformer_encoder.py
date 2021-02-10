@@ -47,7 +47,9 @@ class TransformerEncoderModel(torch.nn.Module):
         torch.nn.Module.__init__(self)
         self.ntoken = ntoken
         self.num_outputs = num_outputs
-        self.action_padding_token = num_outputs
+        # note: action_start_token gets id num_outputs (hence +1 for action_padding_token)
+        self.action_padding_token = num_outputs + 1
+        self.num_action_tokens = num_outputs + 2  # each output has one id, so the +2 is for start and padding tokens
         self.max_grad_norm = hparams.train.max_grad_norm
         self.batch_size = hparams.train.batch_size
         self.epsilon = hparams.train.epsilon
@@ -56,7 +58,7 @@ class TransformerEncoderModel(torch.nn.Module):
 
         # define tunable layers -------------------
         self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
-        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
+        self.action_embedding = torch.nn.Embedding(self.num_action_tokens, hparams.model.action_embedding_size)
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )

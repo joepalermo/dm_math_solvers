@@ -255,8 +255,10 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 if positive_condition(buffer_positives, buffer_negatives, reward) or \
                         negative_condition(buffer_positives, buffer_negatives, reward) or \
                         hparams.train.fill_buffer_mode == 'anything':
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].num_actions,
-                                                          envs[env_i].max_num_nodes)
+                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'],
+                                                          action_start_token=envs[env_i].num_actions,
+                                                          action_padding_token=envs[env_i].num_actions+1,
+                                                          max_num_nodes=envs[env_i].max_num_nodes)
                     if trajectory_cache_filepath is not None:
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
                     trajectory_buffer.append(aligned_trajectory)
