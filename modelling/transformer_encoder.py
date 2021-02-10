@@ -46,8 +46,6 @@ class TransformerEncoderModel(torch.nn.Module):
         self.ntoken = ntoken
         self.num_outputs = num_outputs
         self.action_padding_token = num_outputs
-        self.device = device
-        self.to(device)
 
         self.max_grad_norm = hparams.train.max_grad_norm
         self.batch_size = hparams.train.batch_size
@@ -70,6 +68,10 @@ class TransformerEncoderModel(torch.nn.Module):
         self.pos_encoder = PositionalEncoding(hparams.model.nhid, hparams.train.dropout)
         self.dropout = torch.nn.Dropout(hparams.train.dropout)
         self.relu = torch.nn.ReLU()
+
+        # other
+        self.device = device
+        self.to(device)
 
         # set optimization
         self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr, weight_decay=hparams.model.weight_decay)
