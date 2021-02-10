@@ -255,23 +255,10 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 if positive_condition(buffer_positives, buffer_negatives, reward) or \
                         negative_condition(buffer_positives, buffer_negatives, reward) or \
                         hparams.train.fill_buffer_mode == 'anything':
-<<<<<<< HEAD
-<<<<<<< HEAD
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'],
                                                           action_start_token=envs[env_i].num_actions,
                                                           action_padding_token=envs[env_i].num_actions+1,
                                                           max_num_nodes=envs[env_i].max_num_nodes)
-||||||| constructed merge base
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].max_num_nodes)
-=======
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].num_actions)
->>>>>>> setup simple question
-||||||| constructed merge base
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].num_actions)
-=======
-                    aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'], envs[env_i].num_actions,
-                                                          envs[env_i].max_num_nodes)
->>>>>>> fix some bugs
                     if trajectory_cache_filepath is not None:
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
                     trajectory_buffer.append(aligned_trajectory)
@@ -287,13 +274,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)
-<<<<<<< HEAD
-                prev_actions_batch[env_i] = np.array([envs[env_i].max_actions
-||||||| constructed merge base
-                prev_actions_batch[env_i] = np.array([envs[env_i].max_num_nodes
-=======
                 prev_actions_batch[env_i] = np.array([envs[env_i].num_actions
->>>>>>> setup simple question
                                                       for _ in range(envs[env_i].max_num_nodes)])
                 # # append first state of trajectory after reset
                 # info_dict = {'raw_observation': envs_info[env_i]['question']}
@@ -355,13 +336,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
                 n_completed_validation_episodes += 1
                 # reset environment
                 obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
-<<<<<<< HEAD
-                prev_actions_batch[env_i] = np.array([envs[env_i].max_actions
-||||||| constructed merge base
-                prev_actions_batch[env_i] = np.array([envs[env_i].max_num_nodes
-=======
                 prev_actions_batch[env_i] = np.array([envs[env_i].num_actions
->>>>>>> setup simple question
                                                       for _ in range(envs[env_i].max_num_nodes)])
         if n_completed_validation_episodes > n_required_validation_episodes:
             break
