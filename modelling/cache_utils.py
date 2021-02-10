@@ -121,10 +121,10 @@ def extract_strings_from_batches(batches, env):
     return "\n".join(strings)
 
 
-def log_to_text_file(string, filepath):
-    if os.path.isfile(filepath):
+def log_to_text_file(string, logging_filepath):
+    if os.path.isfile(logging_filepath):
         mode = 'a'
     else:
         mode = 'w'
-    with open(filepath, mode) as f:
+    with open(logging_filepath, mode) as f:
         f.write(string + '\n')
