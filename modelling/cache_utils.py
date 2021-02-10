@@ -121,8 +121,7 @@ def extract_strings_from_batches(batches, env):
     return "\n".join(strings)
 
 
-def log_to_text_file(string):
-    filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
+def log_to_text_file(string, filepath):
     if os.path.isfile(filepath):
         mode = 'a'
     else:
