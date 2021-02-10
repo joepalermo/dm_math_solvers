@@ -11,8 +11,10 @@ from modelling.train_utils import init_trajectory_data_structures, init_envs, tr
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from utils import flatten
+import os
 
 # basic setup and checks
+logging_filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
 torch.manual_seed(hparams.run.seed)
 np.random.seed(seed=hparams.run.seed)
 device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
@@ -92,8 +94,8 @@ for epoch_i in range(hparams.train.num_epochs):
             batch_i, _, batches = train(network, None, data_loader, writer, batch_i)
         # logging
         batch_string = extract_strings_from_batches(batches, envs[0])
-        log_to_text_file(f'batch #{batch_i}')
-        log_to_text_file(batch_string)
+        log_to_text_file(f'batch #{batch_i}', logging_filepath)
+        log_to_text_file(batch_string, logging_filepath)
 
         # sample indices for computing td error
         sampled_idxs = np.random.choice(np.arange(len(replay_buffer)),
@@ -118,5 +120,5 @@ for epoch_i in range(hparams.train.num_epochs):
         if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
             last_eval_batch_i = batch_i
             mean_val_reward = run_eval(network, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
-            log_to_text_file(f'mean val reward: {mean_val_reward}')
+            log_to_text_file(f'mean val reward: {mean_val_reward}', logging_filepath)
 

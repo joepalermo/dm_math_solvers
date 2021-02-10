@@ -2,8 +2,6 @@ import os
 import pprint
 import random
 from sqlitedict import SqliteDict
-from modelling.train_utils import get_logdir
-from train import hparams
 from utils import flatten
 import numpy as np
 
@@ -11,7 +9,8 @@ import numpy as np
 def align_trajectory(raw_trajectory, action_start_token, action_padding_token, max_num_nodes):
     def pad_actions(actions, action_start_token, action_padding_token, max_num_nodes):
         actions.insert(0, action_start_token)
-        actions.extend([action_padding_token for _ in range(max_num_nodes - len(actions))])
+        # pad up to length max_num_nodes+1
+        actions.extend([action_padding_token for _ in range(max_num_nodes+1 - len(actions))])
         return actions
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
     actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
@@ -121,8 +120,7 @@ def extract_strings_from_batches(batches, env):
     return "\n".join(strings)
 
 
-def log_to_text_file(string):
-    filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
+def log_to_text_file(string, filepath):
     if os.path.isfile(filepath):
         mode = 'a'
     else:
