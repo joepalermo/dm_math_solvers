@@ -2,17 +2,15 @@ from hparams import HParams
 hparams = HParams('.', hparams_filename='hparams', name='rl_math')
 # hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
-import random
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache
+from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, extract_strings_from_batches, \
+    log_to_text_file
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
     fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from utils import flatten
-import os
-from modelling.cache_utils import extract_trajectory_cache
 
 # basic setup and checks
 torch.manual_seed(hparams.run.seed)
@@ -26,7 +24,7 @@ trajectory_statistics = init_trajectory_data_structures(envs[0])
 
 # init models
 ntoken = hparams.env.vocab_size + 1
-num_outputs = len(envs[0].actions)
+num_outputs = envs[0].num_actions
 max_num_nodes = envs[0].max_num_nodes
 network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
 target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
@@ -38,26 +36,6 @@ replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
 # training loop --------------------------------------------------------------------------------------------------------
-
-
-def extract_strings_from_batches(batches, env):
-    strings = []
-    for batch in batches:
-        state_batch, action_batch = batch
-        for state, action in zip(state_batch, action_batch):
-            decoded_state = env.decode(state)
-            strings.append(f'{decoded_state}, action: {action}')
-    return "\n".join(strings)
-
-
-def log_to_text_file(string):
-    filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
-    if os.path.isfile(filepath):
-        mode = 'a'
-    else:
-        mode = 'w'
-    with open(filepath, mode) as f:
-        f.write(string + '\n')
 
 
 added_to_replay_buffer = 0
