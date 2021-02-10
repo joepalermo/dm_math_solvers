@@ -274,7 +274,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)
-                prev_actions_batch[env_i] = np.array([envs[env_i].max_actions
+                prev_actions_batch[env_i] = np.array([envs[env_i].num_actions+1
                                                       for _ in range(envs[env_i].max_num_nodes)])
                 # # append first state of trajectory after reset
                 # info_dict = {'raw_observation': envs_info[env_i]['question']}
