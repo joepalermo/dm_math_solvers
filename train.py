@@ -28,9 +28,8 @@ trajectory_statistics = init_trajectory_data_structures(envs[0])
 ntoken = hparams.env.vocab_size + 1
 num_outputs = len(envs[0].actions)
 max_num_nodes = envs[0].max_num_nodes
-network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes, device=device)
-target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes,
-                                         device=device)
+network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
+target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
 target_network.eval()
 
 # init replay buffer from trajectory cache on disk
