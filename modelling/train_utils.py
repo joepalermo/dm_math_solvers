@@ -39,6 +39,9 @@ def reset_all(envs, trajectory_statistics=None, train=True):
     envs_info = []
     obs_batch = []
     prev_actions_batch = []
+    prev_actions = [envs[0].num_actions]  # action start token
+    prev_actions.extend([envs[0].num_actions + 1 for _ in range(envs[0].max_num_nodes)])  # action padding tokens
+    prev_actions = np.expand_dims(prev_actions, 0)
     for env in envs:
         if trajectory_statistics is not None:
             module_name, difficulty = min(trajectory_statistics, key=trajectory_statistics.get)
@@ -51,8 +54,7 @@ def reset_all(envs, trajectory_statistics=None, train=True):
                           'difficulty': env.difficulty,
                           'module_difficulty_index': env.module_difficulty_index})
         obs_batch.append(np.expand_dims(obs, 0))
-        # prev_action_batch is initialized to contain only the padding action
-        prev_actions_batch.append(np.expand_dims([env.num_actions+1 for _ in range(env.max_num_nodes)], 0))
+        prev_actions_batch.append(prev_actions)
     obs_batch = np.concatenate(obs_batch)
     prev_actions_batch = np.concatenate(prev_actions_batch)
     return obs_batch, prev_actions_batch, envs_info
@@ -274,11 +276,10 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)
-                prev_actions_batch[env_i] = np.array([envs[env_i].num_actions+1
-                                                      for _ in range(envs[env_i].max_num_nodes)])
-                # # append first state of trajectory after reset
-                # info_dict = {'raw_observation': envs_info[env_i]['question']}
-                # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
+                prev_actions = [envs[0].num_actions]  # action start token
+                prev_actions.extend(
+                    [envs[0].num_actions + 1 for _ in range(envs[0].max_num_nodes)])  # action padding tokens
+                prev_actions_batch[env_i] = np.array(prev_actions)
     if trajectory_cache_filepath is not None:
         trajectory_cache.close()
     return trajectory_buffer
@@ -336,8 +337,10 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
                 n_completed_validation_episodes += 1
                 # reset environment
                 obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
-                prev_actions_batch[env_i] = np.array([envs[env_i].num_actions+1
-                                                      for _ in range(envs[env_i].max_num_nodes)])
+                prev_actions = [envs[0].num_actions]  # action start token
+                prev_actions.extend(
+                    [envs[0].num_actions + 1 for _ in range(envs[0].max_num_nodes)])  # action padding tokens
+                prev_actions_batch[env_i] = np.array(prev_actions)
         if n_completed_validation_episodes > n_required_validation_episodes:
             break
     all_modules_reward = 0
