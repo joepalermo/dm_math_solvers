@@ -9,8 +9,9 @@ import numpy as np
 def align_trajectory(raw_trajectory, action_start_token, action_padding_token, max_num_nodes):
     def pad_actions(actions, action_start_token, action_padding_token, max_num_nodes):
         actions.insert(0, action_start_token)
-        # pad up to length max_num_nodes+1
-        actions.extend([action_padding_token for _ in range(max_num_nodes+1 - len(actions))])
+        # pad up to length max_num_nodes since len(actions) <= max_num_nodes-1 (they are previous actions)
+        # and start token adds +1
+        actions.extend([action_padding_token for _ in range(max_num_nodes - len(actions))])
         return actions
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
     actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
