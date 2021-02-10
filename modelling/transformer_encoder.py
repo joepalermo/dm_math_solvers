@@ -1,6 +1,8 @@
 import math
 import torch
 from torch.nn import TransformerEncoder, TransformerEncoderLayer, Softmax, LSTM
+from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pad_packed_sequence
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
 
@@ -46,7 +48,6 @@ class TransformerEncoderModel(torch.nn.Module):
         self.ntoken = ntoken
         self.num_outputs = num_outputs
         self.action_padding_token = num_outputs
-
         self.max_grad_norm = hparams.train.max_grad_norm
         self.batch_size = hparams.train.batch_size
         self.epsilon = hparams.train.epsilon
@@ -101,14 +102,16 @@ class TransformerEncoderModel(torch.nn.Module):
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         question_encoding = encoding[0]
         # action model --------------
-
-        sequence_lens = [torch.where(action_tokens[i] == self.action_padding_token)[0].min()-1
+        sequence_lens = [torch.where(action_tokens[i] == self.action_padding_token)[0].min()
                          for i in range(len(action_tokens))]
         # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
         action_embedding = self.action_embedding(action_tokens)
+        packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,
+                                                       enforce_sorted=False)
         # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
-        lstm_output, _ = self.lstm_block(action_embedding)
-        action_encoding = lstm_output[torch.arange(len(lstm_output)), sequence_lens]
+        packed_lstm_output, _ = self.lstm_block(packed_action_embedding)
+        padded_lstm_output, output_lengths = pad_packed_sequence(packed_lstm_output, batch_first=True)
+        action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths-1]
         # output model --------------
         question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
         output = self.dense_block_1(question_and_actions)
