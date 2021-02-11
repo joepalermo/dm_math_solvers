@@ -147,22 +147,29 @@ def vpg_step(network, state_batch, action_batch, reward_batch):
 
 def dqn_step(network, target_network, batch):
     state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
-    # compute the target
+    # compute the target --------------
     if target_network is None:
-        targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                  torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
+        with torch.no_grad():
+            targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
+                      torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
     else:
         with torch.no_grad():
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
                       torch.max(target_network(next_state_batch, prev_actions_batch), dim=1)[0]
-    network.optimizer.zero_grad()
+    targets = targets.detach()
+    # compute loss --------------
     batch_output = network(state_batch, prev_actions_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
-    td_error = torch.abs(targets - batch_output)
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
+    # gradient descent --------------
+    network.optimizer.zero_grad()
     batch_loss.backward()
-    # grad_norm = torch.nn.utils.clip_grad_norm_(network.parameters(), network.max_grad_norm)
+    torch.nn.utils.clip_grad_norm_(network.parameters(), network.max_grad_norm)
+    # for param in network.parameters():
+    #     param.grad.data.clamp_(-1, 1)
     network.optimizer.step()
+    # also fetch td-error for logging --------------
+    td_error = torch.abs(targets - batch_output)
     return batch_loss, td_error
 
 

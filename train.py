@@ -67,9 +67,9 @@ for epoch_i in range(hparams.train.num_epochs):
         batch_i, td_error_batches, batches = train(network, None, data_loader, writer, batch_i)
 
     # logging
-    log_to_text_file(f'\nbatch #{batch_i}')
+    log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
     batch_string = log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
-    log_to_text_file(f'\nbatch #{batch_i}')
+    log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
     log_q_values(network, envs[0], logging_q_values_filepath)
 
     # fill buffer -----------
