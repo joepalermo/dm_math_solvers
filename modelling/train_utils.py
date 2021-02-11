@@ -3,11 +3,8 @@ import random
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from scipy.special import softmax
 from environment.envs import MathEnv
-from modelling.cache_utils import align_trajectory, cache_trajectory, log_to_text_file
-from utils import flatten
-from collections import Counter
+from modelling.cache_utils import align_trajectory, cache_trajectory
 from hparams import HParams
 
 hparams = HParams.get_hparams_by_name('rl_math')
@@ -405,33 +402,4 @@ def visualize_replay_priority(envs, replay_priority, replay_buffer):
     # plt.show()
     # import time; time.sleep(1000)
 
-
-def log_q_values(network, env, filepath):
-    question_inputs = []
-    action_inputs = []
-    question_action_input_pairs = [(0, []), (1, []), (2, []), (1, [9]), (2, [9]), (2, [9, 9]), (0, [8])]
-    for question_id, action_sequence in question_action_input_pairs:
-        question_inputs.append(torch.Tensor([question_id]).view(1, 1).type(torch.LongTensor))
-        action_inputs_list = [env.num_actions] + action_sequence + \
-                             [env.num_actions + 1] * (env.max_num_nodes - len(action_sequence))
-        action_inputs.append(torch.Tensor(action_inputs_list).view(1,-1).type(torch.LongTensor))
-    question_batch = torch.cat(question_inputs).to(network.device)
-    action_batch = torch.cat(action_inputs).to(network.device)
-    q_values = network(question_batch, action_batch).detach().cpu().numpy()
-    question_values = {0: 'first', 1: 'second', 2: 'third', 3: 'first'}
-    for question, actions, qvs in zip(question_inputs, action_inputs, q_values):
-        # prep question
-        question = question.numpy()[0][0]
-        actions = actions.numpy()[0].tolist()
-        question_string = question_values[question]
-        # prep actions
-        # op_counts = dict(Counter(actions))
-        # prep q-values
-        num_meaningful_qvs = 24
-        qv_tuples = [(i,qv) for i,qv in enumerate(qvs)][:num_meaningful_qvs]
-        sorted_qv_tuples = sorted(qv_tuples, key=lambda x: x[1], reverse=True)
-        qv_string = ', '.join([f'{i}: {qv}'[:9] for (i,qv) in sorted_qv_tuples])
-        # log all values
-        string = f'\nquestion: {question_string}, actions: {actions}\nq-values: {qv_string}'
-        log_to_text_file(string, filepath)
 

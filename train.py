@@ -4,10 +4,10 @@ hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_de
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, extract_strings_from_batches, \
-    log_to_text_file
+from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, log_batches, \
+    log_to_text_file, log_q_values
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
-    fill_buffer, get_td_error, log_q_values
+    fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from utils import flatten
@@ -67,10 +67,9 @@ for epoch_i in range(hparams.train.num_epochs):
         batch_i, td_error_batches, batches = train(network, None, data_loader, writer, batch_i)
 
     # logging
-    batch_string = extract_strings_from_batches(batches, td_error_batches, envs[0])
-    log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
-    log_to_text_file(batch_string, logging_batches_filepath)
-    log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
+    log_to_text_file(f'\nbatch #{batch_i}')
+    batch_string = log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
+    log_to_text_file(f'\nbatch #{batch_i}')
     log_q_values(network, envs[0], logging_q_values_filepath)
 
     # fill buffer -----------
