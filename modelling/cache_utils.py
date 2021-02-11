@@ -111,13 +111,13 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
         print(f'# steps: {len(flatten(all_trajectories[module_difficulty]))}')
 
 
-def extract_strings_from_batches(batches, env):
+def extract_strings_from_batches(batches, td_error_batches, env):
     strings = []
-    for batch in batches:
-        state_batch, action_batch = batch
-        for state, action in zip(state_batch, action_batch):
+    for batch, td_error_batch in zip(batches, td_error_batches):
+        state_batch, action_batch, reward_batch, _, _, _ = batch
+        for state, action, reward, td_error in zip(state_batch, action_batch, reward_batch, td_error_batch):
             decoded_state = env.decode(state)
-            strings.append(f'{decoded_state}, action: {action}')
+            strings.append(f'{decoded_state}, action: {action}, reward: {reward}, td_error: {td_error}')
     return "\n".join(strings)
 
 

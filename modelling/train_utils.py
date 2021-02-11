@@ -5,9 +5,11 @@ import torch
 from torch.utils.data import DataLoader
 from scipy.special import softmax
 from environment.envs import MathEnv
-from modelling.cache_utils import align_trajectory, cache_trajectory
+from modelling.cache_utils import align_trajectory, cache_trajectory, log_to_text_file
 from utils import flatten
+from collections import Counter
 from hparams import HParams
+
 hparams = HParams.get_hparams_by_name('rl_math')
 from sqlitedict import SqliteDict
 
@@ -81,7 +83,7 @@ def get_action_batch(obs_batch, prev_actions_batch, envs, network=None, eval=Fal
         output_batch = network(obs_batch, prev_actions_batch).detach().cpu().numpy()
         model_type = hparams.model.model_type
     else:
-        output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
+        output_batch = np.random.uniform(size=(len(obs_batch), len(envs[0].actions)))
         model_type = 'policy'
     actions = []
     for i, env in enumerate(envs):
@@ -158,7 +160,7 @@ def dqn_step(network, target_network, batch):
                       torch.max(target_network(next_state_batch, prev_actions_batch), dim=1)[0]
     network.optimizer.zero_grad()
     batch_output = network(state_batch, prev_actions_batch)
-    batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
+    batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
     td_error = torch.abs(targets - batch_output)
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
     batch_loss.backward()
@@ -166,9 +168,11 @@ def dqn_step(network, target_network, batch):
     network.optimizer.step()
     return batch_loss, td_error
 
+
 def get_td_error(network, sampled_steps):
     step_dataset = StepDataset(sampled_steps, network.device)
-    data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False, drop_last=True)
+    data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False,
+                             drop_last=True)
     td_error_list = list()
     for batch in data_loader:
         with torch.no_grad():
@@ -205,7 +209,7 @@ class StepDataset(torch.utils.data.Dataset):
 
 def update_prev_actions(prev_actions_batch, action_batch, padding_action):
     last_padding_index = np.array([np.where(prev_actions_batch[i] == padding_action)[0].min()
-                            for i in range(len(prev_actions_batch))])
+                                   for i in range(len(prev_actions_batch))])
     prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
     return prev_actions_batch
 
@@ -236,7 +240,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
             action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
-                                                 padding_action=envs[0].num_actions+1)
+                                                 padding_action=envs[0].num_actions + 1)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             # cache the latest step from each environment
@@ -248,19 +252,21 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 def positive_condition(buffer_positives, buffer_negatives, reward):
                     return (hparams.train.fill_buffer_mode == 'positive_only' and reward == 1) or \
                            (hparams.train.fill_buffer_mode == 'balanced' and \
-                                buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
-                                reward == 1)
+                            buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
+                            reward == 1)
+
                 def negative_condition(buffer_positives, buffer_negatives, reward):
                     return hparams.train.fill_buffer_mode == 'balanced' and \
-                        buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
-                        reward == 0
+                           buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
+                           reward == 0
+
                 # check if conditions to cache the trajectory are met
                 if positive_condition(buffer_positives, buffer_negatives, reward) or \
                         negative_condition(buffer_positives, buffer_negatives, reward) or \
                         hparams.train.fill_buffer_mode == 'anything':
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'],
                                                           action_start_token=envs[env_i].num_actions,
-                                                          action_padding_token=envs[env_i].num_actions+1,
+                                                          action_padding_token=envs[env_i].num_actions + 1,
                                                           max_num_nodes=envs[env_i].max_num_nodes)
                     if trajectory_cache_filepath is not None:
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
@@ -299,13 +305,12 @@ def train(network, target_network, data_loader, writer, current_batch_i):
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
-        td_errors.append(td_error)
         losses.append(float(batch_loss.detach().cpu().numpy()))
-        batches.append(batch[:2])
-    td_error = torch.cat(td_errors)
+        td_errors.append(td_error.detach().cpu().numpy())
+        batches.append(batch)
     mean_batch_loss = np.array(losses).mean()
     print(f'mean_batch_loss: {mean_batch_loss}')
-    return current_batch_i, td_error, batches
+    return current_batch_i, td_errors, batches
 
 
 def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
@@ -320,7 +325,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
             action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network, eval=True)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
-                                                 padding_action=envs[0].num_actions+1)
+                                                 padding_action=envs[0].num_actions + 1)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
@@ -399,4 +404,34 @@ def visualize_replay_priority(envs, replay_priority, replay_buffer):
     # sns.histplot(replay_priority)
     # plt.show()
     # import time; time.sleep(1000)
+
+
+def log_q_values(network, env, filepath):
+    question_inputs = []
+    action_inputs = []
+    question_action_input_pairs = [(0, []), (1, []), (2, []), (1, [9]), (2, [9]), (2, [9, 9]), (0, [8])]
+    for question_id, action_sequence in question_action_input_pairs:
+        question_inputs.append(torch.Tensor([question_id]).view(1, 1).type(torch.LongTensor))
+        action_inputs_list = [env.num_actions] + action_sequence + \
+                             [env.num_actions + 1] * (env.max_num_nodes - len(action_sequence))
+        action_inputs.append(torch.Tensor(action_inputs_list).view(1,-1).type(torch.LongTensor))
+    question_batch = torch.cat(question_inputs).to(network.device)
+    action_batch = torch.cat(action_inputs).to(network.device)
+    q_values = network(question_batch, action_batch).detach().cpu().numpy()
+    question_values = {0: 'first', 1: 'second', 2: 'third', 3: 'first'}
+    for question, actions, qvs in zip(question_inputs, action_inputs, q_values):
+        # prep question
+        question = question.numpy()[0][0]
+        actions = actions.numpy()[0].tolist()
+        question_string = question_values[question]
+        # prep actions
+        # op_counts = dict(Counter(actions))
+        # prep q-values
+        num_meaningful_qvs = 24
+        qv_tuples = [(i,qv) for i,qv in enumerate(qvs)][:num_meaningful_qvs]
+        sorted_qv_tuples = sorted(qv_tuples, key=lambda x: x[1], reverse=True)
+        qv_string = ', '.join([f'{i}: {qv}'[:9] for (i,qv) in sorted_qv_tuples])
+        # log all values
+        string = f'\nquestion: {question_string}, actions: {actions}\nq-values: {qv_string}'
+        log_to_text_file(string, filepath)
 
