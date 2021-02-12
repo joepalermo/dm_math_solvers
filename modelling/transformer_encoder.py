@@ -77,7 +77,8 @@ class TransformerEncoderModel(torch.nn.Module):
         self.to(device)
 
         # set optimization
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr, weight_decay=hparams.train.weight_decay)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=hparams.train.lr,
+                                          weight_decay=hparams.train.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max',
                                                                     factor=hparams.train.factor,
                                                                     patience=hparams.train.patience, threshold=0.001,
@@ -104,8 +105,8 @@ class TransformerEncoderModel(torch.nn.Module):
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         question_encoding = encoding[0]
         # action model --------------
-        sequence_lens = [torch.where(action_tokens[i] == self.action_padding_token)[0].min()
-                         for i in range(len(action_tokens))]
+        sequence_lens = action_tokens.shape[1] - torch.sum(action_tokens == self.action_padding_token, axis=1)
+        sequence_lens = sequence_lens.detach().cpu()
         # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
         action_embedding = self.action_embedding(action_tokens)
         packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,
@@ -113,7 +114,7 @@ class TransformerEncoderModel(torch.nn.Module):
         # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
         packed_lstm_output, _ = self.lstm_block(packed_action_embedding)
         padded_lstm_output, output_lengths = pad_packed_sequence(packed_lstm_output, batch_first=True)
-        action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths-1]
+        action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths - 1]
         # output model --------------
         question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
         output = self.dense_block_1(question_and_actions)
