@@ -11,6 +11,8 @@ torch.manual_seed(42)
 np.random.seed(seed=42)
 device = torch.device(f'cuda:0' if torch.cuda.is_available() else 'cpu')
 
+# define dataset ------------------------------
+
 num_cases = 5
 num_safe_distractors = 5
 num_kill_distractors = 5
@@ -42,6 +44,8 @@ val_dataset = Dataset(val_case_inputs, val_sequence_inputs, val_targets)
 train_data_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, drop_last=True)
 val_data_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, drop_last=True)
 
+# define models ------------------------------
+
 rnn_config = {'num_cases': num_cases,
           'action_padding_token': num_distractors + 2,
           'num_action_tokens': num_distractors + 3,
@@ -63,26 +67,12 @@ transformer_config = {'num_cases': num_cases,
 model = RNN(rnn_config, device)
 # model = Transformer(transformer_config, device)
 
-# learn via SL ---------------------------------------------------------------------------------------------
+# learn via SL ------------------------------
 # criterion = torch.nn.CrossEntropyLoss()
 criterion = torch.nn.MSELoss()
 total_batches = 0
 
-# one val to start with
-val_scores = []
-for batch in val_data_loader:
-    # unpack batch
-    case_inputs = batch[0].to(model.device)
-    sequence_inputs = batch[1].to(model.device)
-    targets = batch[2].to(model.device)
-    # validation
-    val_output = model(case_inputs, sequence_inputs)
-    val_output = val_output.detach().cpu().numpy()
-    val_targets = targets.detach().cpu().numpy()
-    val_score = mean_absolute_error(val_targets, val_output)
-    val_scores.append(val_score)
-print(f'val MAE: ', np.array(val_scores).mean())
-
+# training loop
 for epoch in range(5):
     for batch in train_data_loader:
         # unpack batch
@@ -99,6 +89,7 @@ for epoch in range(5):
         total_batches += 1
         if total_batches % 10 == 0:
             print(f'train_loss @ step #{total_batches}', loss.item())
+            # validation
             val_scores = list()
             for batch in val_data_loader:
                 # unpack batch
@@ -113,7 +104,7 @@ for epoch in range(5):
                 val_scores.append(val_score)
             print(f'val MAE: ', np.array(val_scores).mean())
 
-
+# visualize final val performance
 for batch in val_data_loader:
     # unpack batch
     case_inputs = batch[0].to(model.device)
