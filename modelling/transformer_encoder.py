@@ -96,8 +96,8 @@ class TransformerEncoderModel(torch.nn.Module):
         question_id = question_tokens[:, -1]
         question_encoding = self.question_id_embedding(question_id)
         # action model --------------
-        sequence_lens = [torch.where(action_tokens[i] == self.action_padding_token)[0].min()
-                         for i in range(len(action_tokens))]
+        sequence_lens = action_tokens.shape[1] - torch.sum(action_tokens == self.action_padding_token, axis=1)
+        sequence_lens = sequence_lens.detach().cpu()
         # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
         action_embedding = self.action_embedding(action_tokens)
         packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,

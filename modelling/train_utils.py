@@ -148,14 +148,19 @@ def vpg_step(network, state_batch, action_batch, reward_batch):
 def dqn_step(network, target_network, batch):
     state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
     # compute the target --------------
-    if target_network is None:
-        with torch.no_grad():
+    with torch.no_grad():
+        # compute next_prev_actions_batch
+        next_prev_actions_batch = prev_actions_batch.clone()
+        action_padding_token = network.num_outputs + 1
+        last_padding_index = [torch.where(prev_actions_batch[i] == action_padding_token)[0].min()
+                              for i in range(len(prev_actions_batch))]
+        next_prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
+        if target_network is None:
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                      torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
-    else:
-        with torch.no_grad():
+                      torch.max(network(next_state_batch, next_prev_actions_batch), dim=1)[0]
+        else:
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                      torch.max(target_network(next_state_batch, prev_actions_batch), dim=1)[0]
+                      torch.max(target_network(next_state_batch, next_prev_actions_batch), dim=1)[0]
     targets = targets.detach()
     # compute loss --------------
     batch_output = network(state_batch, prev_actions_batch)

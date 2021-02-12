@@ -12,8 +12,6 @@ from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 from utils import flatten
 import os
-from modelling.cache_utils import extract_trajectory_cache
-import os
 
 # basic setup and checks
 torch.manual_seed(hparams.run.seed)
