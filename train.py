@@ -4,8 +4,8 @@ hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_de
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, extract_strings_from_batches, \
-    log_to_text_file
+from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, log_batches, \
+    log_to_text_file, log_q_values
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
     fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
@@ -14,12 +14,12 @@ from utils import flatten
 import os
 
 # basic setup and checks
-logging_filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
 torch.manual_seed(hparams.run.seed)
 np.random.seed(seed=hparams.run.seed)
 device = torch.device(f'cuda:{hparams.run.gpu_id}' if torch.cuda.is_available() else 'cpu')
 writer = SummaryWriter(log_dir=get_logdir())
-logging_filepath = os.path.join(get_logdir(), hparams.run.logging_text_filename)
+logging_batches_filepath = os.path.join(get_logdir(), hparams.run.logging_batches_filename)
+logging_q_values_filepath = os.path.join(get_logdir(), hparams.run.logging_q_values_filename)
 
 # initialize all environments
 envs = init_envs(hparams.env)
@@ -60,13 +60,15 @@ for epoch_i in range(hparams.train.num_epochs):
     # train
     print(f'batch #{batch_i}')
     if hparams.train.use_target_network:
-        batch_i, _, batches = train(network, target_network, data_loader, writer, batch_i)
+        batch_i, td_error_batches, batches = train(network, target_network, data_loader, writer, batch_i)
     else:
-        batch_i, _, batches = train(network, None, data_loader, writer, batch_i)
+        batch_i, td_error_batches, batches = train(network, None, data_loader, writer, batch_i)
+
     # logging
-    batch_string = extract_strings_from_batches(batches, envs[0])
-    log_to_text_file(f'batch #{batch_i}', logging_filepath)
-    log_to_text_file(batch_string, logging_filepath)
+    log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
+    batch_string = log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
+    log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
+    log_q_values(network, envs[0], logging_q_values_filepath)
 
     # fill buffer -----------
 
@@ -91,7 +93,6 @@ for epoch_i in range(hparams.train.num_epochs):
         # assert len(replay_buffer) == hparams.train.replay_buffer_size and \
         #        len(replay_priority) == hparams.train.replay_buffer_size
         added_to_replay_buffer += len(latest_buffer)
-
         fill_buffer_idxs = np.arange(len(replay_buffer)-len(latest_buffer), len(replay_buffer))
     else:
         fill_buffer_idxs = np.array([], dtype=np.int64)  # otherwise there are no indices corresponding to fresh experience
@@ -128,5 +129,5 @@ for epoch_i in range(hparams.train.num_epochs):
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
         mean_val_reward = run_eval(network, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
-        log_to_text_file(f'mean val reward: {mean_val_reward}', logging_filepath)
+        log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
 
