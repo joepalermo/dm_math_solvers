@@ -3,11 +3,10 @@ import random
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from scipy.special import softmax
 from environment.envs import MathEnv
 from modelling.cache_utils import align_trajectory, cache_trajectory
-from utils import flatten
 from hparams import HParams
+
 hparams = HParams.get_hparams_by_name('rl_math')
 from sqlitedict import SqliteDict
 
@@ -54,6 +53,7 @@ def reset_all(envs, trajectory_statistics=None, train=True):
                           'difficulty': env.difficulty,
                           'module_difficulty_index': env.module_difficulty_index})
         obs_batch.append(np.expand_dims(obs, 0))
+        # prev_action_batch is initialized to contain only the padding action
         prev_actions_batch.append(prev_actions)
     obs_batch = np.concatenate(obs_batch)
     prev_actions_batch = np.concatenate(prev_actions_batch)
@@ -80,7 +80,7 @@ def get_action_batch(obs_batch, prev_actions_batch, envs, network=None, eval=Fal
         output_batch = network(obs_batch, prev_actions_batch).detach().cpu().numpy()
         model_type = hparams.model.model_type
     else:
-        output_batch = np.random.uniform(size=(len(obs_batch),len(envs[0].actions)))
+        output_batch = np.random.uniform(size=(len(obs_batch), len(envs[0].actions)))
         model_type = 'policy'
     actions = []
     for i, env in enumerate(envs):
@@ -147,27 +147,41 @@ def vpg_step(network, state_batch, action_batch, reward_batch):
 
 def dqn_step(network, target_network, batch):
     state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
-    # compute the target
-    if target_network is None:
-        targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                  torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
-    else:
-        with torch.no_grad():
+    # compute the target --------------
+    with torch.no_grad():
+        # compute next_prev_actions_batch
+        next_prev_actions_batch = prev_actions_batch.clone()
+        action_padding_token = network.num_outputs + 1
+        last_padding_index = [torch.where(prev_actions_batch[i] == action_padding_token)[0].min()
+                              for i in range(len(prev_actions_batch))]
+        next_prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
+        if target_network is None:
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                      torch.max(target_network(next_state_batch, prev_actions_batch), dim=1)[0]
-    network.optimizer.zero_grad()
+                      torch.max(network(next_state_batch, next_prev_actions_batch), dim=1)[0]
+        else:
+            targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
+                      torch.max(target_network(next_state_batch, next_prev_actions_batch), dim=1)[0]
+    targets = targets.detach()
+    # compute loss --------------
     batch_output = network(state_batch, prev_actions_batch)
-    batch_output = batch_output.gather(1, action_batch.view(-1,1)).squeeze()
-    td_error = torch.abs(targets - batch_output)
+    batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
+    # gradient descent --------------
+    network.optimizer.zero_grad()
     batch_loss.backward()
-    # grad_norm = torch.nn.utils.clip_grad_norm_(network.parameters(), network.max_grad_norm)
+    torch.nn.utils.clip_grad_norm_(network.parameters(), network.max_grad_norm)
+    # for param in network.parameters():
+    #     param.grad.data.clamp_(-1, 1)
     network.optimizer.step()
+    # also fetch td-error for logging --------------
+    td_error = torch.abs(targets - batch_output)
     return batch_loss, td_error
+
 
 def get_td_error(network, sampled_steps):
     step_dataset = StepDataset(sampled_steps, network.device)
-    data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False, drop_last=True)
+    data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False,
+                             drop_last=True)
     td_error_list = list()
     for batch in data_loader:
         with torch.no_grad():
@@ -202,9 +216,9 @@ class StepDataset(torch.utils.data.Dataset):
         return state, action, reward, next_state, prev_actions, done
 
 
-def update_prev_actions(prev_actions_batch, action_batch, action_padding_token):
-    last_padding_index = np.array([np.where(prev_actions_batch[i] == action_padding_token)[0].min()
-                            for i in range(len(prev_actions_batch))])
+def update_prev_actions(prev_actions_batch, action_batch, padding_action):
+    last_padding_index = np.array([np.where(prev_actions_batch[i] == padding_action)[0].min()
+                                   for i in range(len(prev_actions_batch))])
     prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
     return prev_actions_batch
 
@@ -235,7 +249,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
             action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
-                                                 action_padding_token=envs[0].num_actions+1)
+                                                 padding_action=envs[0].num_actions + 1)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             # cache the latest step from each environment
@@ -247,19 +261,21 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 def positive_condition(buffer_positives, buffer_negatives, reward):
                     return (hparams.train.fill_buffer_mode == 'positive_only' and reward == 1) or \
                            (hparams.train.fill_buffer_mode == 'balanced' and \
-                                buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
-                                reward == 1)
+                            buffer_positives / buffer_negatives <= hparams.train.positive_to_negative_ratio and \
+                            reward == 1)
+
                 def negative_condition(buffer_positives, buffer_negatives, reward):
                     return hparams.train.fill_buffer_mode == 'balanced' and \
-                        buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
-                        reward == 0
+                           buffer_positives / buffer_negatives > hparams.train.positive_to_negative_ratio and \
+                           reward == 0
+
                 # check if conditions to cache the trajectory are met
                 if positive_condition(buffer_positives, buffer_negatives, reward) or \
                         negative_condition(buffer_positives, buffer_negatives, reward) or \
                         hparams.train.fill_buffer_mode == 'anything':
                     aligned_trajectory = align_trajectory(envs_info[env_i]['trajectory'],
                                                           action_start_token=envs[env_i].num_actions,
-                                                          action_padding_token=envs[env_i].num_actions+1,
+                                                          action_padding_token=envs[env_i].num_actions + 1,
                                                           max_num_nodes=envs[env_i].max_num_nodes)
                     if trajectory_cache_filepath is not None:
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
@@ -280,6 +296,9 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 prev_actions.extend(
                     [envs[0].num_actions + 1 for _ in range(envs[0].max_num_nodes)])  # action padding tokens
                 prev_actions_batch[env_i] = np.array(prev_actions)
+                # # append first state of trajectory after reset
+                # info_dict = {'raw_observation': envs_info[env_i]['question']}
+                # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
     if trajectory_cache_filepath is not None:
         trajectory_cache.close()
     return trajectory_buffer
@@ -295,13 +314,12 @@ def train(network, target_network, data_loader, writer, current_batch_i):
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
-        td_errors.append(td_error)
         losses.append(float(batch_loss.detach().cpu().numpy()))
-        batches.append(batch[:2])
-    td_error = torch.cat(td_errors)
+        td_errors.append(td_error.detach().cpu().numpy())
+        batches.append(batch)
     mean_batch_loss = np.array(losses).mean()
     print(f'mean_batch_loss: {mean_batch_loss}')
-    return current_batch_i, td_error, batches
+    return current_batch_i, td_errors, batches
 
 
 def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
@@ -316,7 +334,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
             action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network, eval=True)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
-                                                 action_padding_token=envs[0].num_actions+1)
+                                                 padding_action=envs[0].num_actions + 1)
         # for each environment process the most recent step
         for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
@@ -395,4 +413,5 @@ def visualize_replay_priority(envs, replay_priority, replay_buffer):
     # sns.histplot(replay_priority)
     # plt.show()
     # import time; time.sleep(1000)
+
 
