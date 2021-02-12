@@ -1,64 +1,28 @@
 import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.metrics import mean_absolute_error
 from torch.utils.data import DataLoader
-from modelling.differentiate_supervised_analogue.utils import Dataset
+from modelling.differentiate_supervised_analogue.utils import Dataset, generate_dataset
 from modelling.differentiate_supervised_analogue.models import RNN, Transformer
 import random
+
 torch.manual_seed(42)
 np.random.seed(seed=42)
 device = torch.device(f'cuda:0' if torch.cuda.is_available() else 'cpu')
 
-
-def generate_dataset(num_samples, num_cases, num_distractors, sequence_length):
-    '''
-    samples can have target 0 if they have either:
-    1) the wrong number of 0s to match the case
-    2) distractor symbols
-    otherwise
-    '''
-    samples = []
-    start_token = num_distractors + 1
-    padding_token = num_distractors + 2
-    for _ in range(num_samples):
-        sequence = []
-        case = random.randint(0, num_cases-1)
-        target = random.randint(0, 1)
-        # target = 1
-        if target == 1:
-            sequence.extend([0] * case)
-        elif random.random() < 0.5:
-            wrong_num_cases = case
-            while wrong_num_cases == case:
-                wrong_num_cases = random.randint(0, num_cases-1)
-            sequence.extend([0] * wrong_num_cases)
-        else:
-            sequence.extend([0] * case)
-            sampled_num_distractors = random.randint(0, sequence_length - len(sequence) - 1)
-            distractors = [random.randint(1, num_distractors) for _ in range(sampled_num_distractors)]
-            sequence.extend(distractors)
-        random.shuffle(sequence)
-        # put sequence together
-        padding = [padding_token for _ in range(sequence_length - len(sequence))]
-        sequence = [start_token] + sequence + padding
-        sample = (case, sequence, target)
-        samples.append(sample)
-    return samples
-
-
-num_cases = 3
-num_distractors = 3
-samples = generate_dataset(num_samples=50000,
+num_cases = 5
+num_safe_distractors = 5
+num_kill_distractors = 5
+num_distractors = num_safe_distractors + num_kill_distractors
+samples = generate_dataset(num_unique_samples=10000,
                            num_cases=num_cases,
-                           num_distractors=num_distractors,
-                           sequence_length=8)
-
-for sample in samples:
-    print(sample)
+                           num_safe_distractors=num_safe_distractors,
+                           num_kill_distractors=num_kill_distractors,
+                           sequence_length=15)
 
 # unpack
-train_samples, val_samples = train_test_split(samples)
+train_samples, val_samples = train_test_split(samples, test_size=0.5)
 train_case_inputs, train_sequence_inputs, train_targets = zip(*train_samples)
 val_case_inputs, val_sequence_inputs, val_targets = zip(*val_samples)
 
@@ -69,29 +33,57 @@ train_targets = torch.from_numpy(np.array(train_targets))
 val_case_inputs = torch.from_numpy(np.array(val_case_inputs))
 val_sequence_inputs = torch.from_numpy(np.array(val_sequence_inputs))
 val_targets = torch.from_numpy(np.array(val_targets))
+# print(train_case_inputs.shape, train_sequence_inputs.shape, train_targets.shape)
+# print(val_case_inputs.shape, val_sequence_inputs.shape, val_targets.shape)
 
+# build data loaders
 train_dataset = Dataset(train_case_inputs, train_sequence_inputs, train_targets)
 val_dataset = Dataset(val_case_inputs, val_sequence_inputs, val_targets)
 train_data_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, drop_last=True)
-val_data_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, drop_last=True)
+val_data_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, drop_last=True)
 
-config = {'num_cases': num_cases,
+rnn_config = {'num_cases': num_cases,
           'action_padding_token': num_distractors + 2,
           'num_action_tokens': num_distractors + 3,
           'num_layers': 2,
           'hidden_size': 128,
           'dropout': 0.1,
           'lr': 0.001,
-          'weight_decay': 0.001}
+          'weight_decay': 0}
 
-model = RNN(config, device)
-model = Transformer(config, device)
+transformer_config = {'num_cases': num_cases,
+          'action_padding_token': num_distractors + 2,
+          'num_action_tokens': num_distractors + 3,
+          'num_layers': 1,
+          'hidden_size': 128,
+          'dropout': 0.1,
+          'lr': 0.0001,
+          'weight_decay': 0}
+
+model = RNN(rnn_config, device)
+# model = Transformer(transformer_config, device)
 
 # learn via SL ---------------------------------------------------------------------------------------------
 # criterion = torch.nn.CrossEntropyLoss()
 criterion = torch.nn.MSELoss()
 total_batches = 0
-for epoch in range(1):
+
+# one val to start with
+val_scores = []
+for batch in val_data_loader:
+    # unpack batch
+    case_inputs = batch[0].to(model.device)
+    sequence_inputs = batch[1].to(model.device)
+    targets = batch[2].to(model.device)
+    # validation
+    val_output = model(case_inputs, sequence_inputs)
+    val_output = val_output.detach().cpu().numpy()
+    val_targets = targets.detach().cpu().numpy()
+    val_score = mean_absolute_error(val_targets, val_output)
+    val_scores.append(val_score)
+print(f'val MAE: ', np.array(val_scores).mean())
+
+for epoch in range(5):
     for batch in train_data_loader:
         # unpack batch
         case_inputs = batch[0].to(model.device)
@@ -107,16 +99,33 @@ for epoch in range(1):
         total_batches += 1
         if total_batches % 10 == 0:
             print(f'train_loss @ step #{total_batches}', loss.item())
-            val_accs = list()
+            val_scores = list()
             for batch in val_data_loader:
                 # unpack batch
                 case_inputs = batch[0].to(model.device)
                 sequence_inputs = batch[1].to(model.device)
                 targets = batch[2].to(model.device)
-
+                # validation
                 val_output = model(case_inputs, sequence_inputs)
                 val_output = val_output.detach().cpu().numpy()
                 val_targets = targets.detach().cpu().numpy()
-                val_acc = mean_squared_error(val_targets, val_output)
-                val_accs.append(val_acc)
-            print(f'val_acc', np.array(val_accs).mean())
+                val_score = mean_absolute_error(val_targets, val_output)
+                val_scores.append(val_score)
+            print(f'val MAE: ', np.array(val_scores).mean())
+
+
+for batch in val_data_loader:
+    # unpack batch
+    case_inputs = batch[0].to(model.device)
+    sequence_inputs = batch[1].to(model.device)
+    targets = batch[2].to(model.device)
+    # validation
+    val_output = model(case_inputs, sequence_inputs)
+    val_output = val_output.detach().cpu().numpy()
+    val_targets = targets.detach().cpu().numpy()
+    val_score = mean_absolute_error(val_targets, val_output)
+    val_scores.append(val_score)
+    case_inputs, sequence_inputs = \
+        case_inputs.detach().cpu().numpy(), sequence_inputs.detach().cpu().numpy()
+    for case_input, sequence_input, output, target in zip(case_inputs, sequence_inputs, val_output, val_targets):
+        print(case_input, sequence_input, output, target)
