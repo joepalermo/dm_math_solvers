@@ -27,9 +27,11 @@ def generate_dataset(num_unique_samples, num_cases, num_safe_distractors, num_ki
     targets = []
     samples = []
     unique_set = set()
+    num_rejected = 0
     start_token = num_safe_distractors + num_kill_distractors + 1
     padding_token = num_safe_distractors + num_kill_distractors + 2
     while len(samples) < num_unique_samples:
+        # generate sample ------------------------
         sequence = []
         # pick case and target
         case = random.randint(0, num_cases-1)
@@ -73,15 +75,21 @@ def generate_dataset(num_unique_samples, num_cases, num_safe_distractors, num_ki
         sequence.extend(padding)
         # add start token
         sequence = [start_token] + sequence
-        # put sample together
+        # put sample together ------------------------
         sample = (case, sequence, [target])
         hashable_sample = f'{case}_{",".join([str(x) for x in sequence])}_{target}'
         if hashable_sample not in unique_set:
             unique_set.add(hashable_sample)
             samples.append(sample)
             targets.append(target)
+        else:
+            num_rejected += 1
+    print(f'num rejected: {num_rejected}')
+    # compute baseline performance ------------------------
     mean_target = sum(targets)/len(targets)
+    median_target = sorted(targets)[len(targets)//2]
+    print('median_target:', median_target)
+    print('baseline (median) MAE: ', mean_absolute_error([median_target for _ in targets], targets))
     print('mean_target:', mean_target)
-    baseline = [mean_target for _ in targets]
-    print('baseline MAE: ', mean_absolute_error(baseline, targets))
+    print('baseline (mean) MAE: ', mean_absolute_error([mean_target for _ in targets], targets))
     return samples

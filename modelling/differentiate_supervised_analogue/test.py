@@ -17,14 +17,14 @@ num_cases = 5
 num_safe_distractors = 5
 num_kill_distractors = 5
 num_distractors = num_safe_distractors + num_kill_distractors
-samples = generate_dataset(num_unique_samples=10000,
+samples = generate_dataset(num_unique_samples=50000,
                            num_cases=num_cases,
                            num_safe_distractors=num_safe_distractors,
                            num_kill_distractors=num_kill_distractors,
                            sequence_length=15)
 
 # unpack
-train_samples, val_samples = train_test_split(samples, test_size=0.5)
+train_samples, val_samples = train_test_split(samples, test_size=0.9)
 train_case_inputs, train_sequence_inputs, train_targets = zip(*train_samples)
 val_case_inputs, val_sequence_inputs, val_targets = zip(*val_samples)
 
@@ -42,7 +42,7 @@ val_targets = torch.from_numpy(np.array(val_targets))
 train_dataset = Dataset(train_case_inputs, train_sequence_inputs, train_targets)
 val_dataset = Dataset(val_case_inputs, val_sequence_inputs, val_targets)
 train_data_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, drop_last=True)
-val_data_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, drop_last=True)
+val_data_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, drop_last=True)
 
 # define models ------------------------------
 
@@ -52,7 +52,7 @@ rnn_config = {'num_cases': num_cases,
           'num_layers': 2,
           'hidden_size': 128,
           'dropout': 0.1,
-          'lr': 0.001,
+          'lr': 0.0001,
           'weight_decay': 0}
 
 transformer_config = {'num_cases': num_cases,
@@ -73,7 +73,7 @@ criterion = torch.nn.MSELoss()
 total_batches = 0
 
 # training loop
-for epoch in range(5):
+for epoch in range(500):
     for batch in train_data_loader:
         # unpack batch
         case_inputs = batch[0].to(model.device)
