@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, log_batches, \
-    log_to_text_file, log_q_values
+    log_to_text_file, log_q_values, add_trajectory_return_to_trajectories
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
     fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
@@ -77,6 +77,7 @@ for epoch_i in range(hparams.train.num_epochs):
             batch_i - last_fill_buffer_batch_i > hparams.train.batches_per_fill_buffer:
         last_fill_buffer_batch_i = batch_i
         latest_buffer = fill_buffer(None, envs, trajectory_statistics, None)
+        latest_buffer = add_trajectory_return_to_trajectories(latest_buffer, gamma=hparams.train.gamma)
         latest_buffer = np.array(flatten(latest_buffer))
         latest_replay_priority = np.ones(len(latest_buffer)) * hparams.train.default_replay_buffer_priority
         # add fresh experience to replay buffer

@@ -145,8 +145,26 @@ def vpg_step(network, state_batch, action_batch, reward_batch):
     return batch_loss
 
 
+def mc_step(network, batch):
+    state_batch, action_batch, _, _, prev_actions_batch, _, trajectory_return_batch = batch
+    # compute loss --------------
+    output_batch = network(state_batch, prev_actions_batch)
+    output_batch = output_batch.gather(1, action_batch.view(-1, 1)).squeeze()
+    batch_loss = torch.nn.MSELoss()(output_batch, trajectory_return_batch)
+    # gradient descent --------------
+    network.optimizer.zero_grad()
+    batch_loss.backward()
+    torch.nn.utils.clip_grad_norm_(network.parameters(), network.max_grad_norm)
+    # for param in network.parameters():
+    #     param.grad.data.clamp_(-1, 1)
+    network.optimizer.step()
+    # also fetch td-error for logging --------------
+    td_error = torch.abs(output_batch - trajectory_return_batch)
+    return batch_loss, td_error
+
+
 def dqn_step(network, target_network, batch):
-    state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
+    state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
     # compute the target --------------
     with torch.no_grad():
         # compute next_prev_actions_batch
@@ -206,14 +224,15 @@ class StepDataset(torch.utils.data.Dataset):
         return len(self.steps)
 
     def __getitem__(self, idx):
-        state, action, reward, next_state, prev_actions, done = self.steps[idx]
+        state, action, reward, next_state, prev_actions, done, trajectory_return = self.steps[idx]
         state = torch.from_numpy(state.astype(np.int64)).to(self.device)
         action = torch.from_numpy(np.array(action, dtype=np.int64)).to(self.device)
         reward = torch.from_numpy(np.array(reward, dtype=np.int64)).to(self.device)
         next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
         prev_actions = torch.from_numpy(np.array(prev_actions, dtype=np.int64)).to(self.device)
         done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
-        return state, action, reward, next_state, prev_actions, done
+        trajectory_return = torch.from_numpy(np.array(trajectory_return, dtype=np.int64)).to(self.device)
+        return state, action, reward, next_state, prev_actions, done, trajectory_return
 
 
 def update_prev_actions(prev_actions_batch, action_batch, padding_action):
@@ -310,7 +329,8 @@ def train(network, target_network, data_loader, writer, current_batch_i):
     losses = list()
     batches = list()
     for i, batch in enumerate(data_loader):
-        batch_loss, td_error = dqn_step(network, target_network, batch)
+        # batch_loss, td_error = dqn_step(network, target_network, batch)
+        batch_loss, td_error = mc_step(network, batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
