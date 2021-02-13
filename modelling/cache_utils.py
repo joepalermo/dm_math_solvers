@@ -75,8 +75,21 @@ def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
     return all_trajectories
 
 
-def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size):
-    replay_buffer = flatten(extract_trajectory_cache(trajectory_cache_filepath))
+def add_trajectory_return_to_trajectories(trajectories, gamma):
+    mod_trajectories = []
+    # add trajectory return to each step
+    for trajectory in trajectories:
+        trajectory_return = sum([reward*gamma**i for i, (_, _, reward, _, _, _) in enumerate(trajectory)])
+        mod_trajectory = [(state, action, reward, next_state, prev_actions, done, trajectory_return)
+            for state, action, reward, next_state, prev_actions, done in trajectory]
+        mod_trajectories.append(mod_trajectory)
+    return mod_trajectories
+
+
+def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size, gamma=1):
+    trajectories = extract_trajectory_cache(trajectory_cache_filepath)
+    trajectories = add_trajectory_return_to_trajectories(trajectories, gamma)
+    replay_buffer = flatten(trajectories)
     random.shuffle(replay_buffer)
     return np.array(replay_buffer[:replay_buffer_size])
 
