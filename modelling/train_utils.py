@@ -203,7 +203,7 @@ def get_td_error(network, sampled_steps):
     td_error_list = list()
     for batch in data_loader:
         with torch.no_grad():
-            state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
+            state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
                       torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
             batch_output = network(state_batch, prev_actions_batch)
@@ -231,7 +231,7 @@ class StepDataset(torch.utils.data.Dataset):
         next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
         prev_actions = torch.from_numpy(np.array(prev_actions, dtype=np.int64)).to(self.device)
         done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
-        trajectory_return = torch.from_numpy(np.array(trajectory_return, dtype=np.int64)).to(self.device)
+        trajectory_return = torch.from_numpy(np.array(trajectory_return, dtype=np.float32)).to(self.device)
         return state, action, reward, next_state, prev_actions, done, trajectory_return
 
 

@@ -86,7 +86,7 @@ def add_trajectory_return_to_trajectories(trajectories, gamma):
     return mod_trajectories
 
 
-def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size, gamma=1):
+def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size, gamma):
     trajectories = extract_trajectory_cache(trajectory_cache_filepath)
     trajectories = add_trajectory_return_to_trajectories(trajectories, gamma)
     replay_buffer = flatten(trajectories)
@@ -130,7 +130,7 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
     strings = []
     td_errors = []
     for batch, td_error_batch in zip(batches, td_error_batches):
-        state_batch, action_batch, reward_batch, _, _, _ = batch
+        state_batch, action_batch, reward_batch, _, _, _, _ = batch
         for state, action, reward, td_error in zip(state_batch, action_batch, reward_batch, td_error_batch):
             decoded_state = env.decode(state)
             strings.append(f'{decoded_state}, action: {action}, reward: {reward}, td_error: {td_error}')
