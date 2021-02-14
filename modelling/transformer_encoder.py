@@ -1,6 +1,8 @@
 import math
 import torch
 from torch.nn import TransformerEncoder, TransformerEncoderLayer, Softmax, LSTM
+from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pad_packed_sequence
 from hparams import HParams
 hparams = HParams.get_hparams_by_name('rl_math')
 
@@ -40,9 +42,14 @@ class DenseBlock(torch.nn.Module):
 
 
 class TransformerEncoderModel(torch.nn.Module):
-    def __init__(self, ntoken, num_outputs, max_num_nodes, device):
+    def __init__(self, ntoken, num_outputs, device):
         super().__init__()
         torch.nn.Module.__init__(self)
+        self.ntoken = ntoken
+        self.num_outputs = num_outputs
+        # note: action_start_token gets id num_outputs (hence +1 for action_padding_token)
+        self.action_padding_token = num_outputs + 1
+        self.num_action_tokens = num_outputs + 2  # each output has one id, so the +2 is for start and padding tokens
         self.max_grad_norm = hparams.train.max_grad_norm
         self.batch_size = hparams.train.batch_size
         self.epsilon = hparams.train.epsilon
@@ -51,7 +58,7 @@ class TransformerEncoderModel(torch.nn.Module):
 
         # define tunable layers -------------------
         self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
-        self.action_embedding = torch.nn.Embedding(num_outputs, hparams.model.action_embedding_size)
+        self.action_embedding = torch.nn.Embedding(self.num_action_tokens, hparams.model.action_embedding_size)
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
@@ -70,7 +77,8 @@ class TransformerEncoderModel(torch.nn.Module):
         self.to(device)
 
         # set optimization
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=hparams.train.lr, weight_decay=hparams.model.weight_decay)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=hparams.train.lr,
+                                          weight_decay=hparams.train.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max',
                                                                     factor=hparams.train.factor,
                                                                     patience=hparams.train.patience, threshold=0.001,
@@ -97,11 +105,16 @@ class TransformerEncoderModel(torch.nn.Module):
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         question_encoding = encoding[0]
         # action model --------------
+        sequence_lens = action_tokens.shape[1] - torch.sum(action_tokens == self.action_padding_token, axis=1)
+        sequence_lens = sequence_lens.detach().cpu()
         # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
         action_embedding = self.action_embedding(action_tokens)
+        packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,
+                                                       enforce_sorted=False)
         # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
-        lstm_output, _ = self.lstm_block(action_embedding)
-        action_encoding = lstm_output[:,-1,:]
+        packed_lstm_output, _ = self.lstm_block(packed_action_embedding)
+        padded_lstm_output, output_lengths = pad_packed_sequence(packed_lstm_output, batch_first=True)
+        action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths - 1]
         # output model --------------
         question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
         output = self.dense_block_1(question_and_actions)

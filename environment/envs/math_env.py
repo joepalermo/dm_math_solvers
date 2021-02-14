@@ -63,6 +63,7 @@ class MathEnv(gym.Env):
         self.actions = self.operators + [
             f"f{i}" for i in range(self.max_formal_elements)
         ]
+        self.num_actions = len(self.actions)
         self.action_space = spaces.Discrete(len(self.actions))
         self.action_indices = np.arange(len(self.actions))
         self.observation_space = spaces.MultiDiscrete(

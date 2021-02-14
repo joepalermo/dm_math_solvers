@@ -1,18 +1,25 @@
+import os
 import pprint
 import random
+
+import torch
 from sqlitedict import SqliteDict
 from utils import flatten
 import numpy as np
 
 
-def align_trajectory(raw_trajectory, max_num_actions):
-    def pad_actions(actions, max_num_actions):
-        actions.extend([max_num_actions for _ in range(max_num_actions - len(actions))])
+def align_trajectory(raw_trajectory, action_start_token, action_padding_token, max_num_nodes):
+    def pad_actions(actions, action_start_token, action_padding_token, max_num_nodes):
+        actions.insert(0, action_start_token)
+        # pad up to length max_num_nodes+1 to ensure there is always at least 1 padding token
+        # since padding tokens are used to indicate sequence length
+        actions.extend([action_padding_token for _ in range(max_num_nodes+1 - len(actions))])
         return actions
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
     actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
-    aligned_trajectory = [(state, action, reward, next_state, pad_actions(prev_actions, max_num_actions), done)
+    aligned_trajectory = [(state, action, reward, next_state,
+                           pad_actions(prev_actions, action_start_token, action_padding_token, max_num_nodes), done)
                          for state, prev_actions, (next_state, action, reward, done)
                          in zip(states, actions_up_to_step, everything_else)]
     return aligned_trajectory
@@ -68,8 +75,21 @@ def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
     return all_trajectories
 
 
-def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size):
-    replay_buffer = flatten(extract_trajectory_cache(trajectory_cache_filepath))
+def add_trajectory_return_to_trajectories(trajectories, gamma):
+    mod_trajectories = []
+    # add trajectory return to each step
+    for trajectory in trajectories:
+        trajectory_return = sum([reward*gamma**i for i, (_, _, reward, _, _, _) in enumerate(trajectory)])
+        mod_trajectory = [(state, action, reward, next_state, prev_actions, done, trajectory_return)
+            for state, action, reward, next_state, prev_actions, done in trajectory]
+        mod_trajectories.append(mod_trajectory)
+    return mod_trajectories
+
+
+def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size, gamma=1):
+    trajectories = extract_trajectory_cache(trajectory_cache_filepath)
+    trajectories = add_trajectory_return_to_trajectories(trajectories, gamma)
+    replay_buffer = flatten(trajectories)
     random.shuffle(replay_buffer)
     return np.array(replay_buffer[:replay_buffer_size])
 
@@ -100,4 +120,62 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
             np.random.choice(module_difficulty_trajectories, size=num_to_sample)
         print(f"{module_difficulty} samples:")
         for trajectory in sampled_trajectories:
-            print(f"\t{decoder(trajectory[-1][3])}; reward: {trajectory[-1][2]}")
+            print(f"\t{decoder(trajectory[-1][3])}; actions: {trajectory[-1][4]}, reward: {trajectory[-1][2]}")
+        print(f'{module_difficulty}')
+        print(f'# trajectories: {len(all_trajectories[module_difficulty])}')
+        print(f'# steps: {len(flatten(all_trajectories[module_difficulty]))}')
+
+
+def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
+    strings = []
+    td_errors = []
+    for batch, td_error_batch in zip(batches, td_error_batches):
+        state_batch, action_batch, reward_batch, _, _, _ = batch
+        for state, action, reward, td_error in zip(state_batch, action_batch, reward_batch, td_error_batch):
+            decoded_state = env.decode(state)
+            strings.append(f'{decoded_state}, action: {action}, reward: {reward}, td_error: {td_error}')
+            td_errors.append(td_error)
+    highest_td_errors_idxs = np.argsort(np.array(td_errors))[::-1][:num_batches].tolist()
+    lowest_td_errors_idxs = np.argsort(np.array(td_errors))[:num_batches].tolist()
+    highest_and_lowest = [strings[i] for i in highest_td_errors_idxs] + [strings[i] for i in lowest_td_errors_idxs]
+    log_batches_string = "\n".join(highest_and_lowest)
+    log_to_text_file(log_batches_string, filepath)
+
+
+def log_q_values(network, env, filepath):
+    question_inputs = []
+    action_inputs = []
+    question_action_input_pairs = [(0, []), (0, [9]), (0, [8]), (1, []), (1, [9]), (1, [9, 9]), (2, []), (2, [9]), (2, [9, 9]), (2, [9, 9, 9])]
+    for question_id, action_sequence in question_action_input_pairs:
+        question_inputs.append(torch.Tensor([question_id]).view(1, 1).type(torch.LongTensor))
+        action_inputs_list = [env.num_actions] + action_sequence + \
+                             [env.num_actions + 1] * (env.max_num_nodes - len(action_sequence))
+        action_inputs.append(torch.Tensor(action_inputs_list).view(1,-1).type(torch.LongTensor))
+    question_batch = torch.cat(question_inputs).to(network.device)
+    action_batch = torch.cat(action_inputs).to(network.device)
+    q_values = network(question_batch, action_batch).detach().cpu().numpy()
+    question_values = {0: 'first', 1: 'second', 2: 'third', 3: 'first'}
+    for question, actions, qvs in zip(question_inputs, action_inputs, q_values):
+        # prep question
+        question = question.numpy()[0][0]
+        actions = actions.numpy()[0].tolist()
+        question_string = question_values[question]
+        # prep actions
+        # op_counts = dict(Counter(actions))
+        # prep q-values
+        num_meaningful_qvs = 24
+        qv_tuples = [(i,qv) for i,qv in enumerate(qvs)][:num_meaningful_qvs]
+        sorted_qv_tuples = sorted(qv_tuples, key=lambda x: x[1], reverse=True)
+        qv_string = ', '.join([f'{i}: {qv}'[:9] for (i,qv) in sorted_qv_tuples])
+        # log all values
+        string = f'\nquestion: {question_string}, actions: {actions}\nq-values: {qv_string}'
+        log_to_text_file(string, filepath)
+
+
+def log_to_text_file(string, filepath):
+    if os.path.isfile(filepath):
+        mode = 'a'
+    else:
+        mode = 'w'
+    with open(filepath, mode) as f:
+        f.write(string + '\n')
