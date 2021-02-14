@@ -1,6 +1,6 @@
 from hparams import HParams
-hparams = HParams('.', hparams_filename='hparams', name='rl_math')
-# hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+# hparams = HParams('.', hparams_filename='hparams', name='rl_math')
+hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
 import random
 from torch.utils.data import DataLoader
@@ -9,6 +9,7 @@ from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
     fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
+from modelling.mlp import MLPBlock
 import numpy as np
 from utils import flatten
 import os
@@ -28,9 +29,17 @@ trajectory_statistics = init_trajectory_data_structures(envs[0])
 ntoken = hparams.env.vocab_size + 1
 num_outputs = len(envs[0].actions)
 max_num_nodes = envs[0].max_num_nodes
-network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes, device=device)
-target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes,
-                                         device=device)
+
+if hparams.model.network == 'transformer':
+    network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes, device=device)
+    target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, max_num_nodes=max_num_nodes,
+                                            device=device)
+elif hparams.model.network == 'mlp':
+    network = MLPBlock(device=device, input_size=ntoken, num_outputs=num_outputs)
+    target_network = MLPBlock(device=device, input_size=ntoken, num_outputs=num_outputs)
+else:
+    raise ValueError(f'hparams.model.model is {hparams.model.model} which is not recognized')
+
 target_network.eval()
 
 # init replay buffer from trajectory cache on disk

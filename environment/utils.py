@@ -56,6 +56,27 @@ def cast_formal_element(f):
     else:
         return Expression(f)
 
+def tokenize_formal_elements(question):
+    formal_elements = extract_formal_elements(question, True)
+    words = [(m.group(0), (m.start(), m.end() - 1)) for m in re.finditer("[A-Za-z]\w+|\*\*\*||(?<![0-9])[.,;:?]|[.,;:?](?![0-9])", question)]
+    words = [word for word in words if len(word[0]) > 0]
+    joined_list = []
+    i = 0
+    last_pos = 0
+    while words:
+        word, pos = words[i]
+        if pos[0] == last_pos: # add a word
+            joined_list.append(word)
+            last_pos = pos[1] + 2
+            del words[0]
+        elif not formal_elements:
+            break
+        else:
+            joined_list.append("$" + str(type(formal_elements[0]).__name__))
+            last_pos = pos[0]
+            del formal_elements[0]
+    joined_list.extend([word for word, _ in words])
+    return ' '.join(joined_list)
 
 def guess_until_problem_solved(env, question, answer, verbose=False, max_episode_index=1000):
     episode_i = 0
