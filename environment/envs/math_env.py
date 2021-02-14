@@ -1,6 +1,7 @@
 from inspect import signature
 from pathlib import Path
 from random import sample
+import pickle
 
 import gym
 import numpy as np
@@ -73,7 +74,13 @@ class MathEnv(gym.Env):
         self.val = split_validation_data(config, self.train)
         # load tokenizer
         self.padding_token = config.vocab_size
-        self.tokenizer = spm.SentencePieceProcessor(model_file=config.tokenizer_filepath)
+        if hparams.env.tokenizer == "sentencepiece":
+            self.tokenizer = spm.SentencePieceProcessor(model_file=config.tokenizer_filepath)
+        elif hparams.env.tokenizer == "count":
+            with open("preprocessing/count_tokenizer.pkl", 'rb') as f:
+                self.tokenizer = pickle.load(f)
+        else:
+            raise ValueError("tokenizer type not recognized!")
 
 
     def step(self, action_index):
@@ -111,17 +118,25 @@ class MathEnv(gym.Env):
     # tokenization utilities -------------------------------------------------------------------------------------------
 
     def encode(self, raw_observation):
-        encoded_ids = self.tokenizer.encode(raw_observation)
-        # pad the encoded ids up to a maximum length
-        encoded_ids.extend(
-            [self.padding_token for _ in range(self.config.max_sequence_length - len(encoded_ids))]
-        )
-        return np.array(encoded_ids)
+        if hparams.env.tokenizer == "sentencepiece":
+            encoded_ids = self.tokenizer.encode(raw_observation)
+            # pad the encoded ids up to a maximum length
+            encoded_ids.extend(
+                [self.padding_token for _ in range(self.config.max_sequence_length - len(encoded_ids))]
+            )
+            encoded_ids = np.array(encoded_ids)
+        elif hparams.env.tokenizer == "count":
+            encoded_ids = self.tokenizer.transform([raw_observation]).toarray()
+        return encoded_ids
 
     def decode(self, encoded_ids):
         # filter out padding tokens before decoding
-        encoded_ids = [id_ for id_ in encoded_ids.tolist() if id_ != self.padding_token]
-        return self.tokenizer.decode(encoded_ids)
+        if hparams.env.tokenizer == "sentencepiece":
+            encoded_ids = [id_ for id_ in encoded_ids.tolist() if id_ != self.padding_token]
+            decoded_ids = self.tokenizer.decode(encoded_ids)
+        elif hparams.env.tokenizer == "count":
+            decoded_ids = encoded_ids # Can't get order so just return in an encoded way, can make it readable later
+        return decoded_ids
 
     # utilities to reset the environment -------------------------------------------------------------------------------
 
