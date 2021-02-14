@@ -329,8 +329,8 @@ def train(network, target_network, data_loader, writer, current_batch_i):
     losses = list()
     batches = list()
     for i, batch in enumerate(data_loader):
-        # batch_loss, td_error = dqn_step(network, target_network, batch)
-        batch_loss, td_error = mc_step(network, batch)
+        batch_loss, td_error = dqn_step(network, target_network, batch)
+        # batch_loss, td_error = mc_step(network, batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1

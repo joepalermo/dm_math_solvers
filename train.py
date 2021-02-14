@@ -35,7 +35,8 @@ target_network.eval()
 
 # init replay buffer from trajectory cache on disk
 replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random_exploration_trajectory_cache_filepath,
-                                                            hparams.train.replay_buffer_size)
+                                                            hparams.train.replay_buffer_size,
+                                                            hparams.train.gamma)
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
 # training loop --------------------------------------------------------------------------------------------------------
