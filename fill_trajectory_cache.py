@@ -11,8 +11,6 @@ from sqlitedict import SqliteDict
 # torch.manual_seed(hparams.run.seed)
 # np.random.seed(seed=hparams.run.seed)
 
-assert hparams.train.fill_buffer_mode != 'anything'
-
 # initialize all environments
 envs = init_envs(hparams.env)
 trajectory_statistics = init_trajectory_data_structures(envs[0])
