@@ -196,8 +196,44 @@ def dqn_step(network, target_network, batch):
     return batch_loss, td_error
 
 
-def get_td_error(network, sampled_steps):
-    step_dataset = StepDataset(sampled_steps, network.device)
+def ddqn_step(q1, q2, batch):
+    state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
+    # compute the target --------------
+    with torch.no_grad():
+        # compute next_prev_actions_batch
+        next_prev_actions_batch = prev_actions_batch.clone()
+        action_padding_token = q1.num_outputs + 1
+        last_padding_index = [torch.where(prev_actions_batch[i] == action_padding_token)[0].min()
+                              for i in range(len(prev_actions_batch))]
+        next_prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
+
+        # shows that q1 at argmax over q1 equals max over q1:
+        # q1(next_state_batch, next_prev_actions_batch).\
+        #   gather(1,torch.argmax(q1(next_state_batch, next_prev_actions_batch), dim=1).view(-1, 1)),
+        # torch.max(q1(next_state_batch, next_prev_actions_batch), dim=1).values
+
+        q1_maximizing_actions = torch.argmax(q1(next_state_batch, next_prev_actions_batch), dim=1).view(-1,1)
+        targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
+                  q2(next_state_batch, next_prev_actions_batch).gather(1, q1_maximizing_actions).flatten()
+    targets = targets.detach()
+    # compute loss --------------
+    batch_output = q1(state_batch, prev_actions_batch)
+    batch_output = batch_output.gather(1, action_batch.view(-1, 1)).flatten()
+    batch_loss = torch.nn.MSELoss()(batch_output, targets)
+    # gradient descent --------------
+    q1.optimizer.zero_grad()
+    batch_loss.backward()
+    torch.nn.utils.clip_grad_norm_(q1.parameters(), q1.max_grad_norm)
+    # for param in q1.parameters():
+    #     param.grad.data.clamp_(-1, 1)
+    q1.optimizer.step()
+    # also fetch td-error for logging --------------
+    td_error = torch.abs(targets - batch_output)
+    return batch_loss, td_error
+
+
+def get_td_error(q1, q2, sampled_steps):
+    step_dataset = StepDataset(sampled_steps, q1.device)
     data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False,
                              drop_last=True)
     td_error_list = list()
@@ -205,8 +241,8 @@ def get_td_error(network, sampled_steps):
         with torch.no_grad():
             state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                      torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
-            batch_output = network(state_batch, prev_actions_batch)
+                        torch.max(q2(next_state_batch, prev_actions_batch), dim=1)[0]
+            batch_output = q1(state_batch, prev_actions_batch)
             batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
             batch_td_error = torch.abs(targets - batch_output)
             td_error_list.append(batch_td_error)
@@ -323,14 +359,14 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
     return trajectory_buffer
 
 
-def train(network, target_network, data_loader, writer, current_batch_i):
-    network.train()
+def train(q1, q2, data_loader, writer, current_batch_i):
+    q1.train()
     td_errors = list()
     losses = list()
     batches = list()
     for i, batch in enumerate(data_loader):
-        batch_loss, td_error = dqn_step(network, target_network, batch)
-        # batch_loss, td_error = mc_step(network, batch)
+        batch_loss, td_error = ddqn_step(q1, q2, batch)
+        # batch_loss, td_error = mc_step(q1, batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
