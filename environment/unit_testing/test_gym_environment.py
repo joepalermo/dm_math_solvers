@@ -23,7 +23,7 @@ class Test(unittest.TestCase):
             info["raw_observation"]
             == f"{question}; Equation('0 = 4*b + b + 15')"
         )
-        assert reward == -1
+        assert reward == 0
         assert done
 
     def test_problem_0_fail_2(self):
@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
             info["raw_observation"]
             == f"{question}; solve_system(Equation('0 = 4*b + b + 15'))"
         )
-        assert reward == -1
+        assert reward == 0
         assert done
 
     def test_problem_0_fail_3(self):
@@ -61,7 +61,7 @@ class Test(unittest.TestCase):
         action = "f10"  # indexing out of range
         action_index = env.get_action_index(action)
         observation_, reward, done, info = env.step(action_index)
-        assert reward == -1
+        assert reward == 0
         assert done
 
     def test_problem_0_success_1(self):
@@ -343,13 +343,40 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert not done
 
+    def test_problem_third_diff_success(self):
+        env = MathEnv(hparams.env)
+        # reset - then succeed after 4th action
+        encoded_question, _ = env.reset_from_text("Find the third derivative of -272*j**5 + j**3 - 8234*j**2.",
+                                                  "-16320*j**2 + 6")
+        question = env.decode(encoded_question)
+        assert question == "Find the third derivative of -272*j**5 + j**3 - 8234*j**2."
+        # take action
+        action_index = env.get_action_index(differentiate)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # take action
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # take action
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # take action
+        action_index = env.get_action_index("f0")
+        observation, reward, done, info = env.step(action_index)
+        print(info['raw_observation'])
+        assert reward == 1
+        assert done
+
     def test_max_nodes_failure(self):
         env = MathEnv(hparams.env)
         encoded_question, _ = env.reset_from_text("Is 66574 a composite number?", "True")
         question = env.decode(encoded_question)
         assert question == "Is 66574 a composite number?"
         nt_action_index = env.get_action_index(not_op)
-        for i in range(9):
+        for i in range(env.max_num_nodes-1):
             # take action
             observation, reward, done, info = env.step(nt_action_index)
             print(f"action #{i}", info["raw_observation"], done)
@@ -359,5 +386,5 @@ class Test(unittest.TestCase):
         i += 1
         observation, reward, done, info = env.step(nt_action_index)
         print(f"action #{i}", info["raw_observation"], done)
-        assert reward == -1
+        assert reward == 0
         assert done

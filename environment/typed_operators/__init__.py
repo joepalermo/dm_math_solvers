@@ -1,5 +1,5 @@
 import re
-import sympy as sym
+import sympy
 from typing import List, Dict, Set
 import multiprocess as mp
 import time
@@ -127,7 +127,7 @@ def solve_system(system: list) -> dict:
     def sympy_solve(system, return_dict):
         # run in try-except to suppress exception logging (must be done here due to use of multiprocess)
         try:
-            solutions = sym.solve(system)
+            solutions = sympy.solve(system)
             return_dict["solutions"] = solutions
         except:
             pass
@@ -135,7 +135,7 @@ def solve_system(system: list) -> dict:
     sympy_equations = []
     for equation in system:
         lhs, rhs = str(equation).split("=")
-        sympy_eq = sym.Eq(sym.sympify(lhs), sym.sympify(rhs))
+        sympy_eq = sympy.Eq(sympy.sympify(lhs), sympy.sympify(rhs))
         sympy_equations.append(sympy_eq)
 
     manager = mp.Manager()
@@ -234,24 +234,26 @@ def substitution_right_to_left(arb: Arbitrary, eq: Equation) -> Arbitrary:
 
 
 def factor(expression: Expression) -> Expression:
-    return Expression(str(sym.factor(expression)))
+    return Expression(str(sympy.factor(expression)))
 
 
 def simplify(arb: Arbitrary) -> Arbitrary:
     if "=" in str(arb):
         lhs, rhs = str(arb).split("=")
         lhs, rhs = lhs.strip(), rhs.strip()
-        return Equation(f"{sym.simplify(lhs)} = {sym.simplify(rhs)}".strip())
+        return Equation(f"{sympy.simplify(lhs)} = {sympy.simplify(rhs)}".strip())
     else:
-        return Expression(str(sym.simplify(str(arb))).strip())
+        return Expression(str(sympy.simplify(str(arb))).strip())
 
 
 def differentiate(expression: Expression) -> Expression:
-    return Expression(str(sym.diff(sym.sympify(str(expression)))))
+    derivative = sympy.diff(sympy.sympify(str(expression)))
+    return Expression(str(derivative))
 
 
 def differentiate_wrt(expression: Expression, variable: Variable) -> Expression:
-    return Expression(str(sym.diff(sym.sympify(str(expression)), sym.sympify(str(variable)))))
+    derivative = sympy.diff(sympy.sympify(str(expression)), sympy.sympify(str(variable)))
+    return Expression(str(derivative))
 
 
 def replace_arg(function: Function, var: Variable) -> Function:
@@ -275,7 +277,7 @@ def gcd(x: Value, y: Value) -> Value:
 
 
 def is_prime(x: Value) -> bool:
-    return sym.isprime(int(x.value))
+    return sympy.isprime(int(x.value))
 
 
 def lcm(x: Value, y: Value) -> Value:

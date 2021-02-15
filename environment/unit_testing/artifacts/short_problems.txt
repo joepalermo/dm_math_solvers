@@ -1,5 +1,7 @@
 Find the third derivative of 2*d**4 - 35*d**2 - 695 wrt d.
 48*d
+Find the third derivative of -272*j**5 + j**3 - 8234*j**2 wrt j.
+-16320*j**2 + 6
 Solve 0 = 4*b + b + 15 for b.
 -3
 Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f.
