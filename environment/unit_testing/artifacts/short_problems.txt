@@ -1,3 +1,5 @@
+Find the third derivative of 2*d**4 - 35*d**2 - 695 wrt d.
+48*d
 Solve 0 = 4*b + b + 15 for b.
 -3
 Solve 0 = 4*f - 0*t - 4*t - 4, -4*f + t = -13 for f.

@@ -1,7 +1,7 @@
 import os
 import pprint
 import random
-
+import math
 import torch
 from sqlitedict import SqliteDict
 from utils import flatten
@@ -119,11 +119,28 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
         sampled_trajectories = [] if len(module_difficulty_trajectories) == 0 else \
             np.random.choice(module_difficulty_trajectories, size=num_to_sample)
         print(f"{module_difficulty} samples:")
+        # TODO: remove special logging vvvvv
+        counts = [0, 0, 0]
+        rewards = [0, 0, 0]
+        # TODO: remove special logging ^^^^^
         for trajectory in sampled_trajectories:
-            print(f"\t{decoder(trajectory[-1][3])}; actions: {trajectory[-1][4]}, reward: {trajectory[-1][2]}")
+            state = decoder(trajectory[-1][3])
+            reward = trajectory[-1][2]
+            # TODO: remove special logging vvvvv
+            if 'second' in state:
+                problem_type = 1
+            elif 'third' in state:
+                problem_type = 2
+            else:
+                problem_type = 0
+            rewards[problem_type] += reward
+            counts[problem_type] += 1
+            # TODO: remove special logging ^^^^^
         print(f'{module_difficulty}')
         print(f'# trajectories: {len(all_trajectories[module_difficulty])}')
         print(f'# steps: {len(flatten(all_trajectories[module_difficulty]))}')
+        print(rewards, counts)
+        print([round(rewards[i]/counts[i], 2) for i in range(len(counts))])
 
 
 def log_batches(batches, td_error_batches, env, filepath, num_batches=20):

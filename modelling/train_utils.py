@@ -51,7 +51,8 @@ def reset_all(envs, trajectory_statistics=None, train=True):
                           'trajectory': [(obs, None, None, None, info)],
                           'module_name': env.module_name,
                           'difficulty': env.difficulty,
-                          'module_difficulty_index': env.module_difficulty_index})
+                          'module_difficulty_index': env.module_difficulty_index,
+                          'attempts': 0})
         obs_batch.append(np.expand_dims(obs, 0))
         # prev_action_batch is initialized to contain only the padding action
         prev_actions_batch.append(prev_actions)
@@ -109,7 +110,18 @@ def reset_environment(env, train=True):
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': env.module_name,
                  'difficulty': env.difficulty,
-                 'module_difficulty_index': env.module_difficulty_index}
+                 'module_difficulty_index': env.module_difficulty_index,
+                 'attempts': 0}
+
+
+def reset_environment_with_same_problem(env, attempts):
+    obs, info = env.reset_with_same_problem()
+    return obs, {'question': info['raw_observation'],
+                 'trajectory': [(obs, None, None, None, None)],
+                 'module_name': env.module_name,
+                 'difficulty': env.difficulty,
+                 'module_difficulty_index': env.module_difficulty_index,
+                 'attempts': attempts}
 
 
 def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistics, train=True):
@@ -119,7 +131,8 @@ def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistic
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
                  'difficulty': difficulty,
-                 'module_difficulty_index': env.module_difficulty_index}
+                 'module_difficulty_index': env.module_difficulty_index,
+                 'attempts': 0}
 
 
 # make function to compute action distribution
@@ -310,6 +323,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
             # cache the latest step from each environment
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
             if done:
+                envs_info[env_i]['attempts'] += 1
                 # if random.random() < 0.01:
                 #     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 # print(envs_info[env_i]['trajectory'][-1][4]['raw_observation'])
@@ -344,8 +358,12 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 elif negative_condition(buffer_positives, buffer_negatives, reward):
                     buffer_negatives += len(aligned_trajectory)
                 # reset environment
-                obs_batch[env_i], envs_info[env_i] = \
-                    reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
+                if reward != 1 and envs_info[env_i]['attempts'] < hparams.train.max_num_attempts:
+                    obs_batch[env_i], envs_info[env_i] = \
+                        reset_environment_with_same_problem(envs[env_i], envs_info[env_i]['attempts'])
+                else:
+                    obs_batch[env_i], envs_info[env_i] = \
+                        reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)
                 prev_actions = [envs[0].num_actions]  # action start token
                 prev_actions.extend(

@@ -70,3 +70,5 @@ class Test(unittest.TestCase):
         assert lcd(Rational('2/3'), Rational('3/5')) == Value('15')
         assert lcd(Rational('2/3'), Rational('3/5')) == Value('15')
 
+
+
