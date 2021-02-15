@@ -65,12 +65,6 @@ for epoch_i in range(hparams.train.num_epochs):
     else:
         batch_i, td_error_batches, batches = train(q2, q1, data_loader, writer, batch_i)
 
-    # logging
-    log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
-    batch_string = log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
-    log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
-    log_q_values(q1, envs[0], logging_q_values_filepath)
-
     # fill buffer -----------
 
     print(f'fresh replay buffer: {round(added_to_replay_buffer / len(replay_buffer) * 100, 2)}%')
@@ -122,6 +116,18 @@ for epoch_i in range(hparams.train.num_epochs):
     # eval -----------
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
-        mean_val_reward = run_eval(q1, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+        mean_val_reward, observed_graphs = run_eval(q1, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+        # logging batches
+        log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
+        log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
         log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
+        # logging q-values
+        log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
+        log_to_text_file(f'\nq1', logging_q_values_filepath)
+        log_q_values(q1, envs[0], logging_q_values_filepath)
+        log_to_text_file(f'\nq2', logging_q_values_filepath)
+        log_q_values(q2, envs[0], logging_q_values_filepath)
+        for i in range(10):
+            log_to_text_file(observed_graphs[i], logging_q_values_filepath)
+        log_to_text_file(f'mean val reward: {mean_val_reward}', logging_q_values_filepath)
 

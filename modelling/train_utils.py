@@ -340,9 +340,9 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                         f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                     trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
                 if positive_condition(buffer_positives, buffer_negatives, reward):
-                    buffer_positives += 1
+                    buffer_positives += len(aligned_trajectory)
                 elif negative_condition(buffer_positives, buffer_negatives, reward):
-                    buffer_negatives += 1
+                    buffer_negatives += len(aligned_trajectory)
                 # reset environment
                 obs_batch[env_i], envs_info[env_i] = \
                     reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
@@ -361,6 +361,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
 
 def train(q1, q2, data_loader, writer, current_batch_i):
     q1.train()
+    q2.train()
     td_errors = list()
     losses = list()
     batches = list()
@@ -384,6 +385,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
     n_completed_validation_episodes = 0
     obs_batch, prev_actions_batch, envs_info = reset_all(envs, train=False)
+    observed_graphs = []
     while True:
         # take a step in each environment in "parallel"
         with torch.no_grad():
@@ -397,8 +399,10 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
+                observed_graph = f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n"
+                observed_graphs.append(observed_graph)
                 if random.random() < 0.05:
-                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
+                    print(observed_graph)
                 with open(f'{logdir}/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 if k in total_reward:
@@ -430,7 +434,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()
-    return mean_val_reward
+    return mean_val_reward, observed_graphs
 
 
 def visualize_replay_priority(envs, replay_priority, replay_buffer):

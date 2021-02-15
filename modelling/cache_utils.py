@@ -133,7 +133,7 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
         state_batch, action_batch, reward_batch, _, _, _, _ = batch
         for state, action, reward, td_error in zip(state_batch, action_batch, reward_batch, td_error_batch):
             decoded_state = env.decode(state)
-            strings.append(f'{decoded_state}, action: {action}, reward: {reward}, td_error: {td_error}')
+            strings.append('td_error: {:.2f}, '.format(td_error) + f'{decoded_state}, action: {env.action_names[action]}, reward: {reward}')
             td_errors.append(td_error)
     highest_td_errors_idxs = np.argsort(np.array(td_errors))[::-1][:num_batches].tolist()
     lowest_td_errors_idxs = np.argsort(np.array(td_errors))[:num_batches].tolist()
@@ -145,7 +145,7 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
 def log_q_values(network, env, filepath):
     question_inputs = []
     action_inputs = []
-    question_action_input_pairs = [(0, []), (0, [9]), (0, [8]), (1, []), (1, [9]), (1, [9, 9]), (2, []), (2, [9]), (2, [9, 9]), (2, [9, 9, 9])]
+    question_action_input_pairs = [(0, []), (0, [9]), (1, []), (1, [9]), (1, [9, 9]), (2, []), (2, [9]), (2, [9, 9]), (2, [9, 9, 9])]
     for question_id, action_sequence in question_action_input_pairs:
         question_inputs.append(torch.Tensor([question_id]).view(1, 1).type(torch.LongTensor))
         action_inputs_list = [env.num_actions] + action_sequence + \
@@ -166,7 +166,7 @@ def log_q_values(network, env, filepath):
         num_meaningful_qvs = 24
         qv_tuples = [(i,qv) for i,qv in enumerate(qvs)][:num_meaningful_qvs]
         sorted_qv_tuples = sorted(qv_tuples, key=lambda x: x[1], reverse=True)
-        qv_string = ', '.join([f'{i}: {qv}'[:9] for (i,qv) in sorted_qv_tuples])
+        qv_string = ', '.join([f'{(env.action_names[i])}:' + '{:.2f}'.format(qv) for (i,qv) in sorted_qv_tuples])
         # log all values
         string = f'\nquestion: {question_string}, actions: {actions}\nq-values: {qv_string}'
         log_to_text_file(string, filepath)
