@@ -246,6 +246,8 @@ def ddqn_step(q1, q2, batch):
 
 
 def get_td_error(q1, q2, sampled_steps):
+    q1.eval()
+    q2.eval()
     step_dataset = StepDataset(sampled_steps, q1.device)
     data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False,
                              drop_last=True)
@@ -298,11 +300,14 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
     :param trajectory_statistics:
     :return:
     '''
+    if network is not None:
+        network.eval()
     assert hparams.train.fill_buffer_mode == 'positive_only' or \
            hparams.train.fill_buffer_mode == 'balanced' or \
            hparams.train.fill_buffer_mode == 'anything'
     # reset all environments
     cached_steps = 0
+    added_graphs = []
     trajectory_buffer = []
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
@@ -350,6 +355,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
                     trajectory_buffer.append(aligned_trajectory)
                     cached_steps += len(aligned_trajectory)
+                    added_graphs.append(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                     with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
                         f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                     trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
@@ -374,7 +380,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
     if trajectory_cache_filepath is not None:
         trajectory_cache.close()
-    return trajectory_buffer
+    return trajectory_buffer, added_graphs
 
 
 def train(q1, q2, data_loader, writer, current_batch_i):

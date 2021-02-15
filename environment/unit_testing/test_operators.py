@@ -75,3 +75,13 @@ class Test(unittest.TestCase):
         inpt = Expression('-272*j**5 + j**3 - 8234*j**2')
         third_derivative = differentiate(differentiate(differentiate(inpt)))
         assert sympify(third_derivative) == sympify(Expression('-16320*j**2 + 6'))
+
+    def test_simplify_not_identity(self):
+        inpt = Expression('2*x')
+        output = simplify(inpt)
+        assert output is None
+
+    def test_factor_not_identity(self):
+        inpt = Expression('2*x')
+        output = factor(inpt)
+        assert output is None

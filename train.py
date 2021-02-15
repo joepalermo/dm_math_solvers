@@ -41,6 +41,7 @@ replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buf
 
 # training loop --------------------------------------------------------------------------------------------------------
 
+added_graphs = []
 added_to_replay_buffer = 0
 batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 for epoch_i in range(hparams.train.num_epochs):
@@ -60,6 +61,7 @@ for epoch_i in range(hparams.train.num_epochs):
 
     # train
     print(f'batch #{batch_i}')
+    print(len(replay_buffer))
     if random.random() < 0.5:
         batch_i, td_error_batches, batches = train(q1, q2, data_loader, writer, batch_i)
     else:
@@ -71,7 +73,7 @@ for epoch_i in range(hparams.train.num_epochs):
     if batch_i >= hparams.train.num_batches_until_fill_buffer and \
             batch_i - last_fill_buffer_batch_i > hparams.train.batches_per_fill_buffer:
         last_fill_buffer_batch_i = batch_i
-        latest_buffer = fill_buffer(None, envs, trajectory_statistics, None)
+        latest_buffer, added_graphs = fill_buffer(q1, envs, trajectory_statistics, None)
         latest_buffer = add_trajectory_return_to_trajectories(latest_buffer, gamma=hparams.train.gamma)
         latest_buffer = np.array(flatten(latest_buffer))
         latest_replay_priority = np.ones(len(latest_buffer)) * hparams.train.default_replay_buffer_priority
@@ -101,17 +103,20 @@ for epoch_i in range(hparams.train.num_epochs):
     sampled_idxs = np.random.choice(np.arange(len(replay_buffer)), size=num_to_sample)
     td_error_update_idxs = np.concatenate([sampled_train_idxs, fill_buffer_idxs, sampled_idxs])
     sampled_steps = replay_buffer[td_error_update_idxs]
-    td_error = get_td_error(q1, q2, sampled_steps)
+    if random.random() < 0.5:
+        td_error = get_td_error(q1, q2, sampled_steps)
+    else:
+        td_error = get_td_error(q2, q1, sampled_steps)
 
     # update replay priority
     replay_priority[td_error_update_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
     # visualize_replay_priority(envs, replay_priority, replay_buffer)
 
-    # drop lowest priority samples -----------
-    if len(fill_buffer_idxs) > 0:
-        lowest_priority_indices = np.argsort(replay_priority)[:len(fill_buffer_idxs)]
-        replay_buffer = np.delete(replay_buffer, lowest_priority_indices, axis=0)
-        replay_priority = np.delete(replay_priority, lowest_priority_indices, axis=0)
+    # # drop lowest priority samples -----------
+    # if len(fill_buffer_idxs) > 0:
+    #     lowest_priority_indices = np.argsort(replay_priority)[:len(fill_buffer_idxs)]
+    #     replay_buffer = np.delete(replay_buffer, lowest_priority_indices, axis=0)
+    #     replay_priority = np.delete(replay_priority, lowest_priority_indices, axis=0)
 
     # eval -----------
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
@@ -120,6 +125,8 @@ for epoch_i in range(hparams.train.num_epochs):
         # logging batches
         log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
         log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
+        added_graphs_string = "added graphs" + "\n".join(added_graphs)
+        log_to_text_file(added_graphs_string, logging_batches_filepath)
         log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
         # logging q-values
         log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)

@@ -233,17 +233,27 @@ def substitution_right_to_left(arb: Arbitrary, eq: Equation) -> Arbitrary:
     return Arbitrary(str(arb).replace(str(project_rhs(eq)), str(project_lhs(eq))))
 
 
-def factor(expression: Expression) -> Expression:
-    return Expression(str(sympy.factor(expression)))
-
-
-def simplify(arb: Arbitrary) -> Arbitrary:
-    if "=" in str(arb):
-        lhs, rhs = str(arb).split("=")
-        lhs, rhs = lhs.strip(), rhs.strip()
-        return Equation(f"{sympy.simplify(lhs)} = {sympy.simplify(rhs)}".strip())
+def factor(inpt: Expression) -> Expression:
+    output = Expression(str(sympy.factor(inpt)))
+    # don't allow factor to act as an identity function
+    if str(inpt) == str(output):
+        return None
     else:
-        return Expression(str(sympy.simplify(str(arb))).strip())
+        return output
+
+
+def simplify(inpt: Arbitrary) -> Arbitrary:
+    if "=" in str(inpt):
+        lhs, rhs = str(inpt).split("=")
+        lhs, rhs = lhs.strip(), rhs.strip()
+        output = Equation(f"{sympy.simplify(lhs)} = {sympy.simplify(rhs)}".strip())
+    else:
+        output = Expression(str(sympy.simplify(str(inpt))).strip())
+    # don't allow simplify to act as an identity function
+    if str(inpt) == str(output):
+        return None
+    else:
+        return output
 
 
 def differentiate(expression: Expression) -> Expression:

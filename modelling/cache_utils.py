@@ -126,6 +126,7 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
         for trajectory in sampled_trajectories:
             state = decoder(trajectory[-1][3])
             reward = trajectory[-1][2]
+            print(f'state: {state}, reward: {reward}')
             # TODO: remove special logging vvvvv
             if 'second' in state:
                 problem_type = 1
@@ -187,6 +188,9 @@ def log_q_values(network, env, filepath):
         # log all values
         string = f'\nquestion: {question_string}, actions: {actions}\nq-values: {qv_string}'
         log_to_text_file(string, filepath)
+
+
+# def get_replay_buffer_stats(replay_buffer):
 
 
 def log_to_text_file(string, filepath):
