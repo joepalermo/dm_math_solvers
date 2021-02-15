@@ -161,6 +161,7 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
 
 
 def log_q_values(network, env, filepath):
+    network.eval()
     question_inputs = []
     action_inputs = []
     question_action_input_pairs = [(0, []), (0, [9]), (1, []), (1, [9]), (1, [9, 9]), (2, []), (2, [9]), (2, [9, 9]), (2, [9, 9, 9])]
