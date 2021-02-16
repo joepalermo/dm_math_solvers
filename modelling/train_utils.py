@@ -51,7 +51,8 @@ def reset_all(envs, trajectory_statistics=None, train=True):
                           'trajectory': [(obs, None, None, None, info)],
                           'module_name': env.module_name,
                           'difficulty': env.difficulty,
-                          'module_difficulty_index': env.module_difficulty_index})
+                          'module_difficulty_index': env.module_difficulty_index,
+                          'attempts': 0})
         obs_batch.append(np.expand_dims(obs, 0))
         # prev_action_batch is initialized to contain only the padding action
         prev_actions_batch.append(prev_actions)
@@ -109,7 +110,18 @@ def reset_environment(env, train=True):
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': env.module_name,
                  'difficulty': env.difficulty,
-                 'module_difficulty_index': env.module_difficulty_index}
+                 'module_difficulty_index': env.module_difficulty_index,
+                 'attempts': 0}
+
+
+def reset_environment_with_same_problem(env, attempts):
+    obs, info = env.reset_with_same_problem()
+    return obs, {'question': info['raw_observation'],
+                 'trajectory': [(obs, None, None, None, None)],
+                 'module_name': env.module_name,
+                 'difficulty': env.difficulty,
+                 'module_difficulty_index': env.module_difficulty_index,
+                 'attempts': attempts}
 
 
 def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistics, train=True):
@@ -119,7 +131,8 @@ def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistic
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
                  'difficulty': difficulty,
-                 'module_difficulty_index': env.module_difficulty_index}
+                 'module_difficulty_index': env.module_difficulty_index,
+                 'attempts': 0}
 
 
 # make function to compute action distribution
@@ -196,17 +209,55 @@ def dqn_step(network, target_network, batch):
     return batch_loss, td_error
 
 
-def get_td_error(network, sampled_steps):
-    step_dataset = StepDataset(sampled_steps, network.device)
+def ddqn_step(q1, q2, batch):
+    state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
+    # compute the target --------------
+    with torch.no_grad():
+        # compute next_prev_actions_batch
+        next_prev_actions_batch = prev_actions_batch.clone()
+        action_padding_token = q1.num_outputs + 1
+        last_padding_index = [torch.where(prev_actions_batch[i] == action_padding_token)[0].min()
+                              for i in range(len(prev_actions_batch))]
+        next_prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
+
+        # shows that q1 at argmax over q1 equals max over q1:
+        # q1(next_state_batch, next_prev_actions_batch).\
+        #   gather(1,torch.argmax(q1(next_state_batch, next_prev_actions_batch), dim=1).view(-1, 1)),
+        # torch.max(q1(next_state_batch, next_prev_actions_batch), dim=1).values
+
+        q1_maximizing_actions = torch.argmax(q1(next_state_batch, next_prev_actions_batch), dim=1).view(-1,1)
+        targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
+                  q2(next_state_batch, next_prev_actions_batch).gather(1, q1_maximizing_actions).flatten()
+    targets = targets.detach()
+    # compute loss --------------
+    batch_output = q1(state_batch, prev_actions_batch)
+    batch_output = batch_output.gather(1, action_batch.view(-1, 1)).flatten()
+    batch_loss = torch.nn.MSELoss()(batch_output, targets)
+    # gradient descent --------------
+    q1.optimizer.zero_grad()
+    batch_loss.backward()
+    torch.nn.utils.clip_grad_norm_(q1.parameters(), q1.max_grad_norm)
+    # for param in q1.parameters():
+    #     param.grad.data.clamp_(-1, 1)
+    q1.optimizer.step()
+    # also fetch td-error for logging --------------
+    td_error = torch.abs(targets - batch_output)
+    return batch_loss, td_error
+
+
+def get_td_error(q1, q2, sampled_steps):
+    q1.eval()
+    q2.eval()
+    step_dataset = StepDataset(sampled_steps, q1.device)
     data_loader = DataLoader(step_dataset, batch_size=hparams.train.sample_td_error_batch_size, shuffle=False,
                              drop_last=True)
     td_error_list = list()
     for batch in data_loader:
         with torch.no_grad():
-            state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch = batch
+            state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                      torch.max(network(next_state_batch, prev_actions_batch), dim=1)[0]
-            batch_output = network(state_batch, prev_actions_batch)
+                        torch.max(q2(next_state_batch, prev_actions_batch), dim=1)[0]
+            batch_output = q1(state_batch, prev_actions_batch)
             batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
             batch_td_error = torch.abs(targets - batch_output)
             td_error_list.append(batch_td_error)
@@ -231,7 +282,7 @@ class StepDataset(torch.utils.data.Dataset):
         next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
         prev_actions = torch.from_numpy(np.array(prev_actions, dtype=np.int64)).to(self.device)
         done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
-        trajectory_return = torch.from_numpy(np.array(trajectory_return, dtype=np.int64)).to(self.device)
+        trajectory_return = torch.from_numpy(np.array(trajectory_return, dtype=np.float32)).to(self.device)
         return state, action, reward, next_state, prev_actions, done, trajectory_return
 
 
@@ -249,11 +300,14 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
     :param trajectory_statistics:
     :return:
     '''
+    if network is not None:
+        network.eval()
     assert hparams.train.fill_buffer_mode == 'positive_only' or \
            hparams.train.fill_buffer_mode == 'balanced' or \
            hparams.train.fill_buffer_mode == 'anything'
     # reset all environments
     cached_steps = 0
+    added_graphs = []
     trajectory_buffer = []
     buffer_positives = 1
     buffer_negatives = 1  # init to 1 to prevent division by zero
@@ -274,6 +328,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
             # cache the latest step from each environment
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
             if done:
+                envs_info[env_i]['attempts'] += 1
                 # if random.random() < 0.01:
                 #     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 # print(envs_info[env_i]['trajectory'][-1][4]['raw_observation'])
@@ -300,16 +355,21 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
                     trajectory_buffer.append(aligned_trajectory)
                     cached_steps += len(aligned_trajectory)
+                    added_graphs.append(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                     with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
                         f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                     trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
                 if positive_condition(buffer_positives, buffer_negatives, reward):
-                    buffer_positives += 1
+                    buffer_positives += len(aligned_trajectory)
                 elif negative_condition(buffer_positives, buffer_negatives, reward):
-                    buffer_negatives += 1
+                    buffer_negatives += len(aligned_trajectory)
                 # reset environment
-                obs_batch[env_i], envs_info[env_i] = \
-                    reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
+                if reward != 1 and envs_info[env_i]['attempts'] < hparams.train.max_num_attempts:
+                    obs_batch[env_i], envs_info[env_i] = \
+                        reset_environment_with_same_problem(envs[env_i], envs_info[env_i]['attempts'])
+                else:
+                    obs_batch[env_i], envs_info[env_i] = \
+                        reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)
                 prev_actions = [envs[0].num_actions]  # action start token
                 prev_actions.extend(
@@ -320,17 +380,18 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 # envs_info[env_i]['trajectory'].append((obs_batch[env_i].astype(np.int16), None, None, None, info_dict))
     if trajectory_cache_filepath is not None:
         trajectory_cache.close()
-    return trajectory_buffer
+    return trajectory_buffer, added_graphs
 
 
-def train(network, target_network, data_loader, writer, current_batch_i):
-    network.train()
+def train(q1, q2, data_loader, writer, current_batch_i):
+    q1.train()
+    q2.train()
     td_errors = list()
     losses = list()
     batches = list()
     for i, batch in enumerate(data_loader):
-        # batch_loss, td_error = dqn_step(network, target_network, batch)
-        batch_loss, td_error = mc_step(network, batch)
+        batch_loss, td_error = ddqn_step(q1, q2, batch)
+        # batch_loss, td_error = mc_step(q1, batch)
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
@@ -348,6 +409,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
     n_completed_validation_episodes = 0
     obs_batch, prev_actions_batch, envs_info = reset_all(envs, train=False)
+    observed_graphs = []
     while True:
         # take a step in each environment in "parallel"
         with torch.no_grad():
@@ -361,8 +423,10 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
             # if episode is complete, check if trajectory should be kept in buffer and reset environment
             if done:
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
+                observed_graph = f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n"
+                observed_graphs.append(observed_graph)
                 if random.random() < 0.05:
-                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
+                    print(observed_graph)
                 with open(f'{logdir}/validation_graphs_{k[0]}_{k[1]}.txt', 'a') as f:
                     f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 if k in total_reward:
@@ -394,7 +458,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()
-    return mean_val_reward
+    return mean_val_reward, observed_graphs
 
 
 def visualize_replay_priority(envs, replay_priority, replay_buffer):
