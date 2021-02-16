@@ -10,6 +10,7 @@ from modelling.train_utils import init_trajectory_data_structures, init_envs, tr
     fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
+import random
 from utils import flatten
 import os
 
@@ -29,17 +30,18 @@ trajectory_statistics = init_trajectory_data_structures(envs[0])
 ntoken = hparams.env.vocab_size + 1
 num_outputs = envs[0].num_actions
 max_num_nodes = envs[0].max_num_nodes
-network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
-target_network = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
-target_network.eval()
+q1 = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
+q2 = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
 
 # init replay buffer from trajectory cache on disk
 replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random_exploration_trajectory_cache_filepath,
-                                                            hparams.train.replay_buffer_size)
+                                                            hparams.train.replay_buffer_size,
+                                                            hparams.train.gamma)
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
 # training loop --------------------------------------------------------------------------------------------------------
 
+added_graphs = []
 added_to_replay_buffer = 0
 batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 for epoch_i in range(hparams.train.num_epochs):
@@ -54,21 +56,16 @@ for epoch_i in range(hparams.train.num_epochs):
     sampled_steps = replay_buffer[sampled_train_idxs]
 
     # construct data loader
-    step_dataset = StepDataset(sampled_steps, network.device)
-    data_loader = DataLoader(step_dataset, batch_size=network.batch_size, shuffle=False, drop_last=True)
+    step_dataset = StepDataset(sampled_steps, q1.device)
+    data_loader = DataLoader(step_dataset, batch_size=q1.batch_size, shuffle=False, drop_last=True)
 
     # train
     print(f'batch #{batch_i}')
-    if hparams.train.use_target_network:
-        batch_i, td_error_batches, batches = train(network, target_network, data_loader, writer, batch_i)
+    print(len(replay_buffer))
+    if random.random() < 0.5:
+        batch_i, td_error_batches, batches = train(q1, q2, data_loader, writer, batch_i)
     else:
-        batch_i, td_error_batches, batches = train(network, None, data_loader, writer, batch_i)
-
-    # logging
-    log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
-    batch_string = log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
-    log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
-    log_q_values(network, envs[0], logging_q_values_filepath)
+        batch_i, td_error_batches, batches = train(q2, q1, data_loader, writer, batch_i)
 
     # fill buffer -----------
 
@@ -76,7 +73,7 @@ for epoch_i in range(hparams.train.num_epochs):
     if batch_i >= hparams.train.num_batches_until_fill_buffer and \
             batch_i - last_fill_buffer_batch_i > hparams.train.batches_per_fill_buffer:
         last_fill_buffer_batch_i = batch_i
-        latest_buffer = fill_buffer(None, envs, trajectory_statistics, None)
+        latest_buffer, added_graphs = fill_buffer(q1, envs, trajectory_statistics, None)
         latest_buffer = add_trajectory_return_to_trajectories(latest_buffer, gamma=hparams.train.gamma)
         latest_buffer = np.array(flatten(latest_buffer))
         latest_replay_priority = np.ones(len(latest_buffer)) * hparams.train.default_replay_buffer_priority
@@ -106,29 +103,38 @@ for epoch_i in range(hparams.train.num_epochs):
     sampled_idxs = np.random.choice(np.arange(len(replay_buffer)), size=num_to_sample)
     td_error_update_idxs = np.concatenate([sampled_train_idxs, fill_buffer_idxs, sampled_idxs])
     sampled_steps = replay_buffer[td_error_update_idxs]
-    td_error = get_td_error(network, sampled_steps)
+    if random.random() < 0.5:
+        td_error = get_td_error(q1, q2, sampled_steps)
+    else:
+        td_error = get_td_error(q2, q1, sampled_steps)
 
     # update replay priority
     replay_priority[td_error_update_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
     # visualize_replay_priority(envs, replay_priority, replay_buffer)
 
-    # drop lowest priority samples -----------
-    if len(fill_buffer_idxs) > 0:
-        lowest_priority_indices = np.argsort(replay_priority)[:len(fill_buffer_idxs)]
-        replay_buffer = np.delete(replay_buffer, lowest_priority_indices, axis=0)
-        replay_priority = np.delete(replay_priority, lowest_priority_indices, axis=0)
-
-    # update target network -----------
-    if batch_i >= hparams.train.batches_until_target_network and \
-            batch_i - last_target_network_update_batch_i >= hparams.train.batches_per_target_network_update:
-        last_target_network_update_batch_i = batch_i
-        target_network.load_state_dict(network.state_dict())
-        target_network.eval()
-        print('updated target network')
+    # # drop lowest priority samples -----------
+    # if len(fill_buffer_idxs) > 0:
+    #     lowest_priority_indices = np.argsort(replay_priority)[:len(fill_buffer_idxs)]
+    #     replay_buffer = np.delete(replay_buffer, lowest_priority_indices, axis=0)
+    #     replay_priority = np.delete(replay_priority, lowest_priority_indices, axis=0)
 
     # eval -----------
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
-        mean_val_reward = run_eval(network, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+        mean_val_reward, observed_graphs = run_eval(q1, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+        # logging batches
+        log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
+        log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
+        added_graphs_string = "added graphs" + "\n".join(added_graphs)
+        log_to_text_file(added_graphs_string, logging_batches_filepath)
         log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
+        # logging q-values
+        log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
+        log_to_text_file(f'\nq1', logging_q_values_filepath)
+        log_q_values(q1, envs[0], logging_q_values_filepath)
+        log_to_text_file(f'\nq2', logging_q_values_filepath)
+        log_q_values(q2, envs[0], logging_q_values_filepath)
+        for i in range(10):
+            log_to_text_file(observed_graphs[i], logging_q_values_filepath)
+        log_to_text_file(f'mean val reward: {mean_val_reward}', logging_q_values_filepath)
 
