@@ -1,13 +1,13 @@
+
 from inspect import signature
 from pathlib import Path
+from sympy import sympify
 from random import sample
-
 import gym
 import numpy as np
 from gym import spaces
 from scipy.special import softmax
 import sentencepiece as spm
-
 from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
 from environment.utils import load_training_data, split_validation_data
@@ -62,6 +62,7 @@ class MathEnv(gym.Env):
         self.actions = self.operators + [
             f"f{i}" for i in range(self.max_formal_elements)
         ]
+        self.action_names = [op.__name__ for op in self.operators] + [f"f{i}" for i in range(self.max_formal_elements)]
         self.num_actions = len(self.actions)
         self.action_space = spaces.Discrete(len(self.actions))
         self.action_indices = np.arange(len(self.actions))
@@ -80,7 +81,6 @@ class MathEnv(gym.Env):
         """
         :param action_index: index into the action space
         :return: observation, reward, done, info
-
         An action fills the next element in the compute graph.
         -observation: question + interim compute graph
         -reward: 0 if the compute doesn't evaluate correctly, 1 if it does
@@ -101,12 +101,27 @@ class MathEnv(gym.Env):
             or np.array_equal(next_mask, np.zeros(len(next_mask)))
         )
         # get reward
-        if done and str(output) == self.answer:
-            reward = 1
+        if done:
+            # cleanup output
+            sympify_output = None
+            sympify_answer = None
+            try:
+                sympify_output = sympify(str(output))
+                sympify_answer = sympify(self.answer)
+            except:
+                pass
+            if sympify_output is not None and sympify_answer is not None and \
+                    sympify_output == sympify_answer:
+                reward = 1
+            elif str(output) == str(self.answer):
+                reward = 1
+            else:
+                reward = 0
         else:
             reward = 0
         info = {"raw_observation": raw_observation}
         return observation, reward, done, info
+
 
     # tokenization utilities -------------------------------------------------------------------------------------------
 
