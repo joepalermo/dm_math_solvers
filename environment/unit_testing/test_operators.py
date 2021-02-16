@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 from environment.typed_operators import *
+from sympy import sympify
 
 
 class Test(unittest.TestCase):
@@ -70,3 +71,17 @@ class Test(unittest.TestCase):
         assert lcd(Rational('2/3'), Rational('3/5')) == Value('15')
         assert lcd(Rational('2/3'), Rational('3/5')) == Value('15')
 
+    def test_third_derivative(self):
+        inpt = Expression('-272*j**5 + j**3 - 8234*j**2')
+        third_derivative = differentiate(differentiate(differentiate(inpt)))
+        assert sympify(third_derivative) == sympify(Expression('-16320*j**2 + 6'))
+
+    def test_simplify_not_identity(self):
+        inpt = Expression('2*x')
+        output = simplify(inpt)
+        assert output is None
+
+    def test_factor_not_identity(self):
+        inpt = Expression('2*x')
+        output = factor(inpt)
+        assert output is None
