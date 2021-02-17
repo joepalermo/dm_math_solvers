@@ -113,9 +113,10 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
             all_trajectories[module_difficulty] = []
         else:
             all_trajectories[module_difficulty].extend(trajectories)
+    module_difficulty_counts = {}
+    total_num_steps = total_num_trajectories = 0
     for module_difficulty in all_trajectories:
         module_difficulty_trajectories = all_trajectories[module_difficulty]
-
         sampled_trajectories = [] if len(module_difficulty_trajectories) == 0 else \
             np.random.choice(module_difficulty_trajectories, size=num_to_sample)
         print(f"{module_difficulty} samples:")
@@ -124,8 +125,16 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
             reward = trajectory[-1][2]
             print(f'state: {state}, reward: {reward}')
         print(f'{module_difficulty}')
-        print(f'# trajectories: {len(all_trajectories[module_difficulty])}')
-        print(f'# steps: {len(flatten(all_trajectories[module_difficulty]))}')
+        num_trajectories = len(all_trajectories[module_difficulty])
+        num_steps = len(flatten(all_trajectories[module_difficulty]))
+        print(f'# trajectories: {num_trajectories}')
+        print(f'# steps: {num_steps}')
+        module_difficulty_counts[module_difficulty] = (num_steps, num_trajectories)
+        total_num_trajectories += num_trajectories
+        total_num_steps += num_steps
+    pprint.pprint(module_difficulty_counts)
+    print(f'# total trajectories: {total_num_trajectories}')
+    print(f'# total steps: {total_num_steps}')
 
 
 def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
