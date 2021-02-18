@@ -60,7 +60,7 @@ for epoch_i in range(hparams.train.num_epochs):
     data_loader = DataLoader(step_dataset, batch_size=q1.batch_size, shuffle=False, drop_last=True)
 
     # train
-    print(f'batch #{batch_i}')
+    print(f'({hparams.run.name}) batch #{batch_i}')
     print(len(replay_buffer))
     if random.random() < 0.5:
         batch_i, td_error_batches, batches = train(q1, q2, data_loader, writer, batch_i)
