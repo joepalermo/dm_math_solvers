@@ -92,8 +92,8 @@ class MathEnv(gym.Env):
         self.compute_graph.add(action)
         output = self.compute_graph.eval()
         compute_graph = str(self.compute_graph)
-        raw_observation = f"{self.question}; {compute_graph}"
-        observation = self.encode(raw_observation)
+        full_raw_observation = f"{self.question}; {compute_graph}"
+        observation = self.encode(self.question)
         next_mask = self.compute_mask()
         done = (
             self.compute_graph.current_node is None
@@ -119,7 +119,7 @@ class MathEnv(gym.Env):
                 reward = 0
         else:
             reward = 0
-        info = {"raw_observation": raw_observation}
+        info = {"raw_observation": full_raw_observation}
         return observation, reward, done, info
 
 
