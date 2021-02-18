@@ -133,6 +133,7 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
         total_num_trajectories += num_trajectories
         total_num_steps += num_steps
     pprint.pprint(module_difficulty_counts)
+    print(f'# prev actions: {len(trajectory[-1][4])-1}')
     print(f'# total trajectories: {total_num_trajectories}')
     print(f'# total steps: {total_num_steps}')
 

@@ -45,8 +45,6 @@ added_graphs = []
 added_to_replay_buffer = 0
 batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 for epoch_i in range(hparams.train.num_epochs):
-    print(f'epoch #{epoch_i}')
-
     # sample and train -----------
 
     # sample from prioritized replay buffer
@@ -121,20 +119,16 @@ for epoch_i in range(hparams.train.num_epochs):
     # eval -----------
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
-        mean_val_reward, observed_graphs = run_eval(q1, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
-        # logging batches
+        mean_val_reward, eval_graphs = run_eval(q1, envs, writer, batch_i, hparams.train.n_required_validation_episodes)
+        # log batches
         log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
         log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
-        added_graphs_string = "added graphs" + "\n".join(added_graphs)
+        # log added graphs
+        added_graphs_string = "added graphs:\n" + "\n".join(added_graphs)
         log_to_text_file(added_graphs_string, logging_batches_filepath)
-        log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
-        # logging q-values
-        log_to_text_file(f'\nbatch #{batch_i}', logging_q_values_filepath)
-        log_to_text_file(f'\nq1', logging_q_values_filepath)
-        log_q_values(q1, envs[0], logging_q_values_filepath)
-        log_to_text_file(f'\nq2', logging_q_values_filepath)
-        log_q_values(q2, envs[0], logging_q_values_filepath)
+        # log eval trajectories
         for i in range(10):
-            log_to_text_file(observed_graphs[i], logging_q_values_filepath)
-        log_to_text_file(f'mean val reward: {mean_val_reward}', logging_q_values_filepath)
+            log_to_text_file(eval_graphs[i], logging_batches_filepath)
+        # log eval reward
+        log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
 
