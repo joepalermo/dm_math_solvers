@@ -78,7 +78,7 @@ def get_action_batch(obs_batch, prev_actions_batch, envs, network=None, eval=Fal
     if network:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64)).to(network.device)
         prev_actions_batch = torch.from_numpy(prev_actions_batch.astype(np.int64)).to(network.device)
-        output_batch = network(obs_batch, prev_actions_batch).detach().cpu().numpy()
+        output_batch = network(obs_batch).detach().cpu().numpy()
         model_type = hparams.model.model_type
     else:
         output_batch = np.random.uniform(size=(len(obs_batch), len(envs[0].actions)))
@@ -161,7 +161,7 @@ def vpg_step(network, state_batch, action_batch, reward_batch):
 def mc_step(network, batch):
     state_batch, action_batch, _, _, prev_actions_batch, _, trajectory_return_batch = batch
     # compute loss --------------
-    output_batch = network(state_batch, prev_actions_batch)
+    output_batch = network(state_batch)
     output_batch = output_batch.gather(1, action_batch.view(-1, 1)).squeeze()
     batch_loss = torch.nn.MSELoss()(output_batch, trajectory_return_batch)
     # gradient descent --------------
@@ -188,13 +188,13 @@ def dqn_step(network, target_network, batch):
         next_prev_actions_batch[np.arange(len(prev_actions_batch)), last_padding_index] = action_batch
         if target_network is None:
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                      torch.max(network(next_state_batch, next_prev_actions_batch), dim=1)[0]
+                      torch.max(network(next_state_batch), dim=1)[0]
         else:
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                      torch.max(target_network(next_state_batch, next_prev_actions_batch), dim=1)[0]
+                      torch.max(target_network(next_state_batch), dim=1)[0]
     targets = targets.detach()
     # compute loss --------------
-    batch_output = network(state_batch, prev_actions_batch)
+    batch_output = network(state_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
     # gradient descent --------------
@@ -225,12 +225,12 @@ def ddqn_step(q1, q2, batch):
         #   gather(1,torch.argmax(q1(next_state_batch, next_prev_actions_batch), dim=1).view(-1, 1)),
         # torch.max(q1(next_state_batch, next_prev_actions_batch), dim=1).values
 
-        q1_maximizing_actions = torch.argmax(q1(next_state_batch, next_prev_actions_batch), dim=1).view(-1,1)
+        q1_maximizing_actions = torch.argmax(q1(next_state_batch), dim=1).view(-1,1)
         targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                  q2(next_state_batch, next_prev_actions_batch).gather(1, q1_maximizing_actions).flatten()
+                  q2(next_state_batch).gather(1, q1_maximizing_actions).flatten()
     targets = targets.detach()
     # compute loss --------------
-    batch_output = q1(state_batch, prev_actions_batch)
+    batch_output = q1(state_batch)
     batch_output = batch_output.gather(1, action_batch.view(-1, 1)).flatten()
     batch_loss = torch.nn.MSELoss()(batch_output, targets)
     # gradient descent --------------
@@ -256,8 +256,8 @@ def get_td_error(q1, q2, sampled_steps):
         with torch.no_grad():
             state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
-                        torch.max(q2(next_state_batch, prev_actions_batch), dim=1)[0]
-            batch_output = q1(state_batch, prev_actions_batch)
+                        torch.max(q2(next_state_batch), dim=1)[0]
+            batch_output = q1(state_batch)
             batch_output = batch_output.gather(1, action_batch.view(-1, 1)).squeeze()
             batch_td_error = torch.abs(targets - batch_output)
             td_error_list.append(batch_td_error)

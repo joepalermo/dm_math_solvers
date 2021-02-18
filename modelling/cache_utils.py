@@ -165,7 +165,7 @@ def log_q_values(network, env, filepath):
         action_inputs.append(torch.Tensor(action_inputs_list).view(1,-1).type(torch.LongTensor))
     question_batch = torch.cat(question_inputs).to(network.device)
     action_batch = torch.cat(action_inputs).to(network.device)
-    q_values = network(question_batch, action_batch).detach().cpu().numpy()
+    q_values = network(question_batch).detach().cpu().numpy()
     question_values = {0: 'first', 1: 'second', 2: 'third', 3: 'first'}
     for question, actions, qvs in zip(question_inputs, action_inputs, q_values):
         # prep question

@@ -64,7 +64,7 @@ class TransformerEncoderModel(torch.nn.Module):
         )
         self.lstm_block = LSTM(input_size=hparams.model.action_embedding_size, hidden_size=hparams.model.lstm_hidden_size,
                                num_layers=hparams.model.lstm_nlayers, batch_first=True, dropout=hparams.train.dropout)
-        self.dense_block_1 = DenseBlock(hparams.model.nhid + hparams.model.lstm_hidden_size, hparams.model.nhid)
+        self.dense_block_1 = DenseBlock(hparams.model.nhid, hparams.model.nhid)
         self.dense_2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
 
         # define non-tunable layers -------------------
@@ -89,7 +89,7 @@ class TransformerEncoderModel(torch.nn.Module):
         #                                                      total_steps=hparams.train.total_steps,
         #                                                      final_div_factor=hparams.train.final_div_factor)
 
-    def forward(self, question_tokens, action_tokens):
+    def forward(self, question_tokens):
         # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)
         # question model --------------
         # embed the tokens
@@ -104,19 +104,19 @@ class TransformerEncoderModel(torch.nn.Module):
         # encoding = self.transformer_encoder(embedding_with_pos)
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
         question_encoding = encoding[0]
-        # action model --------------
-        sequence_lens = action_tokens.shape[1] - torch.sum(action_tokens == self.action_padding_token, axis=1)
-        sequence_lens = sequence_lens.detach().cpu()
-        # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
-        action_embedding = self.action_embedding(action_tokens)
-        packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,
-                                                       enforce_sorted=False)
-        # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
-        packed_lstm_output, _ = self.lstm_block(packed_action_embedding)
-        padded_lstm_output, output_lengths = pad_packed_sequence(packed_lstm_output, batch_first=True)
-        action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths - 1]
+        # # action model --------------
+        # sequence_lens = action_tokens.shape[1] - torch.sum(action_tokens == self.action_padding_token, axis=1)
+        # sequence_lens = sequence_lens.detach().cpu()
+        # # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
+        # action_embedding = self.action_embedding(action_tokens)
+        # packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,
+        #                                                enforce_sorted=False)
+        # # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
+        # packed_lstm_output, _ = self.lstm_block(packed_action_embedding)
+        # padded_lstm_output, output_lengths = pad_packed_sequence(packed_lstm_output, batch_first=True)
+        # action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths - 1]
         # output model --------------
-        question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
-        output = self.dense_block_1(question_and_actions)
+        # question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
+        output = self.dense_block_1(question_encoding)
         output = self.dense_2(self.dropout(output))
         return output
