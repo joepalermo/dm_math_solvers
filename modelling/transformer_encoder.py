@@ -62,9 +62,9 @@ class TransformerEncoderModel(torch.nn.Module):
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.lstm_block = LSTM(input_size=hparams.model.action_embedding_size, hidden_size=hparams.model.lstm_hidden_size,
+        self.lstm_block = LSTM(input_size=hparams.model.action_embedding_size, hidden_size=hparams.model.nhid,
                                num_layers=hparams.model.lstm_nlayers, batch_first=True, dropout=hparams.train.dropout)
-        self.dense_block_1 = DenseBlock(hparams.model.nhid + hparams.model.lstm_hidden_size, hparams.model.nhid)
+        self.dense_block_1 = DenseBlock(hparams.model.nhid, hparams.model.nhid)
         self.dense_2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
 
         # define non-tunable layers -------------------
@@ -112,11 +112,13 @@ class TransformerEncoderModel(torch.nn.Module):
         packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,
                                                        enforce_sorted=False)
         # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
-        packed_lstm_output, _ = self.lstm_block(packed_action_embedding)
+        assert hparams.model.lstm_nlayers == 1
+        h0 = question_encoding.unsqueeze(0)
+        c0 = torch.zeros(hparams.model.lstm_nlayers, len(question_tokens), hparams.model.nhid).to(self.device)
+        packed_lstm_output, _ = self.lstm_block(packed_action_embedding, (h0, c0))
         padded_lstm_output, output_lengths = pad_packed_sequence(packed_lstm_output, batch_first=True)
         action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths - 1]
         # output model --------------
-        question_and_actions = torch.cat([question_encoding, action_encoding], dim=1)
-        output = self.dense_block_1(question_and_actions)
+        output = self.dense_block_1(action_encoding)
         output = self.dense_2(self.dropout(output))
         return output
