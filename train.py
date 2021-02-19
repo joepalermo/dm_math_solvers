@@ -132,7 +132,7 @@ for epoch_i in range(hparams.train.num_epochs):
             log_to_text_file(selected_added_graphs_string, logging_batches_filepath)
         # log eval trajectories
         log_to_text_file("validation graphs:", logging_batches_filepath)
-        selected_eval_graphs = random.choices(eval_graphs, k=min(len(added_graphs), 10))
+        selected_eval_graphs = random.choices(eval_graphs, k=min(len(eval_graphs), 10))
         selected_eval_graphs_string = "\n".join(selected_eval_graphs)
         log_to_text_file(selected_eval_graphs_string, logging_batches_filepath)
         # log eval reward
