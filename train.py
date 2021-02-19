@@ -36,7 +36,8 @@ q2 = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=devi
 # init replay buffer from trajectory cache on disk
 replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random_exploration_trajectory_cache_filepath,
                                                             hparams.train.replay_buffer_size,
-                                                            hparams.train.gamma)
+                                                            hparams.train.gamma,
+                                                            selected_filenames=hparams.env.selected_filenames)
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
 # training loop --------------------------------------------------------------------------------------------------------

@@ -51,20 +51,23 @@ def cache_trajectory(env_info, aligned_trajectory, trajectory_cache):
         trajectory_cache[key] = trajectories
 
 
-def extract_trajectory_cache(trajectory_cache_filepath, verbose=False):
+def extract_trajectory_cache(trajectory_cache_filepath, selected_filenames=None, verbose=False):
     all_trajectories = []
+    selected_filenames = selected_filenames if selected_filenames is not None else []
+    seleted_module_names = [fn.split('.txt')[0] for fn in selected_filenames]
     module_difficulty_trajectory_counts = {}
     try:
         trajectory_cache = SqliteDict(trajectory_cache_filepath, autocommit=True)
         for key in trajectory_cache:
             trajectories = trajectory_cache[key]
-            if verbose:
-                module_difficulty = '-'.join(key.split('-')[:-1])
-                if module_difficulty not in module_difficulty_trajectory_counts:
-                    module_difficulty_trajectory_counts[module_difficulty] = 1
-                else:
-                    module_difficulty_trajectory_counts[module_difficulty] += 1
-            all_trajectories.extend(trajectories)
+            module_difficulty = '-'.join(key.split('-')[:-1])
+            module = module_difficulty.split('-')[0]
+            if module_difficulty not in module_difficulty_trajectory_counts:
+                module_difficulty_trajectory_counts[module_difficulty] = 1
+            else:
+                module_difficulty_trajectory_counts[module_difficulty] += 1
+            if module in seleted_module_names:
+                all_trajectories.extend(trajectories)
         if verbose:
             pprint.pprint(module_difficulty_trajectory_counts)
             print(f"# problems: {len(trajectory_cache)}")
@@ -86,8 +89,9 @@ def add_trajectory_return_to_trajectories(trajectories, gamma):
     return mod_trajectories
 
 
-def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size, gamma):
-    trajectories = extract_trajectory_cache(trajectory_cache_filepath)
+def extract_replay_buffer_from_trajectory_cache(trajectory_cache_filepath, replay_buffer_size, gamma,
+                                                selected_filenames=None):
+    trajectories = extract_trajectory_cache(trajectory_cache_filepath, selected_filenames=selected_filenames)
     trajectories = add_trajectory_return_to_trajectories(trajectories, gamma)
     replay_buffer = flatten(trajectories)
     random.shuffle(replay_buffer)
