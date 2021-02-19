@@ -12,7 +12,7 @@ from sqlitedict import SqliteDict
 
 
 def get_logdir():
-    return f'logs-{hparams.run.name}'
+    return f'logs/logs-{hparams.run.name}'
 
 
 def init_trajectory_data_structures(env):
@@ -329,8 +329,8 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
             envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
             if done:
                 envs_info[env_i]['attempts'] += 1
-                # if random.random() < 0.01:
-                #     print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
+                if random.random() < 0.01:
+                    print(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                 # print(envs_info[env_i]['trajectory'][-1][4]['raw_observation'])
                 def positive_condition(buffer_positives, buffer_negatives, reward):
                     return (hparams.train.fill_buffer_mode == 'positive_only' and reward == 1) or \
