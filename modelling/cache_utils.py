@@ -149,7 +149,10 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
         state_batch, action_batch, reward_batch, _, prev_actions_batch, _, _ = batch
         for state, action, reward, prev_actions, td_error in zip(state_batch, action_batch, reward_batch, prev_actions_batch, td_error_batch):
             decoded_state = env.decode(state)
-            strings.append('td_error: {:.2f}, '.format(td_error) + f'{decoded_state}, prev_actions: {prev_actions}, action: {env.action_names[action]}, reward: {reward}')
+            prev_actions_string = [env.action_names[action_i] for action_i in prev_actions if action_i < env.num_actions]
+            step_string = 'td_error: {:.2f}, '.format(td_error) + f'{decoded_state}, ' \
+                f'prev_actions: {prev_actions_string}, action: {env.action_names[action]}, reward: {reward}'
+            strings.append(step_string)
             td_errors.append(td_error)
     highest_td_errors_idxs = np.argsort(np.array(td_errors))[::-1][:num_batches].tolist()
     lowest_td_errors_idxs = np.argsort(np.array(td_errors))[:num_batches].tolist()

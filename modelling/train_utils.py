@@ -12,7 +12,7 @@ from sqlitedict import SqliteDict
 
 
 def get_logdir():
-    return f'logs/logs-{hparams.run.name}'
+    return f'logs-{hparams.run.name}'
 
 
 def init_trajectory_data_structures(env):
@@ -364,7 +364,8 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 elif negative_condition(buffer_positives, buffer_negatives, reward):
                     buffer_negatives += len(aligned_trajectory)
                 # reset environment
-                if reward != 1 and envs_info[env_i]['attempts'] < hparams.train.max_num_attempts:
+                if hparams.train.reset_with_same_problem and reward != 1 and \
+                        envs_info[env_i]['attempts'] < hparams.train.max_num_attempts:
                     obs_batch[env_i], envs_info[env_i] = \
                         reset_environment_with_same_problem(envs[env_i], envs_info[env_i]['attempts'])
                 else:

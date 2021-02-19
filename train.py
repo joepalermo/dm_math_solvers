@@ -125,10 +125,12 @@ for epoch_i in range(hparams.train.num_epochs):
         log_to_text_file(f'\nbatch #{batch_i}', logging_batches_filepath)
         log_batches(batches, td_error_batches, envs[0], logging_batches_filepath)
         # log added graphs
-        added_graphs_string = "added graphs:\n" + "\n".join(added_graphs)
-        log_to_text_file(added_graphs_string, logging_batches_filepath)
+        log_to_text_file("added graphs:", logging_batches_filepath)
+        for i in range(min(10, len(added_graphs))):
+            log_to_text_file(added_graphs[i], logging_batches_filepath)
         # log eval trajectories
-        for i in range(10):
+        log_to_text_file("validation graphs:", logging_batches_filepath)
+        for i in range(min(10, len(eval_graphs))):
             log_to_text_file(eval_graphs[i], logging_batches_filepath)
         # log eval reward
         log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
