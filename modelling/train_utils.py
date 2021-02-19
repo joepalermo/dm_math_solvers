@@ -73,7 +73,7 @@ def step_all(envs, action_batch):
     return obs_batch, step_batch
 
 
-def get_action_batch(obs_batch, prev_actions_batch, envs, network=None, eval=False):
+def get_action_batch(obs_batch, prev_actions_batch, envs, epsilon=None, network=None, eval=False):
     # get network output
     if network:
         obs_batch = torch.from_numpy(obs_batch.astype(np.int64)).to(network.device)
@@ -94,7 +94,7 @@ def get_action_batch(obs_batch, prev_actions_batch, envs, network=None, eval=Fal
             action_index = np.random.choice(env.action_indices, p=masked_normed_policy_vector)
         elif model_type == 'value':
             eps_ = random.random()
-            if eps_ < network.epsilon and not eval:
+            if not eval and eps_ < epsilon:
                 # take random action from among unmasked actions
                 available_actions = [i for i in env.action_indices if masked_output[i] != 0]
                 action_index = random.choice(available_actions)
@@ -302,6 +302,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
     '''
     if network is not None:
         network.eval()
+        epsilon = hparams.train.starting_epsilon
     assert hparams.train.fill_buffer_mode == 'positive_only' or \
            hparams.train.fill_buffer_mode == 'balanced' or \
            hparams.train.fill_buffer_mode == 'anything'
@@ -317,9 +318,12 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
     obs_batch, prev_actions_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, train=True)
     # take steps in all environments until the number of cached steps reaches a threshold
     while cached_steps < hparams.train.buffer_threshold:
+        if epsilon < hparams.train.maximum_epsilon and cached_steps == 0:
+            epsilon = min(epsilon + hparams.train.epsilon_step_size, hparams.train.maximum_epsilon)
+            print(epsilon)
         # take a step in each environment in "parallel"
         with torch.no_grad():
-            action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network)
+            action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, epsilon=epsilon, network=network)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
                                                  padding_action=envs[0].num_actions + 1)
@@ -413,7 +417,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     while True:
         # take a step in each environment in "parallel"
         with torch.no_grad():
-            action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, network=network, eval=True)
+            action_batch = get_action_batch(obs_batch, prev_actions_batch, envs, epsilon=0, network=network, eval=True)
         obs_batch, step_batch = step_all(envs, action_batch)
         prev_actions_batch = update_prev_actions(prev_actions_batch, action_batch,
                                                  padding_action=envs[0].num_actions + 1)

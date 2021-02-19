@@ -52,7 +52,7 @@ class TransformerEncoderModel(torch.nn.Module):
         self.num_action_tokens = num_outputs + 2  # each output has one id, so the +2 is for start and padding tokens
         self.max_grad_norm = hparams.train.max_grad_norm
         self.batch_size = hparams.train.batch_size
-        self.epsilon = hparams.train.epsilon
+        # self.epsilon = hparams.train.epsilon
         # ntoken is vocab_size + 1 and vocab_size is index of padding_token, thus need to decrement ntoken by 1
         self.padding_token = ntoken - 1
 
