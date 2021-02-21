@@ -235,11 +235,7 @@ def substitution_right_to_left(arb: Arbitrary, eq: Equation) -> Arbitrary:
 
 def factor(inpt: Expression) -> Expression:
     output = Expression(str(sympy.factor(inpt)))
-    # don't allow factor to act as an identity function
-    if str(inpt) == str(output):
-        return None
-    else:
-        return output
+    return output
 
 
 def simplify(inpt: Arbitrary) -> Arbitrary:
@@ -249,11 +245,7 @@ def simplify(inpt: Arbitrary) -> Arbitrary:
         output = Equation(f"{sympy.simplify(lhs)} = {sympy.simplify(rhs)}".strip())
     else:
         output = Expression(str(sympy.simplify(str(inpt))).strip())
-    # don't allow simplify to act as an identity function
-    if str(inpt) == str(output):
-        return None
-    else:
-        return output
+    return output
 
 
 def differentiate(expression: Expression) -> Expression:

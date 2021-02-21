@@ -60,8 +60,8 @@ class Test(unittest.TestCase):
         self.assertRaises(Exception, solve_system, system)
 
     def test_is_prime(self):
-        assert is_prime(Value('19373'))
-        assert not_op(is_prime(Value('19374')))
+        assert is_prime(Value('3'))
+        assert not_op(is_prime(Value('4')))
 
     def test_prime_factors(self):
         result = prime_factors(Value('7380'))
@@ -76,16 +76,6 @@ class Test(unittest.TestCase):
         third_derivative = differentiate(differentiate(differentiate(inpt)))
         assert sympify(third_derivative) == sympify(Expression('-16320*j**2 + 6'))
 
-    def test_simplify_not_identity(self):
-        inpt = Expression('2*x')
-        output = simplify(inpt)
-        assert output is None
-
-    def test_factor_not_identity(self):
-        inpt = Expression('2*x')
-        output = factor(inpt)
-        assert output is None
-
     def test_function_evaluation1(self):
         f0 = Function('l(t) = -t**2 - 7*t - 7')
         f1 = Expression('l(-5)')
@@ -97,3 +87,15 @@ class Test(unittest.TestCase):
         f1 = Expression('x(-2)')
         output = evaluate_function(f0, f1)
         assert output == Value(-7)
+
+    def test_diff_distractors(self):
+        expression = Expression('442*c**4 + 248')
+        output1 = differentiate(factor(expression))
+        output2 = factor(differentiate(expression))
+        output3 = differentiate(simplify(expression))
+        output4 = simplify(differentiate(expression))
+        answer = Expression('1768*c**3')
+        assert output1 == answer
+        assert output2 == answer
+        assert output3 == answer
+        assert output4 == answer
