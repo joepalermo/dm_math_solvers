@@ -48,7 +48,7 @@ class TransformerEncoderModel(torch.nn.Module):
         self.ntoken = ntoken
         self.num_outputs = num_outputs
         # note: action_start_token gets id num_outputs (hence +1 for action_padding_token)
-        self.action_padding_token = num_outputs + 1
+        self.action_padding_token = ntoken + num_outputs + 1
         self.num_action_tokens = num_outputs + 2  # each output has one id, so the +2 is for start and padding tokens
         self.max_grad_norm = hparams.train.max_grad_norm
         self.batch_size = hparams.train.batch_size
@@ -57,13 +57,10 @@ class TransformerEncoderModel(torch.nn.Module):
         self.padding_token = ntoken - 1
 
         # define tunable layers -------------------
-        self.token_embedding = torch.nn.Embedding(ntoken, hparams.model.nhid)
-        self.action_embedding = torch.nn.Embedding(self.num_action_tokens, hparams.model.action_embedding_size)
+        self.token_embedding = torch.nn.Embedding(self.ntoken + self.num_action_tokens, hparams.model.nhid)
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
-        self.lstm_block = LSTM(input_size=hparams.model.action_embedding_size, hidden_size=hparams.model.nhid,
-                               num_layers=hparams.model.lstm_nlayers, batch_first=True, dropout=hparams.train.dropout)
         self.dense_block_1 = DenseBlock(hparams.model.nhid, hparams.model.nhid)
         self.dense_2 = torch.nn.Linear(hparams.model.nhid, num_outputs)
 
@@ -93,32 +90,21 @@ class TransformerEncoderModel(torch.nn.Module):
         # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)
         # question model --------------
         # embed the tokens
-        embedding = self.token_embedding(question_tokens)
+        action_tokens = action_tokens + self.ntoken
+        combined_tokens = torch.cat([question_tokens, action_tokens], dim=1)
+        embedding = self.token_embedding(combined_tokens)
         # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
         embedding = embedding.permute((1, 0, 2))
         # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
-        padding_mask = torch.where(question_tokens == self.padding_token, 1, 0).type(torch.BoolTensor).to(self.device)
+        padding_mask = torch.where(
+            torch.logical_or(combined_tokens == self.padding_token,
+                             combined_tokens == self.action_padding_token), 1, 0).type(torch.BoolTensor).to(self.device)
         # apply the transformer encoder
         # encoding = self.transformer_encoder(embedding_with_pos)
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)
-        question_encoding = encoding[0]
-        # action model --------------
-        sequence_lens = action_tokens.shape[1] - torch.sum(action_tokens == self.action_padding_token, axis=1)
-        sequence_lens = sequence_lens.detach().cpu()
-        # (BS, max_num_actions) => (BS, max_num_actions, embedding_dim)
-        action_embedding = self.action_embedding(action_tokens)
-        packed_action_embedding = pack_padded_sequence(action_embedding, sequence_lens, batch_first=True,
-                                                       enforce_sorted=False)
-        # (BS, max_num_actions, embedding_dim) => (BS, max_num_actions, hparams.model.lstm_hidden_size)
-        assert hparams.model.lstm_nlayers == 1
-        h0 = question_encoding.unsqueeze(0)
-        c0 = torch.zeros(hparams.model.lstm_nlayers, len(question_tokens), hparams.model.nhid).to(self.device)
-        packed_lstm_output, _ = self.lstm_block(packed_action_embedding, (h0, c0))
-        padded_lstm_output, output_lengths = pad_packed_sequence(packed_lstm_output, batch_first=True)
-        action_encoding = padded_lstm_output[torch.arange(len(padded_lstm_output)), output_lengths - 1]
         # output model --------------
-        output = self.dense_block_1(action_encoding)
+        output = self.dense_block_1(encoding[0])
         output = self.dense_2(self.dropout(output))
         return output
