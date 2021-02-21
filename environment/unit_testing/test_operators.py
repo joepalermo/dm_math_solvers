@@ -85,3 +85,15 @@ class Test(unittest.TestCase):
         inpt = Expression('2*x')
         output = factor(inpt)
         assert output is None
+
+    def test_function_evaluation1(self):
+        f0 = Function('l(t) = -t**2 - 7*t - 7')
+        f1 = Expression('l(-5)')
+        output = evaluate_function(f0, f1)
+        assert output == Value(3)
+
+    def test_function_evaluation2(self):
+        f0 = Function('x(k) = k**3 + k**2 + 6*k + 9')
+        f1 = Expression('x(-2)')
+        output = evaluate_function(f0, f1)
+        assert output == Value(-7)

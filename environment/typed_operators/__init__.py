@@ -338,7 +338,7 @@ def evaluate_function(function_definition: Function, function_argument: Expressi
         )
         assert function_name_from_definition == function_name_from_argument
     # evaluate function
-    rhs_with_arg = rhs.replace(function_parameter, str(function_argument))
+    rhs_with_arg = rhs.replace(function_parameter, f'({function_argument})')
     return Value(eval(rhs_with_arg))
 
 
