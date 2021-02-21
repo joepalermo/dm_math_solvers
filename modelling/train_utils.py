@@ -363,7 +363,8 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                     added_graphs.append(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                     with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
                         f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
-                    trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
+                    if trajectory_statistics is not None:
+                        trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
                 if positive_condition(buffer_positives, buffer_negatives, reward):
                     buffer_positives += 1 if hparams.train.fill_buffer_single_step_at_a_time else len(aligned_trajectory)
                 elif negative_condition(buffer_positives, buffer_negatives, reward):
@@ -373,10 +374,13 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                         envs_info[env_i]['attempts'] < hparams.train.max_num_attempts:
                     obs_batch[env_i], envs_info[env_i] = \
                         reset_environment_with_same_problem(envs[env_i], envs_info[env_i]['attempts'])
-                else:
+                elif trajectory_statistics is not None:
                     obs_batch[env_i], envs_info[env_i] = \
                         reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
                                                                        train=True)
+                else:
+                    obs_batch[env_i], envs_info[env_i] = \
+                        reset_environment(envs[env_i], train=True)
                 prev_actions = [envs[0].num_actions]  # action start token
                 prev_actions.extend(
                     [envs[0].num_actions + 1 for _ in range(envs[0].max_num_nodes)])  # action padding tokens
