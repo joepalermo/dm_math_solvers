@@ -353,16 +353,21 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                                                           max_num_nodes=envs[env_i].max_num_nodes)
                     if trajectory_cache_filepath is not None:
                         cache_trajectory(envs_info[env_i], aligned_trajectory, trajectory_cache)
-                    trajectory_buffer.append(aligned_trajectory)
-                    cached_steps += len(aligned_trajectory)
+                    if hparams.train.fill_buffer_single_step_at_a_time:
+                        random_step = random.choice(aligned_trajectory)
+                        trajectory_buffer.append([random_step])
+                        cached_steps += 1
+                    else:
+                        trajectory_buffer.append(aligned_trajectory)
+                        cached_steps += len(aligned_trajectory)
                     added_graphs.append(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n")
                     with open(f'{get_logdir()}/training_graphs.txt', 'a') as f:
                         f.write(f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}\n")
                     trajectory_statistics[(envs_info[env_i]['module_name'], envs_info[env_i]['difficulty'])] += 1
                 if positive_condition(buffer_positives, buffer_negatives, reward):
-                    buffer_positives += len(aligned_trajectory)
+                    buffer_positives += 1 if hparams.train.fill_buffer_single_step_at_a_time else len(aligned_trajectory)
                 elif negative_condition(buffer_positives, buffer_negatives, reward):
-                    buffer_negatives += len(aligned_trajectory)
+                    buffer_negatives += 1 if hparams.train.fill_buffer_single_step_at_a_time else len(aligned_trajectory)
                 # reset environment
                 if hparams.train.reset_with_same_problem and reward != 1 and \
                         envs_info[env_i]['attempts'] < hparams.train.max_num_attempts:
