@@ -20,7 +20,7 @@ class Test(unittest.TestCase):
         f = extract_formal_elements(question)
         assert f == [
             Variable("w"),
-            Expression("(-1 + 13)*3/(-6)"),
+            Value(sympy.sympify("(-1 + 13)*3/(-6)")),
             Equation("b = w - -6"),
             Equation("i = 2 - b"),
             Equation("-15 = 3*c + i*c"),

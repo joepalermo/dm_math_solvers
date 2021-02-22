@@ -2,6 +2,7 @@ import os
 import re
 from tqdm import tqdm
 from environment.typed_operators import Equation, Function, Expression, Variable, Value, Rational
+import sympy
 
 
 def is_numeric(string):
@@ -37,24 +38,27 @@ def extract_formal_elements(question, cast=True):
     ]
     # cast types
     if cast:
-        formal_elements = [cast_formal_element(f) for f in formal_elements]
-    return formal_elements
+        casted_formal_elements = [cast_formal_element(f) for f in formal_elements]
+    return casted_formal_elements
 
 
 def cast_formal_element(f):
-    if "=" in f:
-        try:
-            return Function(f)
-        except:
-            return Equation(f)
-    elif len(f) == 1 and f.isalpha():
-        return Variable(f)
-    elif f.isnumeric():
-        return Value(f)
-    elif re.compile("([0-9]+[/][0-9]+$)").match(f):
-        return Rational(f)
-    else:
-        return Expression(f)
+    try:
+        x = sympy.sympify(f)
+        if type(x) == sympy.core.numbers.Rational:
+            return Rational(str(x))
+        elif issubclass(type(x), sympy.core.numbers.Number):
+            return Value(str(x))
+        elif type(x) == sympy.core.symbol.Symbol:
+            return Variable(f)
+        else:
+            return Expression(f)
+    except:
+        if "=" in f:
+            try:
+                return Function(f)
+            except:
+                return Equation(f)
 
 
 def guess_until_problem_solved(env, question, answer, verbose=False, max_episode_index=1000):
@@ -72,6 +76,8 @@ def guess_until_problem_solved(env, question, answer, verbose=False, max_episode
             action_index = env.sample_masked_action_index()
             observation, reward, done, info = env.step(action_index)
             if verbose:
+                if "lookup_value(solve_system(append_to_empty_list('p_0')),Variable('b'))" in info['raw_observation']:
+                    print()
                 print(f"\t\tS': {info['raw_observation']}, R: {reward}, done: {done}")
             if reward == 1:
                 graph_guessed_correctly = True

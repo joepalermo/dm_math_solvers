@@ -388,3 +388,52 @@ class Test(unittest.TestCase):
         print(f"action #{i}", info["raw_observation"], done)
         assert reward == 0
         assert done
+
+
+    def test_lcd1(self):
+        env = MathEnv(hparams.env)
+        encoded_question, _ = env.reset_from_text("What is the common denominator of -64/1065 and 92/105?", "7455")
+        question = env.decode(encoded_question)
+        # lcd
+        assert question == "What is the common denominator of -64/1065 and 92/105?"
+        action_index = env.get_action_index(lcd)
+        observation, reward, done, info = env.step(action_index)
+        print(f"action #{action_index}", info["raw_observation"], done)
+        assert reward == 0
+        assert not done
+        # f0
+        action_index = env.get_action_index("f0")
+        observation, reward, done, info = env.step(action_index)
+        print(f"action #{action_index}", info["raw_observation"], done)
+        assert reward == 0
+        assert not done
+        # f1
+        action_index = env.get_action_index("f1")
+        observation, reward, done, info = env.step(action_index)
+        print(f"action #{action_index}", info["raw_observation"], done)
+        assert reward == 1
+        assert done
+
+    def test_lcd2(self):
+        env = MathEnv(hparams.env)
+        encoded_question, _ = env.reset_from_text("Calculate the common denominator of 1/(3/(-6)) - 402/(-60) and -71/12.", "60")
+        question = env.decode(encoded_question)
+        # lcd
+        assert question == "Calculate the common denominator of 1/(3/(-6)) - 402/(-60) and -71/12."
+        action_index = env.get_action_index(lcd)
+        observation, reward, done, info = env.step(action_index)
+        print(f"action #{action_index}", info["raw_observation"], done)
+        assert reward == 0
+        assert not done
+        # f0
+        action_index = env.get_action_index("f0")
+        observation, reward, done, info = env.step(action_index)
+        print(f"action #{action_index}", info["raw_observation"], done)
+        assert reward == 0
+        assert not done
+        # f1
+        action_index = env.get_action_index("f1")
+        observation, reward, done, info = env.step(action_index)
+        print(f"action #{action_index}", info["raw_observation"], done)
+        assert reward == 1
+        assert done

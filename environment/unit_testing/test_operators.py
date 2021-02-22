@@ -99,3 +99,9 @@ class Test(unittest.TestCase):
         assert output2 == answer
         assert output3 == answer
         assert output4 == answer
+
+    def test_lcd(self):
+        arg1 = Rational('-64/1065')
+        arg2 = Rational('92/105')
+        output = lcd(arg1, arg2)
+        assert output == Value('7455')

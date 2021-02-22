@@ -1,5 +1,5 @@
 from hparams import HParams
-hparams = HParams('artifacts/.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+hparams = HParams('artifacts/.', hparams_filename='hparams_guessing', name='rl_math', ask_before_deletion=False)
 from environment.envs.math_env import MathEnv
 from environment.utils import guess_until_problem_solved
 import unittest
