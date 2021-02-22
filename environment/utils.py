@@ -83,6 +83,7 @@ def guess_until_problem_solved(env, question, answer, verbose=False, max_episode
                 graph_guessed_correctly = True
             step_i += 1
         episode_i += 1
+    assert graph_guessed_correctly
     print(f'graph: {info["raw_observation"].split(";")[1]}')
     print(f"{episode_i} trials taken to guess: {question}")
 

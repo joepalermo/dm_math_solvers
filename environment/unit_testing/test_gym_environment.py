@@ -9,7 +9,7 @@ import unittest
 
 
 class Test(unittest.TestCase):
-    def test_problem_0_fail_1(self):
+    def test_algebra_linear_1d_fail_1(self):
         env = MathEnv(hparams.env)
         # reset - then fail after 1st action
         encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
@@ -26,7 +26,7 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert done
 
-    def test_problem_0_fail_2(self):
+    def test_algebra_linear_1d_fail_2(self):
         env = MathEnv(hparams.env)
         # reset - then fail after 2nd action
         encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
@@ -51,7 +51,7 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert done
 
-    def test_problem_0_fail_3(self):
+    def test_algebra_linear_1d_fail_3(self):
         env = MathEnv(hparams.env)
         # reset - then fail after 1st action
         encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
         assert reward == 0
         assert done
 
-    def test_problem_0_success_1(self):
+    def test_algebra_linear_1d_success_1(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_question, _ = env.reset_from_text("Solve 0 = 4*b + b + 15 for b.", "-3")
@@ -125,7 +125,7 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_problem_4_success_1_with_masking(self):
+    def test_calculus_differentiate_success_1_with_masking(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_question, _ = env.reset_from_text("Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d.",
@@ -159,7 +159,7 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_problem_4_success_2_with_masking(self):
+    def test_calculus_differentiate_success_2_with_masking(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_question, _ = env.reset_from_text("Find the first derivative of 2*d**4 - 35*d**2 - 695 wrt d.",
@@ -183,7 +183,7 @@ class Test(unittest.TestCase):
                 info["raw_observation"] == f"{question}; differentiate(Expression('2*d**4 - 35*d**2 - 695'))"
         )
 
-    def test_problem_5_success(self):
+    def test_numbers_div_remainder_success(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_question, _ = env.reset_from_text("Calculate the remainder when 93 is divided by 59.", "34")
@@ -220,7 +220,7 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_problem_6_success(self):
+    def test_numbers_gcd_success(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_question, _ = env.reset_from_text("Calculate the highest common divisor of 1300 and 300.", "100")
@@ -256,7 +256,7 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_problem_8_success_1(self):
+    def test_is_prime_success_1(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_question, _ = env.reset_from_text("Is 93163 a prime number?", "False")
@@ -282,7 +282,7 @@ class Test(unittest.TestCase):
         assert reward == 1
         assert done
 
-    def test_problem_8_success_2(self):
+    def test_is_prime_success_2(self):
         env = MathEnv(hparams.env)
         # reset - then succeed after 4th action
         encoded_question, _ = env.reset_from_text("Is 66574 a composite number?", "True")
@@ -317,31 +317,6 @@ class Test(unittest.TestCase):
         )
         assert reward == 1
         assert done
-
-    def test_problem_9_success(self):
-        env = MathEnv(hparams.env)
-        # reset - then succeed after 4th action
-        encoded_question, _ = env.reset_from_text("Is 66574 a composite number?", "True")
-        question = env.decode(encoded_question)
-        assert question == "Is 66574 a composite number?"
-        # take action
-        action = not_op
-        action_index = env.get_action_index(action)
-        observation, reward, done, info = env.step(action_index)
-        assert (
-                info["raw_observation"] == f"{question}; not_op('p_0')"
-        )
-        assert reward == 0
-        assert not done
-        # take action
-        action = not_op
-        action_index = env.get_action_index(action)
-        observation, reward, done, info = env.step(action_index)
-        assert (
-                info["raw_observation"] == f"{question}; not_op(not_op('p_0'))"
-        )
-        assert reward == 0
-        assert not done
 
     def test_problem_third_diff_success(self):
         env = MathEnv(hparams.env)
@@ -435,5 +410,41 @@ class Test(unittest.TestCase):
         action_index = env.get_action_index("f1")
         observation, reward, done, info = env.step(action_index)
         print(f"action #{action_index}", info["raw_observation"], done)
+        assert reward == 1
+        assert done
+
+    def test_polynomial_roots(self):
+        question = "What is f in -87616*f**2 - 1776*f - 9 = 0?"
+        answer = "-3/296"
+        env = MathEnv(hparams.env)
+        encoded_question, _ = env.reset_from_text(question, answer)
+        action = lookup_value
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = solve_system
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = "f0"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = append_to_empty_list
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = "f1"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        print(info['raw_observation'])
         assert reward == 1
         assert done

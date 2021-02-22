@@ -59,6 +59,7 @@ class Test(unittest.TestCase):
         system = [Equation('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
         self.assertRaises(Exception, solve_system, system)
 
+
     def test_is_prime(self):
         assert is_prime(Value('3'))
         assert not_op(is_prime(Value('4')))
