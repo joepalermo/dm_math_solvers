@@ -210,7 +210,7 @@ def dqn_step(network, target_network, batch):
 
 
 def ddqn_step(q1, q2, batch):
-    state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
+    state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = [b.to(q1.device) for b in batch]
     # compute the target --------------
     with torch.no_grad():
         # compute next_prev_actions_batch
@@ -254,7 +254,7 @@ def get_td_error(q1, q2, sampled_steps):
     td_error_list = list()
     for batch in data_loader:
         with torch.no_grad():
-            state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = batch
+            state_batch, action_batch, reward_batch, next_state_batch, prev_actions_batch, done_batch, _ = [b.to(q1.device) for b in batch]
             targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
                         torch.max(q2(next_state_batch, prev_actions_batch), dim=1)[0]
             batch_output = q1(state_batch, prev_actions_batch)
@@ -276,13 +276,13 @@ class StepDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         state, action, reward, next_state, prev_actions, done, trajectory_return = self.steps[idx]
-        state = torch.from_numpy(state.astype(np.int64)).to(self.device)
-        action = torch.from_numpy(np.array(action, dtype=np.int64)).to(self.device)
-        reward = torch.from_numpy(np.array(reward, dtype=np.int64)).to(self.device)
-        next_state = torch.from_numpy(next_state.astype(np.int64)).to(self.device)
-        prev_actions = torch.from_numpy(np.array(prev_actions, dtype=np.int64)).to(self.device)
-        done = torch.from_numpy(np.array(done, dtype=np.int64)).to(self.device)
-        trajectory_return = torch.from_numpy(np.array(trajectory_return, dtype=np.float32)).to(self.device)
+        state = torch.from_numpy(state.astype(np.int64))
+        action = torch.from_numpy(np.array(action, dtype=np.int64))
+        reward = torch.from_numpy(np.array(reward, dtype=np.int64))
+        next_state = torch.from_numpy(next_state.astype(np.int64))
+        prev_actions = torch.from_numpy(np.array(prev_actions, dtype=np.int64))
+        done = torch.from_numpy(np.array(done, dtype=np.int64))
+        trajectory_return = torch.from_numpy(np.array(trajectory_return, dtype=np.float32))
         return state, action, reward, next_state, prev_actions, done, trajectory_return
 
 
@@ -401,11 +401,13 @@ def train(q1, q2, data_loader, writer, current_batch_i):
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
-        losses.append(float(batch_loss.detach().cpu().numpy()))
-        td_errors.append(td_error.detach().cpu().numpy())
+        # losses.append(float(batch_loss.detach().cpu().numpy()))
+        losses.append(batch_loss.detach())
+        td_errors.append(td_error.detach())
         batches.append(batch)
-    mean_batch_loss = np.array(losses).mean()
-    print(f'mean_batch_loss: {mean_batch_loss}')
+    mean_batch_loss = torch.mean(torch.stack(losses, dim=0))
+    td_errors = torch.stack(td_errors, dim=0).cpu().numpy()
+    print(f'mean_batch_loss: {mean_batch_loss.item()}')
     return current_batch_i, td_errors, batches
 
 
