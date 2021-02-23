@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
         f = extract_formal_elements(question)
         assert f == [Equation("-3*h**2/2 - 24*h - 45/2 = 0"), Variable("h")]
         soln = lookup_value(solve_system(append_to_empty_list(f[0])), f[1])
-        assert soln == {Value(-1), Value(-15)}
+        assert soln == {Rational(-1), Rational(-15)}
 
     def test_algebra__polynomial_roots_2(self):
         question = "Factor -n**2/3 - 25*n - 536/3."
@@ -82,9 +82,9 @@ class Test(unittest.TestCase):
             Equation("9*s**4 - 8958*s**3 - 14952*s**2 - 2994*s + 2991 = 0"),
         ]
         assert lookup_value(solve_system(append_to_empty_list(f[1])), f[0]) == {
-            Value(-1),
-            Value(1 / 3),
-            Value(997),
+            Rational(-1),
+            Rational('1/3'),
+            Rational(997),
         }
 
     def test_algebra__polynomial_roots_composed_1(self):
@@ -106,8 +106,8 @@ class Test(unittest.TestCase):
             f[3], v_eq_o
         )  # e.g. x.subs(sym.sympify('f(x)'), sym.sympify('v'))
         assert lookup_value(solve_system(append_to_empty_list(equation)), f[4]) == {
-            Value(-1 / 3),
-            Value(1),
+            Rational('-1/3'),
+            Rational(1),
         }
 
     def test_calculus__differentiate(self):

@@ -105,13 +105,23 @@ class Value(Expression):
 class Rational(Expression):
     def __init__(self, rational: str):
         self.rational = str(rational)
-        self.numerator, self.denominator = [Value(x) for x in self.rational.split('/')]
+        try:
+            self.numerator, self.denominator = [Value(x) for x in self.rational.split('/')]
+        except:
+            self.numerator = Value(self.rational)
+            self.denominator = 1
 
     def __str__(self):
         return self.rational
 
     def __eq__(self, rational):
         return self.rational == str(rational)
+
+    def __hash__(self):
+        return hash(str(self.rational))
+
+    def __lt__(self, other):
+        return sympy.Rational(self.rational) < sympy.Rational(other.rational)
 
 # operator definitions --------------------------------------
 
@@ -127,11 +137,10 @@ def solve_system(system: list) -> dict:
     def sympy_solve(system, return_dict):
         # run in try-except to suppress exception logging (must be done here due to use of multiprocess)
         try:
-            solutions = sympy.solve(system)
+            solutions = sympy.solve(system, rational=True)
             return_dict["solutions"] = solutions
         except:
             pass
-
     sympy_equations = []
     for equation in system:
         lhs, rhs = str(equation).split("=")
@@ -153,15 +162,15 @@ def solve_system(system: list) -> dict:
     if len(solutions) == 0:
         raise Exception("no solution found")
     elif type(solutions) is dict:
-        return {Variable(str(k)): set([Value(float(v))]) for k, v in solutions.items()}
+        return {Variable(str(k)): set([Rational(v)]) for k, v in solutions.items()}
     elif type(solutions) is list:
         solutions_dict = {}
         for soln in solutions:
             for k, v in soln.items():
                 if str(k) in solutions_dict.keys():
-                    solutions_dict[Variable(str(k))].add(Value(float(v)))
+                    solutions_dict[Variable(str(k))].add(Rational(v))
                 else:
-                    solutions_dict[Variable(str(k))] = set([Value(float(v))])
+                    solutions_dict[Variable(str(k))] = set([Rational(v)])
         return solutions_dict
 
 

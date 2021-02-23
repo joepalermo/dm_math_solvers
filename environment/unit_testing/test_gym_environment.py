@@ -341,7 +341,6 @@ class Test(unittest.TestCase):
         # take action
         action_index = env.get_action_index("f0")
         observation, reward, done, info = env.step(action_index)
-        print(info['raw_observation'])
         assert reward == 1
         assert done
 
@@ -354,13 +353,11 @@ class Test(unittest.TestCase):
         for i in range(env.max_num_nodes-1):
             # take action
             observation, reward, done, info = env.step(nt_action_index)
-            print(f"action #{i}", info["raw_observation"], done)
             assert reward == 0
             assert not done
         # take final action
         i += 1
         observation, reward, done, info = env.step(nt_action_index)
-        print(f"action #{i}", info["raw_observation"], done)
         assert reward == 0
         assert done
 
@@ -373,19 +370,16 @@ class Test(unittest.TestCase):
         assert question == "What is the common denominator of -64/1065 and 92/105?"
         action_index = env.get_action_index(lcd)
         observation, reward, done, info = env.step(action_index)
-        print(f"action #{action_index}", info["raw_observation"], done)
         assert reward == 0
         assert not done
         # f0
         action_index = env.get_action_index("f0")
         observation, reward, done, info = env.step(action_index)
-        print(f"action #{action_index}", info["raw_observation"], done)
         assert reward == 0
         assert not done
         # f1
         action_index = env.get_action_index("f1")
         observation, reward, done, info = env.step(action_index)
-        print(f"action #{action_index}", info["raw_observation"], done)
         assert reward == 1
         assert done
 
@@ -397,23 +391,20 @@ class Test(unittest.TestCase):
         assert question == "Calculate the common denominator of 1/(3/(-6)) - 402/(-60) and -71/12."
         action_index = env.get_action_index(lcd)
         observation, reward, done, info = env.step(action_index)
-        print(f"action #{action_index}", info["raw_observation"], done)
         assert reward == 0
         assert not done
         # f0
         action_index = env.get_action_index("f0")
         observation, reward, done, info = env.step(action_index)
-        print(f"action #{action_index}", info["raw_observation"], done)
         assert reward == 0
         assert not done
         # f1
         action_index = env.get_action_index("f1")
         observation, reward, done, info = env.step(action_index)
-        print(f"action #{action_index}", info["raw_observation"], done)
         assert reward == 1
         assert done
 
-    def test_polynomial_roots(self):
+    def test_polynomial_roots_1(self):
         question = "What is f in -87616*f**2 - 1776*f - 9 = 0?"
         answer = "-3/296"
         env = MathEnv(hparams.env)
@@ -443,6 +434,41 @@ class Test(unittest.TestCase):
         assert not done
         # next action
         action = "f1"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 1
+        assert done
+
+    def test_polynomial_roots_2(self):
+        question = "Solve -3*h**2/2 - 24*h - 45/2 = 0 for h."
+        answer = "-15, -1"
+        env = MathEnv(hparams.env)
+        encoded_question, _ = env.reset_from_text(question, answer)
+        action = lookup_value
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = solve_system
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = "f1"
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = append_to_empty_list
+        action_index = env.get_action_index(action)
+        observation, reward, done, info = env.step(action_index)
+        assert reward == 0
+        assert not done
+        # next action
+        action = "f0"
         action_index = env.get_action_index(action)
         observation, reward, done, info = env.step(action_index)
         print(info['raw_observation'])
