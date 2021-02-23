@@ -401,11 +401,13 @@ def train(q1, q2, data_loader, writer, current_batch_i):
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
-        losses.append(float(batch_loss.detach().cpu().numpy()))
-        td_errors.append(td_error.detach().cpu().numpy())
+        # losses.append(float(batch_loss.detach().cpu().numpy()))
+        losses.append(batch_loss.detach())
+        td_errors.append(td_error.detach())
         batches.append(batch)
-    mean_batch_loss = np.array(losses).mean()
-    print(f'mean_batch_loss: {mean_batch_loss}')
+    mean_batch_loss = torch.mean(torch.stack(losses, dim=0))
+    td_errors = torch.stack(td_errors, dim=0).cpu().numpy()
+    print(f'mean_batch_loss: {mean_batch_loss.item()}')
     return current_batch_i, td_errors, batches
 
 
