@@ -12,24 +12,24 @@ class Test(unittest.TestCase):
 
     def test_solve_system(self):
         system = [Equation("x = 1")]
-        assert solve_system(system) == {Variable("x"): {Value(1)}}
+        assert solve_system(system) == {Variable("x"): {Rational(1)}}
 
         system = [Equation("x = 1"), Equation("y = 1")]
         assert solve_system(system) == {
-            Variable("x"): {Value(1)},
-            Variable("y"): {Value(1)},
+            Variable("x"): {Rational(1)},
+            Variable("y"): {Rational(1)},
         }
 
         system = [Equation("x + y = 1"), Equation("x - y = 1")]
         assert solve_system(system) == {
-            Variable("x"): {Value(1)},
-            Variable("y"): {Value(0)},
+            Variable("x"): {Rational(1)},
+            Variable("y"): {Rational(0)},
         }
 
         system = [Equation("3*x + y = 9"), Equation("x + 2*y = 8")]
         assert solve_system(system) == {
-            Variable("x"): {Value(2)},
-            Variable("y"): {Value(3)},
+            Variable("x"): {Rational(2)},
+            Variable("y"): {Rational(3)},
         }
 
         # # fails on singular matrix
@@ -42,11 +42,11 @@ class Test(unittest.TestCase):
 
         # system with floating point coefficients
         system = [Equation("-15 = 3*c + 2.0*c")]
-        assert solve_system(system) == {Variable("c"): {Value(-3)}}
+        assert solve_system(system) == {Variable("c"): {Rational(-3)}}
 
         # quadratic equation
         system = [Equation("-3*h**2/2 - 24*h - 45/2 = 0")]
-        assert solve_system(system) == {Variable("h"): {Value(-15.0), Value(-1.0)}}
+        assert solve_system(system) == {Variable("h"): {Rational(-15), Rational(-1)}}
 
         # unsolvable equation / infinite loop without timeout
         system = [Equation('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
@@ -59,6 +59,12 @@ class Test(unittest.TestCase):
         system = [Equation('-4*i**3*j**3 - 2272*i**3 - 769*i**2*j - j**3 = 1')]
         self.assertRaises(Exception, solve_system, system)
 
+        system = [Equation('9*s**4 - 8958*s**3 - 14952*s**2 - 2994*s + 2991 = 0')]
+        assert solve_system(system) == {Variable("s"): {Rational(-1), Rational('1/3'), Rational(997)}}
+
+        system = [Equation('-3*h**2/2 - 24*h - 45/2 = 0')]
+        assert solve_system(system) == {Variable("h"): {Rational('-1'), Rational('-15')}}
+        # print([(str(k), [str(v) for v in vset]) for k,vset in solve_system(system).items()])
 
     def test_is_prime(self):
         assert is_prime(Value('3'))
