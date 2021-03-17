@@ -8,20 +8,12 @@ from utils import flatten
 import numpy as np
 
 
-def align_trajectory(raw_trajectory, action_start_token, action_padding_token, max_num_nodes):
-    def pad_actions(actions, action_start_token, action_padding_token, max_num_nodes):
-        actions.insert(0, action_start_token)
-        # pad up to length max_num_nodes+1 to ensure there is always at least 1 padding token
-        # since padding tokens are used to indicate sequence length
-        actions.extend([action_padding_token for _ in range(max_num_nodes+1 - len(actions))])
-        return actions
+def align_trajectory(raw_trajectory):
     states = [state for state, _, _, _, _ in raw_trajectory[:-1]]
-    actions_up_to_step = [[action for _, action, _, _, _ in raw_trajectory[1:i]] for i in range(1, len(raw_trajectory))]
     everything_else = [(next_state, action, reward, done) for next_state, action, reward, done, _ in raw_trajectory[1:]]
-    aligned_trajectory = [(state, action, reward, next_state,
-                           pad_actions(prev_actions, action_start_token, action_padding_token, max_num_nodes), done)
-                         for state, prev_actions, (next_state, action, reward, done)
-                         in zip(states, actions_up_to_step, everything_else)]
+    aligned_trajectory = [(state, action, reward, next_state, done)
+                         for state, (next_state, action, reward, done)
+                         in zip(states, everything_else)]
     return aligned_trajectory
 
 
@@ -83,8 +75,8 @@ def add_trajectory_return_to_trajectories(trajectories, gamma):
     # add trajectory return to each step
     for trajectory in trajectories:
         trajectory_return = sum([reward*gamma**i for i, (_, _, reward, _, _, _) in enumerate(trajectory)])
-        mod_trajectory = [(state, action, reward, next_state, prev_actions, done, trajectory_return)
-            for state, action, reward, next_state, prev_actions, done in trajectory]
+        mod_trajectory = [(state, action, reward, next_state, done, trajectory_return)
+            for state, action, reward, next_state, done in trajectory]
         mod_trajectories.append(mod_trajectory)
     return mod_trajectories
 
@@ -146,12 +138,11 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
     strings = []
     td_errors = []
     for batch, td_error_batch in zip(batches, td_error_batches):
-        state_batch, action_batch, reward_batch, _, prev_actions_batch, _, _ = batch
-        for state, action, reward, prev_actions, td_error in zip(state_batch, action_batch, reward_batch, prev_actions_batch, td_error_batch):
+        state_batch, action_batch, reward_batch, _, _, _ = batch
+        for state, action, reward, td_error in zip(state_batch, action_batch, reward_batch, td_error_batch):
             decoded_state = env.decode(state)
-            prev_actions_string = [env.action_names[action_i] for action_i in prev_actions if action_i < env.num_actions]
             step_string = 'td_error: {:.2f}, '.format(td_error) + f'{decoded_state}, ' \
-                f'prev_actions: {prev_actions_string}, action: {env.action_names[action]}, reward: {reward}'
+                f'action: {env.action_names[action]}, reward: {reward}'
             strings.append(step_string)
             td_errors.append(td_error)
     highest_td_errors_idxs = np.argsort(np.array(td_errors))[::-1][:num_batches].tolist()
@@ -159,40 +150,6 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
     highest_and_lowest = [strings[i] for i in highest_td_errors_idxs] + [strings[i] for i in lowest_td_errors_idxs]
     log_batches_string = "\n".join(highest_and_lowest)
     log_to_text_file(log_batches_string, filepath)
-
-
-def log_q_values(network, env, filepath):
-    network.eval()
-    question_inputs = []
-    action_inputs = []
-    question_action_input_pairs = [(0, []), (0, [9]), (1, []), (1, [9]), (1, [9, 9]), (2, []), (2, [9]), (2, [9, 9]), (2, [9, 9, 9])]
-    for question_id, action_sequence in question_action_input_pairs:
-        question_inputs.append(torch.Tensor([question_id]).view(1, 1).type(torch.LongTensor))
-        action_inputs_list = [env.num_actions] + action_sequence + \
-                             [env.num_actions + 1] * (env.max_num_nodes - len(action_sequence))
-        action_inputs.append(torch.Tensor(action_inputs_list).view(1,-1).type(torch.LongTensor))
-    question_batch = torch.cat(question_inputs).to(network.device)
-    action_batch = torch.cat(action_inputs).to(network.device)
-    q_values = network(question_batch, action_batch).detach().cpu().numpy()
-    question_values = {0: 'first', 1: 'second', 2: 'third', 3: 'first'}
-    for question, actions, qvs in zip(question_inputs, action_inputs, q_values):
-        # prep question
-        question = question.numpy()[0][0]
-        actions = actions.numpy()[0].tolist()
-        question_string = question_values[question]
-        # prep actions
-        # op_counts = dict(Counter(actions))
-        # prep q-values
-        num_meaningful_qvs = 24
-        qv_tuples = [(i,qv) for i,qv in enumerate(qvs)][:num_meaningful_qvs]
-        sorted_qv_tuples = sorted(qv_tuples, key=lambda x: x[1], reverse=True)
-        qv_string = ', '.join([f'{(env.action_names[i])}:' + '{:.2f}'.format(qv) for (i,qv) in sorted_qv_tuples])
-        # log all values
-        string = f'\nquestion: {question_string}, actions: {actions}\nq-values: {qv_string}'
-        log_to_text_file(string, filepath)
-
-
-# def get_replay_buffer_stats(replay_buffer):
 
 
 def log_to_text_file(string, filepath):

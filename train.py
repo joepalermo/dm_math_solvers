@@ -79,16 +79,6 @@ for epoch_i in range(hparams.train.num_epochs):
         # add fresh experience to replay buffer
         replay_buffer = np.concatenate([replay_buffer, latest_buffer])
         replay_priority = np.concatenate([replay_priority, latest_replay_priority])
-
-        # # replace oldest
-        # replay_buffer = np.concatenate([replay_buffer[len(latest_buffer):], latest_buffer])
-        # replay_priority = np.concatenate([replay_priority[len(latest_replay_priority):], latest_replay_priority])
-        # # replace lowest priority
-        # lowest_priority_indices = np.argsort(replay_priority)[:len(latest_buffer)]
-        # replay_buffer[lowest_priority_indices] = latest_buffer
-        # replay_priority[lowest_priority_indices] = latest_replay_priority
-        # assert len(replay_buffer) == hparams.train.replay_buffer_size and \
-        #        len(replay_priority) == hparams.train.replay_buffer_size
         added_to_replay_buffer += len(latest_buffer)
         fill_buffer_idxs = np.arange(len(replay_buffer)-len(latest_buffer), len(replay_buffer))
     else:
@@ -110,12 +100,6 @@ for epoch_i in range(hparams.train.num_epochs):
     # update replay priority
     replay_priority[td_error_update_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
     # visualize_replay_priority(envs, replay_priority, replay_buffer)
-
-    # # drop lowest priority samples -----------
-    # if len(fill_buffer_idxs) > 0:
-    #     lowest_priority_indices = np.argsort(replay_priority)[:len(fill_buffer_idxs)]
-    #     replay_buffer = np.delete(replay_buffer, lowest_priority_indices, axis=0)
-    #     replay_priority = np.delete(replay_priority, lowest_priority_indices, axis=0)
 
     # eval -----------
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:

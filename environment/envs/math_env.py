@@ -19,8 +19,10 @@ hparams = HParams.get_hparams_by_name('rl_math')
 class MathEnv(gym.Env):
     def __init__(self, config):
         self.compute_graph = None
+        self.episode_actions = []
         # load config
         self.config = config
+        self.encode_question = config.encode_question
         self.max_num_nodes = self._max_episode_steps = config.max_num_nodes
         self.max_formal_elements = config.max_formal_elements
         self.max_difficulty = config.max_difficulty
@@ -87,13 +89,20 @@ class MathEnv(gym.Env):
         -done: True if the graph is complete, False if it isn't
         -info: None
         """
+        self.episode_actions.append(action_index)
         action = self.actions[action_index]
         self.compute_graph.n_nodes += 1
         self.compute_graph.add(action)
         output = self.compute_graph.eval()
         compute_graph = str(self.compute_graph)
         full_raw_observation = f"{self.question}; {compute_graph}"
-        observation = self.encode(self.question)
+        if self.encode_question:
+            encoded_question = self.encode(self.question)
+            padded_episode_actions_array = np.array(self.episode_actions).extend([self.num_actions  # padding action
+                                                                                  for _ in range(self.max_num_nodes)])
+            observation = np.concatenate([encoded_question, padded_episode_actions_array])
+        else:
+            observation = full_raw_observation
         next_mask = self.compute_mask()
         done = (
             self.compute_graph.current_node is None
