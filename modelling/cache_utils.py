@@ -100,7 +100,8 @@ def visualize_trajectory_cache(decoder, trajectory_cache, num_to_sample=5):
             print("\t", decoder(last_state), f"reward: {reward}")
 
 
-def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cache, num_to_sample=5):
+def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cache, question_length,
+                                                        num_to_sample=5):
     all_trajectories = {}
     for key in trajectory_cache:
         trajectories = trajectory_cache[key]
@@ -117,9 +118,10 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
             np.random.choice(module_difficulty_trajectories, size=num_to_sample)
         print(f"{module_difficulty} samples:")
         for trajectory in sampled_trajectories:
-            state = decoder(trajectory[-1][3])
+            question = decoder(trajectory[-1][3][:question_length])
+            prev_actions = trajectory[-1][3][question_length:]
             reward = trajectory[-1][2]
-            print(f'state: {state}, reward: {reward}')
+            print(f'question: {question}, actions: {prev_actions}, reward: {reward}')
         print(f'{module_difficulty}')
         num_trajectories = len(all_trajectories[module_difficulty])
         num_steps = len(flatten(all_trajectories[module_difficulty]))
@@ -129,7 +131,6 @@ def visualize_trajectory_cache_by_module_and_difficulty(decoder, trajectory_cach
         total_num_trajectories += num_trajectories
         total_num_steps += num_steps
     pprint.pprint(module_difficulty_counts)
-    print(f'# prev actions: {len(trajectory[-1][4])-1}')
     print(f'# total trajectories: {total_num_trajectories}')
     print(f'# total steps: {total_num_steps}')
 
