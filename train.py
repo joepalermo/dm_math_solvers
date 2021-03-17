@@ -27,11 +27,16 @@ envs = init_envs(hparams.env)
 trajectory_statistics = init_trajectory_data_structures(envs[0])
 
 # init models
-ntoken = hparams.env.vocab_size + 1
+num_question_tokens = hparams.env.question_vocab_size + 1
 num_outputs = envs[0].num_actions
-max_num_nodes = envs[0].max_num_nodes
-q1 = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
-q2 = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
+question_padding_token = envs[0].question_padding_token
+action_padding_token = envs[0].action_padding_token
+q1 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
+                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
+                             device=device)
+q2 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
+                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
+                             device=device)
 
 # init replay buffer from trajectory cache on disk
 replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random_exploration_trajectory_cache_filepath,

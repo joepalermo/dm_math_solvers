@@ -42,22 +42,23 @@ class DenseBlock(torch.nn.Module):
 
 
 class TransformerEncoderModel(torch.nn.Module):
-    def __init__(self, ntoken, num_outputs, device):
+    def __init__(self, num_question_tokens, num_outputs, question_padding_token, action_padding_token, device):
         super().__init__()
         torch.nn.Module.__init__(self)
-        self.ntoken = ntoken
+        self.num_question_tokens = num_question_tokens
         self.num_outputs = num_outputs
-        # note: action_start_token gets id num_outputs (hence +1 for action_padding_token)
-        self.action_padding_token = ntoken + num_outputs + 1
-        self.num_action_tokens = num_outputs + 2  # each output has one id, so the +2 is for start and padding tokens
+        self.question_padding_token = question_padding_token
+        self.action_padding_token = action_padding_token
+        self.num_action_tokens = num_outputs + 1  # each output has one id, so the +1 is for the padding token
         self.max_grad_norm = hparams.train.max_grad_norm
         self.batch_size = hparams.train.batch_size
         self.epsilon = hparams.train.epsilon
-        # ntoken is vocab_size + 1 and vocab_size is index of padding_token, thus need to decrement ntoken by 1
-        self.padding_token = ntoken - 1
+        # sanity check padding tokens
+        assert self.action_padding_token == num_question_tokens + num_outputs
+        assert self.question_padding_token == num_question_tokens - 1
 
         # define tunable layers -------------------
-        self.token_embedding = torch.nn.Embedding(self.ntoken + self.num_action_tokens, hparams.model.nhid)
+        self.token_embedding = torch.nn.Embedding(self.num_question_tokens + self.num_action_tokens, hparams.model.nhid)
         self.transformer_encoder = TransformerEncoder(
             TransformerEncoderLayer(d_model=hparams.model.nhid, nhead=hparams.model.nhead), hparams.model.nlayers
         )
@@ -90,7 +91,6 @@ class TransformerEncoderModel(torch.nn.Module):
         # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)
         # question model --------------
         # embed the tokens
-        action_tokens = action_tokens + self.ntoken
         combined_tokens = torch.cat([question_tokens, action_tokens], dim=1)
         embedding = self.token_embedding(combined_tokens)
         # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
@@ -99,7 +99,7 @@ class TransformerEncoderModel(torch.nn.Module):
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
         padding_mask = torch.where(
-            torch.logical_or(combined_tokens == self.padding_token,
+            torch.logical_or(combined_tokens == self.question_padding_token,
                              combined_tokens == self.action_padding_token), 1, 0).type(torch.BoolTensor).to(self.device)
         # apply the transformer encoder
         # encoding = self.transformer_encoder(embedding_with_pos)

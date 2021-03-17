@@ -9,7 +9,7 @@ from utils import read_text_file
 hardcoded_symbols = ['G']  # why is 'G' needed?
 spm.SentencePieceTrainer.train(input='environment/tokenization/train_question_corpus.txt',
                                model_prefix='environment/tokenization/tokenizer',
-                               vocab_size=250,
+                               question_vocab_size=250,
                                user_defined_symbols=hardcoded_symbols)
 
 

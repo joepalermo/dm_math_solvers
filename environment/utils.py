@@ -38,8 +38,8 @@ def extract_formal_elements(question, cast=True):
     ]
     # cast types
     if cast:
-        casted_formal_elements = [cast_formal_element(f) for f in formal_elements]
-    return casted_formal_elements
+        formal_elements = [cast_formal_element(f) for f in formal_elements]
+    return formal_elements
 
 
 def cast_formal_element(f):
