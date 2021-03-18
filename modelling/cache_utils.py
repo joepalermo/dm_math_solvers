@@ -144,7 +144,10 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
             decoded_state = env.decode(state[:env.max_sequence_length])
             actions = state[env.max_sequence_length:]
             # TODO: cleanup logging of actions
-            step_string = 'td_error: {:.2f}, '.format(td_error) + f'{decoded_state}, {actions}' \
+            actions -= env.question_vocab_size + 1
+            actions_by_name = [env.action_names[i] for i in actions if i < len(env.actions)]
+            actions_string = ', '.join(actions_by_name)
+            step_string = 'td_error: {:.2f}, '.format(td_error) + f'{decoded_state}; {actions_string} ' \
                 f'action: {env.action_names[action]}, reward: {reward}'
             strings.append(step_string)
             td_errors.append(td_error)
