@@ -74,7 +74,7 @@ def add_trajectory_return_to_trajectories(trajectories, gamma):
     mod_trajectories = []
     # add trajectory return to each step
     for trajectory in trajectories:
-        trajectory_return = sum([reward*gamma**i for i, (_, _, reward, _, _, _) in enumerate(trajectory)])
+        trajectory_return = sum([reward*gamma**i for i, (_, _, reward, _, _) in enumerate(trajectory)])
         mod_trajectory = [(state, action, reward, next_state, done, trajectory_return)
             for state, action, reward, next_state, done in trajectory]
         mod_trajectories.append(mod_trajectory)
@@ -141,8 +141,10 @@ def log_batches(batches, td_error_batches, env, filepath, num_batches=20):
     for batch, td_error_batch in zip(batches, td_error_batches):
         state_batch, action_batch, reward_batch, _, _, _ = batch
         for state, action, reward, td_error in zip(state_batch, action_batch, reward_batch, td_error_batch):
-            decoded_state = env.decode(state)
-            step_string = 'td_error: {:.2f}, '.format(td_error) + f'{decoded_state}, ' \
+            decoded_state = env.decode(state[:env.max_sequence_length])
+            actions = state[env.max_sequence_length:]
+            # TODO: cleanup logging of actions
+            step_string = 'td_error: {:.2f}, '.format(td_error) + f'{decoded_state}, {actions}' \
                 f'action: {env.action_names[action]}, reward: {reward}'
             strings.append(step_string)
             td_errors.append(td_error)

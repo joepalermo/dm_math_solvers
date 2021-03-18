@@ -87,20 +87,19 @@ class TransformerEncoderModel(torch.nn.Module):
         #                                                      total_steps=hparams.train.total_steps,
         #                                                      final_div_factor=hparams.train.final_div_factor)
 
-    def forward(self, question_tokens, action_tokens):
+    def forward(self, input_tokens):
         # question_tokens: (BS, max_question_length), action_tokens: (BS, max_num_actions)
         # question model --------------
         # embed the tokens
-        combined_tokens = torch.cat([question_tokens, action_tokens], dim=1)
-        embedding = self.token_embedding(combined_tokens)
+        embedding = self.token_embedding(input_tokens)
         # pos_encoder and transformer_encoder require shape (seq_len, batch_size, embedding_dim)
         embedding = embedding.permute((1, 0, 2))
         # apply positional encoding
         embedding_with_pos = self.pos_encoder(embedding)
         # create the padding mask
         padding_mask = torch.where(
-            torch.logical_or(combined_tokens == self.question_padding_token,
-                             combined_tokens == self.action_padding_token), 1, 0).type(torch.BoolTensor).to(self.device)
+            torch.logical_or(input_tokens == self.question_padding_token,
+                             input_tokens == self.action_padding_token), 1, 0).type(torch.BoolTensor).to(self.device)
         # apply the transformer encoder
         # encoding = self.transformer_encoder(embedding_with_pos)
         encoding = self.transformer_encoder(embedding_with_pos, src_key_padding_mask=padding_mask)

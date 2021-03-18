@@ -27,6 +27,7 @@ class MathEnv(gym.Env):
         self.max_formal_elements = config.max_formal_elements
         self.max_difficulty = config.max_difficulty
         self.question_vocab_size = config.question_vocab_size
+        self.max_sequence_length = config.max_sequence_length
         # define available operator functions
         self.operators = [
             lookup_value,

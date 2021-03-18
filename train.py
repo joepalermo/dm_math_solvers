@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, log_batches, \
-    log_to_text_file, log_q_values, add_trajectory_return_to_trajectories
+    log_to_text_file, add_trajectory_return_to_trajectories
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
     fill_buffer, get_td_error
 from modelling.transformer_encoder import TransformerEncoderModel
