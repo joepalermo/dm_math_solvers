@@ -293,6 +293,10 @@ def train(q1, q2, data_loader, writer, current_batch_i):
         writer.add_scalar('Train/loss', batch_loss, current_batch_i)
         # writer.add_scalar('Train/gradients', grad_norm, current_batch_i)
         current_batch_i += 1
+        #Anneal epsilon
+        if current_batch_i > hparams.train.num_batches_until_anneal_epsilon:
+            q1.epsilon = min(hparams.train.min_epsilon, q1.epsilon - hparams.train.epsilon_annealing_factor)
+            q2.epsilon = min(hparams.train.min_epsilon, q2.epsilon - hparams.train.epsilon_annealing_factor)
         # losses.append(float(batch_loss.detach().cpu().numpy()))
         losses.append(batch_loss.detach())
         td_errors.append(td_error.detach())
