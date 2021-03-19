@@ -1,13 +1,13 @@
 from hparams import HParams
-# hparams = HParams('.', hparams_filename='hparams', name='rl_math')
-hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+hparams = HParams('.', hparams_filename='hparams', name='rl_math')
+# hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, log_batches, \
     log_to_text_file, add_trajectory_return_to_trajectories
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
-    fill_buffer, get_td_error
+    fill_buffer, get_td_error, save_checkpoint
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 import random
@@ -31,12 +31,6 @@ num_question_tokens = hparams.env.question_vocab_size + 1
 num_outputs = envs[0].num_actions
 question_padding_token = envs[0].question_padding_token
 action_padding_token = envs[0].action_padding_token
-q1 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
-                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
-                             device=device)
-q2 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
-                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
-                             device=device)
 
 # init replay buffer from trajectory cache on disk
 replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random_exploration_trajectory_cache_filepath,
@@ -45,11 +39,30 @@ replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random
                                                             selected_filenames=hparams.env.selected_filenames)
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
+q1 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
+                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
+                             device=device)
+q2 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
+                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
+                             device=device)
+
+batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
+
+# Load checkpoints if they exist
+if os.path.isfile(os.path.join(get_logdir(), hparams.model.q1_file)):
+    print("Checkpoint found, loading checkpoints")
+    q1_checkpoint = torch.load(os.path.join(get_logdir(), hparams.model.q1_file))
+    q2_checkpoint = torch.load(os.path.join(get_logdir(), hparams.model.q2_file))
+    q1.load_state_dict(q1_checkpoint['model_state_dict'])
+    q2.load_state_dict(q2_checkpoint['model_state_dict'])
+    q1.optimizer.load_state_dict(q1_checkpoint['optimizer_state_dict'])
+    q2.optimizer.load_state_dict(q2_checkpoint['optimizer_state_dict'])
+    batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = q1_checkpoint['batch']
+
 # training loop --------------------------------------------------------------------------------------------------------
 
 added_graphs = []
 added_to_replay_buffer = 0
-batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 for epoch_i in range(hparams.train.num_epochs):
     # sample and train -----------
 
@@ -126,4 +139,6 @@ for epoch_i in range(hparams.train.num_epochs):
         log_to_text_file(selected_eval_graphs_string, logging_batches_filepath)
         # log eval reward
         log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
-
+        #Save checkpoints
+        save_checkpoint(batch_i, q1, hparams.model.q1_file)
+        save_checkpoint(batch_i, q2, hparams.model.q2_file)

@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from environment.envs import MathEnv
 from modelling.cache_utils import align_trajectory, cache_trajectory
 from hparams import HParams
+import os
 
 hparams = HParams.get_hparams_by_name('rl_math')
 from sqlitedict import SqliteDict
@@ -14,6 +15,14 @@ from sqlitedict import SqliteDict
 def get_logdir():
     return f'logs-{hparams.run.name}'
 
+def save_checkpoint(batch_i, model, file):
+    """Saves model checkpoint to logdir"""
+    logdir = get_logdir()
+    torch.save({
+        'batch': batch_i,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': model.optimizer.state_dict(),
+    }, os.path.join(logdir, file))
 
 def init_trajectory_data_structures(env):
     '''define data structures to track correct graphs'''
@@ -295,8 +304,8 @@ def train(q1, q2, data_loader, writer, current_batch_i):
         current_batch_i += 1
         #Anneal epsilon
         if current_batch_i > hparams.train.num_batches_until_anneal_epsilon:
-            q1.epsilon = min(hparams.train.min_epsilon, q1.epsilon - hparams.train.epsilon_annealing_factor)
-            q2.epsilon = min(hparams.train.min_epsilon, q2.epsilon - hparams.train.epsilon_annealing_factor)
+            q1.epsilon = max(hparams.train.min_epsilon, q1.epsilon - hparams.train.epsilon_annealing_factor)
+            q2.epsilon = max(hparams.train.min_epsilon, q2.epsilon - hparams.train.epsilon_annealing_factor)
         # losses.append(float(batch_loss.detach().cpu().numpy()))
         losses.append(batch_loss.detach())
         td_errors.append(td_error.detach())
@@ -395,5 +404,4 @@ def visualize_replay_priority(envs, replay_priority, replay_buffer):
     # sns.histplot(replay_priority)
     # plt.show()
     # import time; time.sleep(1000)
-
 
