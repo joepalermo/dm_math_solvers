@@ -41,7 +41,7 @@ def init_envs(env_config):
     return envs
 
 
-def reset_all(envs, trajectory_statistics=None, train=True):
+def reset_all(envs, trajectory_statistics=None, mode='train'):
     '''if trajectory_statistics is not None then select the module_name and difficulty which has been
     least rewarded thus far, else select module_name and difficulty randomly.'''
     envs_info = []
@@ -49,9 +49,9 @@ def reset_all(envs, trajectory_statistics=None, train=True):
     for env in envs:
         if trajectory_statistics is not None:
             module_name, difficulty = min(trajectory_statistics, key=trajectory_statistics.get)
-            obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
+            obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, mode=mode)
         else:
-            obs, info = env.reset(train=train)
+            obs, info = env.reset(mode=mode)
         envs_info.append({'question': info['raw_observation'],
                           'trajectory': [(obs, None, None, None, info)],
                           'module_name': env.module_name,
@@ -227,7 +227,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
     if trajectory_cache_filepath is not None:
         # init trajectory cache from storage
         trajectory_cache = SqliteDict(trajectory_cache_filepath, autocommit=True)
-    obs_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, train=True)
+    obs_batch, envs_info = reset_all(envs, trajectory_statistics=trajectory_statistics, mode='train')
     # take steps in all environments until the number of cached steps reaches a threshold
     while cached_steps < hparams.train.buffer_threshold:
         # take a step in each environment in "parallel"
@@ -321,7 +321,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     logdir = get_logdir()
     total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
     n_completed_validation_episodes = 0
-    obs_batch, envs_info = reset_all(envs, train=False)
+    obs_batch, envs_info = reset_all(envs, mode='val')
     observed_graphs = []
     while True:
         # take a step in each environment in "parallel"
@@ -365,6 +365,48 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
     writer.add_scalar('Val/tot_reward', mean_val_reward, batch_i)
     print(f'{batch_i} batches completed, mean validation reward: {mean_val_reward}')
     writer.close()
+    return mean_val_reward, observed_graphs
+
+def run_test(network, envs, module):
+    network.eval()
+    logdir = get_logdir()
+    total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
+    obs_batch, envs_info = reset_all(envs, mode='test')
+    observed_graphs = []
+    num_episodes = 0
+    while num_episodes < 1000:
+        # take a step in each environment in "parallel"
+        with torch.no_grad():
+            action_batch = get_action_batch(obs_batch, envs, network=network, eval=True)
+        obs_batch, step_batch = step_all(envs, action_batch)
+        # for each environment process the most recent step
+        for env_i, ((obs, reward, done, info), action) in enumerate(zip(step_batch, action_batch)):
+            envs_info[env_i]['trajectory'].append((obs.astype(np.int16), action, reward, done, info))
+            # if episode is complete, check if trajectory should be kept in buffer and reset environment
+            if done:
+                k = (envs[env_i].module_name, envs[env_i].difficulty)
+                observed_graph = f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n"
+                observed_graphs.append(observed_graph)
+                if random.random() < 0.05:
+                    print(observed_graph)
+                if k in total_reward:
+                    total_reward[k]["n_completed_validation_episodes"] += 1
+                    total_reward[k]["tot_reward"] += reward
+                else:
+                    total_reward[k] = {}
+                    total_reward[k]["n_completed_validation_episodes"] = 1
+                    total_reward[k]["tot_reward"] = reward
+                # reset environment
+                obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
+                num_episodes += 1
+
+    all_modules_reward = 0
+    for k in total_reward.keys():
+        mean_val_reward_per_module = total_reward[k]["tot_reward"] / total_reward[k]["n_completed_validation_episodes"]
+        all_modules_reward += total_reward[k]["tot_reward"]
+        writer.add_scalar(f'Val/{k[0]}_{k[1]}_reward', mean_val_reward_per_module, batch_i)
+
+
     return mean_val_reward, observed_graphs
 
 

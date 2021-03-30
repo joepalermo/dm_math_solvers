@@ -121,11 +121,15 @@ def load_question_answer_pairs(filepath):
     return qa_pairs
 
 
-# load train data
-def load_training_data(config):
-    train = {}
+# load data
+def load_data(config, train=True):
+    data = {}
     print("loading problems")
-    problem_filepaths = [os.path.join(config.data_dirpath, filename) for filename in config.selected_filenames]
+    if train:
+        problem_filepaths = [os.path.join(config.data_dirpath, filename) for filename in config.selected_filenames]
+    else:
+        problem_filepaths = [os.path.join(config.test_data_dirpath, filename) for filename in config.selected_filenames]
+
     problem_counts = {}
     for filepath in tqdm(problem_filepaths):
         with open(filepath, "r") as f:
@@ -153,17 +157,16 @@ def load_training_data(config):
             problem_dict = {'module_difficulty_index': problem_counts[(module_name, difficulty)],
                             'question': question,
                             'answer': answer}
-            if module_name in train:
-                if difficulty in train[module_name]:
-                    train[module_name][difficulty].append(problem_dict)
+            if module_name in data:
+                if difficulty in data[module_name]:
+                    data[module_name][difficulty].append(problem_dict)
                 else:
-                    train[module_name][difficulty] = [problem_dict]
+                    data[module_name][difficulty] = [problem_dict]
             else:
-                train[module_name] = {difficulty: [problem_dict]}
+                data[module_name] = {difficulty: [problem_dict]}
     if config.univariate_differentiation:
-        train['calculus__differentiate'][0] = filter_univariate(train['calculus__differentiate'][0])
-    return train
-
+        data['calculus__differentiate'][0] = filter_univariate(data['calculus__differentiate'][0])
+    return data
 
 def split_validation_data(config, train):
     val = {}

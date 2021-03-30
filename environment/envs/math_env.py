@@ -10,7 +10,7 @@ from scipy.special import softmax
 import sentencepiece as spm
 from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
-from environment.utils import load_training_data, split_validation_data
+from environment.utils import load_data, split_validation_data
 from hparams import HParams
 import torch
 
@@ -75,8 +75,9 @@ class MathEnv(gym.Env):
             [self.total_vocab_size for _ in range(config.max_sequence_length)]
         )
         # load data
-        self.train = load_training_data(config)
+        self.train = load_data(config, train=True)
         self.val = split_validation_data(config, self.train)
+        self.test = load_data(config, train=False)
         # load tokenizer
         self.question_padding_token = config.question_vocab_size
         # increment config.question_vocab_size by 1 to account for padding token
@@ -156,11 +157,11 @@ class MathEnv(gym.Env):
 
     # utilities to reset the environment -------------------------------------------------------------------------------
 
-    def reset(self, train=True):
+    def reset(self, mode='train'):
         # randomly sample a module and difficulty level
         module_name = sample(list(self.train.keys()), 1)[0]
         difficulty = sample(list(self.train[module_name].keys()), 1)[0]
-        return self.reset_by_module_and_difficulty(module_name, difficulty, train=train)
+        return self.reset_by_module_and_difficulty(module_name, difficulty, mode=mode)
 
     def reset_from_text(self, question, answer):
         self.module_name = 'N/A'
@@ -200,17 +201,22 @@ class MathEnv(gym.Env):
                               np.array([self.action_padding_token for _ in range(self.max_num_nodes)])])
         return obs, {'raw_observation': self.question}
 
-    def reset_by_module_and_difficulty(self, module_name, difficulty, train=True):
+    def reset_by_module_and_difficulty(self, module_name, difficulty, mode='train'):
         self.module_name = module_name
         self.difficulty = difficulty
-        if train:
+        if mode == 'train':
             problem_dict = sample(
                 self.train[module_name][difficulty], 1
             )[0]
-        else:
+        elif mode == 'val':
             problem_dict = sample(
                 self.val[module_name][difficulty], 1
             )[0]
+        else:
+            problem_dict = sample(
+                self.test[module_name][difficulty], 1
+            )[0]
+
         self.question = problem_dict['question']
         self.answer = problem_dict['answer']
         self.module_difficulty_index = problem_dict['module_difficulty_index']
