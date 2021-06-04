@@ -1,13 +1,13 @@
 from hparams import HParams
-# hparams = HParams('.', hparams_filename='hparams', name='rl_math')
-hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
+hparams = HParams('.', hparams_filename='hparams', name='rl_math')
+# hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, log_batches, \
-    log_to_text_file, log_q_values, add_trajectory_return_to_trajectories
+    log_to_text_file, add_trajectory_return_to_trajectories
 from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
-    fill_buffer, get_td_error
+    fill_buffer, get_td_error, save_checkpoint
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
 import random
@@ -27,11 +27,10 @@ envs = init_envs(hparams.env)
 trajectory_statistics = init_trajectory_data_structures(envs[0])
 
 # init models
-ntoken = hparams.env.vocab_size + 1
+num_question_tokens = hparams.env.question_vocab_size + 1
 num_outputs = envs[0].num_actions
-max_num_nodes = envs[0].max_num_nodes
-q1 = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
-q2 = TransformerEncoderModel(ntoken=ntoken, num_outputs=num_outputs, device=device)
+question_padding_token = envs[0].question_padding_token
+action_padding_token = envs[0].action_padding_token
 
 # init replay buffer from trajectory cache on disk
 replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random_exploration_trajectory_cache_filepath,
@@ -40,11 +39,30 @@ replay_buffer = extract_replay_buffer_from_trajectory_cache(hparams.train.random
                                                             selected_filenames=hparams.env.selected_filenames)
 replay_priority = np.ones(len(replay_buffer)) * hparams.train.default_replay_buffer_priority
 
+q1 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
+                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
+                             device=device)
+q2 = TransformerEncoderModel(num_question_tokens=num_question_tokens, num_outputs=num_outputs,
+                             question_padding_token=question_padding_token, action_padding_token=action_padding_token,
+                             device=device)
+
+batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
+
+# Load checkpoints if they exist
+if os.path.isfile(os.path.join(get_logdir(), hparams.model.q1_file)):
+    print("Checkpoint found, loading checkpoints")
+    q1_checkpoint = torch.load(os.path.join(get_logdir(), hparams.model.q1_file))
+    q2_checkpoint = torch.load(os.path.join(get_logdir(), hparams.model.q2_file))
+    q1.load_state_dict(q1_checkpoint['model_state_dict'])
+    q2.load_state_dict(q2_checkpoint['model_state_dict'])
+    q1.optimizer.load_state_dict(q1_checkpoint['optimizer_state_dict'])
+    q2.optimizer.load_state_dict(q2_checkpoint['optimizer_state_dict'])
+    batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = q1_checkpoint['batch']
+
 # training loop --------------------------------------------------------------------------------------------------------
 
 added_graphs = []
 added_to_replay_buffer = 0
-batch_i = last_fill_buffer_batch_i = last_eval_batch_i = last_target_network_update_batch_i = 0
 for epoch_i in range(hparams.train.num_epochs):
     # sample and train -----------
 
@@ -79,16 +97,6 @@ for epoch_i in range(hparams.train.num_epochs):
         # add fresh experience to replay buffer
         replay_buffer = np.concatenate([replay_buffer, latest_buffer])
         replay_priority = np.concatenate([replay_priority, latest_replay_priority])
-
-        # # replace oldest
-        # replay_buffer = np.concatenate([replay_buffer[len(latest_buffer):], latest_buffer])
-        # replay_priority = np.concatenate([replay_priority[len(latest_replay_priority):], latest_replay_priority])
-        # # replace lowest priority
-        # lowest_priority_indices = np.argsort(replay_priority)[:len(latest_buffer)]
-        # replay_buffer[lowest_priority_indices] = latest_buffer
-        # replay_priority[lowest_priority_indices] = latest_replay_priority
-        # assert len(replay_buffer) == hparams.train.replay_buffer_size and \
-        #        len(replay_priority) == hparams.train.replay_buffer_size
         added_to_replay_buffer += len(latest_buffer)
         fill_buffer_idxs = np.arange(len(replay_buffer)-len(latest_buffer), len(replay_buffer))
     else:
@@ -111,12 +119,6 @@ for epoch_i in range(hparams.train.num_epochs):
     replay_priority[td_error_update_idxs] = td_error.cpu().detach().numpy() ** hparams.train.prioritization_exponent
     # visualize_replay_priority(envs, replay_priority, replay_buffer)
 
-    # # drop lowest priority samples -----------
-    # if len(fill_buffer_idxs) > 0:
-    #     lowest_priority_indices = np.argsort(replay_priority)[:len(fill_buffer_idxs)]
-    #     replay_buffer = np.delete(replay_buffer, lowest_priority_indices, axis=0)
-    #     replay_priority = np.delete(replay_priority, lowest_priority_indices, axis=0)
-
     # eval -----------
     if batch_i - last_eval_batch_i >= hparams.train.batches_per_eval:
         last_eval_batch_i = batch_i
@@ -137,4 +139,6 @@ for epoch_i in range(hparams.train.num_epochs):
         log_to_text_file(selected_eval_graphs_string, logging_batches_filepath)
         # log eval reward
         log_to_text_file(f'mean val reward: {mean_val_reward}', logging_batches_filepath)
-
+        #Save checkpoints
+        save_checkpoint(batch_i, q1, hparams.model.q1_file)
+        save_checkpoint(batch_i, q2, hparams.model.q2_file)

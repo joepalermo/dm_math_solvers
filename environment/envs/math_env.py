@@ -10,7 +10,7 @@ from scipy.special import softmax
 import sentencepiece as spm
 from environment.compute_graph import ComputeGraph
 from environment.typed_operators import *
-from environment.utils import load_training_data, split_validation_data
+from environment.utils import load_data, split_validation_data
 from hparams import HParams
 import torch
 
@@ -19,12 +19,15 @@ hparams = HParams.get_hparams_by_name('rl_math')
 class MathEnv(gym.Env):
     def __init__(self, config):
         self.compute_graph = None
+        self.episode_actions = None
         # load config
         self.config = config
+        self.encode_question = config.encode_question
         self.max_num_nodes = self._max_episode_steps = config.max_num_nodes
         self.max_formal_elements = config.max_formal_elements
         self.max_difficulty = config.max_difficulty
-        self.vocab_size = config.vocab_size
+        self.question_vocab_size = config.question_vocab_size
+        self.max_sequence_length = config.max_sequence_length
         # define available operator functions
         self.operators = [
             lookup_value,
@@ -64,16 +67,21 @@ class MathEnv(gym.Env):
         ]
         self.action_names = [op.__name__ for op in self.operators] + [f"f{i}" for i in range(self.max_formal_elements)]
         self.num_actions = len(self.actions)
+        # increment by 2 to account for both the question padding and the answer padding
+        self.total_vocab_size = self.question_vocab_size + self.num_actions + 2
         self.action_space = spaces.Discrete(len(self.actions))
         self.action_indices = np.arange(len(self.actions))
         self.observation_space = spaces.MultiDiscrete(
-            [self.vocab_size + 1 for _ in range(config.max_sequence_length)]  # increment by 1 for padding_token
+            [self.total_vocab_size for _ in range(config.max_sequence_length)]
         )
         # load data
-        self.train = load_training_data(config)
+        self.train = load_data(config, train=True)
         self.val = split_validation_data(config, self.train)
+        self.test = load_data(config, train=False)
         # load tokenizer
-        self.padding_token = config.vocab_size
+        self.question_padding_token = config.question_vocab_size
+        # increment config.question_vocab_size by 1 to account for padding token
+        self.action_padding_token = (config.question_vocab_size + 1) + self.num_actions
         self.tokenizer = spm.SentencePieceProcessor(model_file=config.tokenizer_filepath)
 
 
@@ -90,10 +98,19 @@ class MathEnv(gym.Env):
         action = self.actions[action_index]
         self.compute_graph.n_nodes += 1
         self.compute_graph.add(action)
+        self.episode_actions.append(action_index)
         output = self.compute_graph.eval()
         compute_graph = str(self.compute_graph)
         full_raw_observation = f"{self.question}; {compute_graph}"
-        observation = self.encode(self.question)
+        if self.encode_question:
+            encoded_question = self.encode(self.question)
+            # increment by (self.question_vocab_size + 1) to ensure no overlap between question vocab and action vocab
+            episode_actions_array = np.array(self.episode_actions) + (self.question_vocab_size + 1)
+            episode_actions_padding_array = np.array([self.action_padding_token
+                                            for _ in range(self.max_num_nodes - len(self.episode_actions))])
+            observation = np.concatenate([encoded_question, episode_actions_array, episode_actions_padding_array])
+        else:
+            observation = full_raw_observation
         next_mask = self.compute_mask()
         done = (
             self.compute_graph.current_node is None
@@ -129,22 +146,22 @@ class MathEnv(gym.Env):
         encoded_ids = self.tokenizer.encode(raw_observation)
         # pad the encoded ids up to a maximum length
         encoded_ids.extend(
-            [self.padding_token for _ in range(self.config.max_sequence_length - len(encoded_ids))]
+            [self.question_padding_token for _ in range(self.config.max_sequence_length - len(encoded_ids))]
         )
         return np.array(encoded_ids)
 
     def decode(self, encoded_ids):
         # filter out padding tokens before decoding
-        encoded_ids = [id_ for id_ in encoded_ids.tolist() if id_ != self.padding_token]
+        encoded_ids = [id_ for id_ in encoded_ids.tolist() if id_ != self.question_padding_token]
         return self.tokenizer.decode(encoded_ids)
 
     # utilities to reset the environment -------------------------------------------------------------------------------
 
-    def reset(self, train=True):
+    def reset(self, mode='train'):
         # randomly sample a module and difficulty level
         module_name = sample(list(self.train.keys()), 1)[0]
         difficulty = sample(list(self.train[module_name].keys()), 1)[0]
-        return self.reset_by_module_and_difficulty(module_name, difficulty, train=train)
+        return self.reset_by_module_and_difficulty(module_name, difficulty, mode=mode)
 
     def reset_from_text(self, question, answer):
         self.module_name = 'N/A'
@@ -153,11 +170,17 @@ class MathEnv(gym.Env):
         self.answer = answer
         self.module_difficulty_index = 'N/A'
         self.compute_graph = ComputeGraph(self.question)
-        return self.encode(self.question), {'raw_observation': self.question}
+        self.episode_actions = list()
+        obs = np.concatenate([self.encode(self.question),
+                              np.array([self.action_padding_token for _ in range(self.max_num_nodes)])])
+        return obs, {'raw_observation': self.question}
 
     def reset_with_same_problem(self):
         self.compute_graph = ComputeGraph(self.question)
-        return self.encode(self.question), {'raw_observation': self.question}
+        self.episode_actions = list()
+        obs = np.concatenate([self.encode(self.question),
+                              np.array([self.action_padding_token for _ in range(self.max_num_nodes)])])
+        return obs, {'raw_observation': self.question}
 
     def reset_with_specific_problem(
         self, module_name, difficulty, module_difficulty_index, train=True
@@ -173,24 +196,35 @@ class MathEnv(gym.Env):
         self.answer = problem_dict['answer']
         self.module_difficulty_index = problem_dict['module_difficulty_index']
         self.compute_graph = ComputeGraph(self.question)
-        return self.encode(self.question), {'raw_observation': self.question}
+        self.episode_actions = list()
+        obs = np.concatenate([self.encode(self.question),
+                              np.array([self.action_padding_token for _ in range(self.max_num_nodes)])])
+        return obs, {'raw_observation': self.question}
 
-    def reset_by_module_and_difficulty(self, module_name, difficulty, train=True):
+    def reset_by_module_and_difficulty(self, module_name, difficulty, mode='train'):
         self.module_name = module_name
         self.difficulty = difficulty
-        if train:
+        if mode == 'train':
             problem_dict = sample(
                 self.train[module_name][difficulty], 1
             )[0]
-        else:
+        elif mode == 'val':
             problem_dict = sample(
                 self.val[module_name][difficulty], 1
             )[0]
+        else:
+            problem_dict = sample(
+                self.test[module_name][difficulty], 1
+            )[0]
+
         self.question = problem_dict['question']
         self.answer = problem_dict['answer']
         self.module_difficulty_index = problem_dict['module_difficulty_index']
         self.compute_graph = ComputeGraph(self.question)
-        return self.encode(self.question), {'raw_observation': self.question}
+        self.episode_actions = list()
+        obs = np.concatenate([self.encode(self.question),
+                              np.array([self.action_padding_token for _ in range(self.max_num_nodes)])])
+        return obs, {'raw_observation': self.question}
 
     # utilities to sample actions --------------------------------------------------------------------------------------
 
