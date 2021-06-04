@@ -63,6 +63,26 @@ def reset_all(envs, trajectory_statistics=None, mode='train'):
     obs_batch = np.concatenate(obs_batch)
     return obs_batch, envs_info
 
+def reset_all_by_module_and_difficulty(envs, module, difficulty, mode='train'):
+    '''if trajectory_statistics is not None then select the module_name and difficulty which has been
+    least rewarded thus far, else select module_name and difficulty randomly.'''
+    envs_info = []
+    obs_batch = []
+    for env in envs:
+        obs, info = env.reset_by_module_and_difficulty(module, difficulty, mode=mode)
+
+        envs_info.append({'question': info['raw_observation'],
+                          'trajectory': [(obs, None, None, None, info)],
+                          'module_name': env.module_name,
+                          'difficulty': env.difficulty,
+                          'module_difficulty_index': env.module_difficulty_index,
+                          'attempts': 0})
+        obs_batch.append(np.expand_dims(obs, 0))
+        # prev_action_batch is initialized to contain only the padding action
+    obs_batch = np.concatenate(obs_batch)
+    return obs_batch, envs_info
+
+
 
 def step_all(envs, action_batch):
     step_batch = list()
@@ -106,8 +126,17 @@ def get_action_batch(obs_batch, envs, network=None, eval=False):
     return actions
 
 
-def reset_environment(env, train=True):
-    obs, info = env.reset(train=train)
+def reset_environment(env, mode='train'):
+    obs, info = env.reset(mode=mode)
+    return obs, {'question': info['raw_observation'],
+                 'trajectory': [(obs, None, None, None, None)],
+                 'module_name': env.module_name,
+                 'difficulty': env.difficulty,
+                 'module_difficulty_index': env.module_difficulty_index,
+                 'attempts': 0}
+
+def reset_environment_by_module_and_difficulty(env, module, difficulty, mode='train'):
+    obs, info = env.reset_by_module_and_difficulty(module, difficulty, mode=mode)
     return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': env.module_name,
@@ -126,9 +155,9 @@ def reset_environment_with_same_problem(env, attempts):
                  'attempts': attempts}
 
 
-def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistics, train=True):
+def reset_environment_with_least_rewarded_problem_type(env, trajectory_statistics, mode='train'):
     module_name, difficulty = min(trajectory_statistics, key=trajectory_statistics.get)
-    obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, train=train)
+    obs, info = env.reset_by_module_and_difficulty(module_name, difficulty, mode=mode)
     return obs, {'question': info['raw_observation'],
                  'trajectory': [(obs, None, None, None, None)],
                  'module_name': module_name,
@@ -284,7 +313,7 @@ def fill_buffer(network, envs, trajectory_statistics, trajectory_cache_filepath)
                 else:
                     obs_batch[env_i], envs_info[env_i] = \
                         reset_environment_with_least_rewarded_problem_type(envs[env_i], trajectory_statistics,
-                                                                       train=True)
+                                                                       mode='train')
     if trajectory_cache_filepath is not None:
         trajectory_cache.close()
     return trajectory_buffer, added_graphs
@@ -304,8 +333,8 @@ def train(q1, q2, data_loader, writer, current_batch_i):
         current_batch_i += 1
         #Anneal epsilon
         if current_batch_i > hparams.train.num_batches_until_anneal_epsilon:
-            q1.epsilon = max(hparams.train.min_epsilon, q1.epsilon - hparams.train.epsilon_annealing_factor)
-            q2.epsilon = max(hparams.train.min_epsilon, q2.epsilon - hparams.train.epsilon_annealing_factor)
+            q1.epsilon = max(hparams.train.min_epsilon, q1.epsilon - hparams.train.epsilon_annealing_increment)
+            q2.epsilon = max(hparams.train.min_epsilon, q2.epsilon - hparams.train.epsilon_annealing_increment)
         # losses.append(float(batch_loss.detach().cpu().numpy()))
         losses.append(batch_loss.detach())
         td_errors.append(td_error.detach())
@@ -349,7 +378,7 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
                     total_reward[k]["tot_reward"] = reward
                 n_completed_validation_episodes += 1
                 # reset environment
-                obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
+                obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], mode='val')
         if n_completed_validation_episodes > n_required_validation_episodes:
             break
     all_modules_reward = 0
@@ -370,8 +399,9 @@ def run_eval(network, envs, writer, batch_i, n_required_validation_episodes):
 def run_test(network, envs, module):
     network.eval()
     logdir = get_logdir()
-    total_reward = {}  # key: (module_name, difficulty) val: dict[key: n_completed_episodes or tot_reward]
-    obs_batch, envs_info = reset_all(envs, mode='test')
+    total_reward = {"n_completed_validation_episodes":0,
+                    "tot_reward": 0}
+    obs_batch, envs_info = reset_all_by_module_and_difficulty(envs, module=module, difficulty=0, mode='test')
     observed_graphs = []
     num_episodes = 0
     while num_episodes < 1000:
@@ -387,27 +417,15 @@ def run_test(network, envs, module):
                 k = (envs[env_i].module_name, envs[env_i].difficulty)
                 observed_graph = f"{info['raw_observation']} = {envs[env_i].compute_graph.eval()}, reward: {reward}\n"
                 observed_graphs.append(observed_graph)
-                if random.random() < 0.05:
-                    print(observed_graph)
-                if k in total_reward:
-                    total_reward[k]["n_completed_validation_episodes"] += 1
-                    total_reward[k]["tot_reward"] += reward
-                else:
-                    total_reward[k] = {}
-                    total_reward[k]["n_completed_validation_episodes"] = 1
-                    total_reward[k]["tot_reward"] = reward
+                total_reward["n_completed_validation_episodes"] += 1
+                total_reward["tot_reward"] += reward
                 # reset environment
-                obs_batch[env_i], envs_info[env_i] = reset_environment(envs[env_i], train=False)
+                obs_batch[env_i], envs_info[env_i] = reset_environment_by_module_and_difficulty(envs[env_i], module=module, difficulty=0, mode='test')
                 num_episodes += 1
 
-    all_modules_reward = 0
-    for k in total_reward.keys():
-        mean_val_reward_per_module = total_reward[k]["tot_reward"] / total_reward[k]["n_completed_validation_episodes"]
-        all_modules_reward += total_reward[k]["tot_reward"]
-        writer.add_scalar(f'Val/{k[0]}_{k[1]}_reward', mean_val_reward_per_module, batch_i)
-
-
-    return mean_val_reward, observed_graphs
+    mean_reward = float(total_reward["tot_reward"]) / total_reward["n_completed_validation_episodes"]
+    print(f"{module} achieves test reward of {mean_reward}")
+    return reward
 
 
 def visualize_replay_priority(envs, replay_priority, replay_buffer):

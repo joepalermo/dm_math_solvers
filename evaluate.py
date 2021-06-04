@@ -57,4 +57,5 @@ else:
     raise ValueError("no trained models found")
 
 # Run evaluation on test set
-mean_val_reward, eval_graphs = run_test(q1, envs)
+for module in hparams.env.selected_filenames:
+    run_test(q1, envs, module[:-4])
