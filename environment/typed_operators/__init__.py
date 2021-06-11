@@ -272,12 +272,12 @@ def replace_arg(function: Function, var: Variable) -> Function:
     return Function(str(function).replace(str(function.parameter), str(var)))
 
 
-def mod(numerator: Value, discriminator: Value) -> Value:
-    return Value(numerator.value % discriminator.value)
+def mod(numerator: Value, denominator: Value) -> Value:
+    return Value(numerator.value % denominator.value)
 
 
-def divides(numerator: Value, discriminator: Value) -> bool:
-    return numerator.value % discriminator.value == 0
+def divides(numerator: Value, denominator: Value) -> bool:
+    return numerator.value % denominator.value == 0
 
 
 def gcd(x: Value, y: Value) -> Value:
