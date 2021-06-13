@@ -17,7 +17,7 @@ class EquationOrExpression:
         return self.equation_or_expression
 
 
-class Equation(EquationOrExpression):
+class Equation(object):
     def __init__(self, equation: str):
         assert len(equation.split("=")) == 2
         self.equation = equation
@@ -50,7 +50,7 @@ class Function(Equation):
         return self.function == str(function)
 
 
-class Expression(EquationOrExpression):
+class Expression(object):
     def __init__(self, expression: str):
         assert "=" not in expression
         self.expression = str(expression)
@@ -233,13 +233,13 @@ def project_rhs(equation: Equation) -> Expression:
     return Expression(str(equation).split("=")[1].strip())
 
 
-def substitution_left_to_right(arb: EquationOrExpression, eq: Equation) -> EquationOrExpression:
-    return EquationOrExpression(str(arb).replace(str(project_lhs(eq)), str(project_rhs(eq))))
+def substitution_left_to_right(arb: object, eq: Equation) -> object:
+    return object(str(arb).replace(str(project_lhs(eq)), str(project_rhs(eq))))
 
 
-def substitution_right_to_left(arb: EquationOrExpression, eq: Equation) -> EquationOrExpression:
+def substitution_right_to_left(arb: object, eq: Equation) -> object:
     """substitution_right_to_left"""
-    return EquationOrExpression(str(arb).replace(str(project_rhs(eq)), str(project_lhs(eq))))
+    return object(str(arb).replace(str(project_rhs(eq)), str(project_lhs(eq))))
 
 
 def factor(inpt: Expression) -> Expression:
@@ -247,7 +247,7 @@ def factor(inpt: Expression) -> Expression:
     return output
 
 
-def simplify(inpt: EquationOrExpression) -> EquationOrExpression:
+def simplify(inpt: object) -> object:
     if "=" in str(inpt):
         lhs, rhs = str(inpt).split("=")
         lhs, rhs = lhs.strip(), rhs.strip()
