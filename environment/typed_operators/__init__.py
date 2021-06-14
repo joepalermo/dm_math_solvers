@@ -42,6 +42,7 @@ class Function(Equation):
         assert match is not None
         self.name, self.parameter = match.group(1), match.group(2)
         self.function = function
+        self.equation = function
 
     def __str__(self):
         return str(self.function)
@@ -268,8 +269,10 @@ def differentiate_wrt(expression: Expression, variable: Variable) -> Expression:
 
 
 def replace_arg(function: Function, var: Variable) -> Function:
-    # TODO: make robust to longer names (e.g. max(x), y -> may(y) which is wrong)
-    return Function(str(function).replace(str(function.parameter), str(var)))
+    lhs, rhs = function.split(" = ")
+    lhs = lhs.replace('(' + str(function.parameter) + ')', '(' + str(var) + ')')
+    rhs = rhs.replace(str(function.parameter), str(var))
+    return make_function(Expression(lhs), Expression(rhs))
 
 
 def mod(numerator: Value, denominator: Value) -> Value:

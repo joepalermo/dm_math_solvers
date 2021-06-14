@@ -112,3 +112,8 @@ class Test(unittest.TestCase):
         arg2 = Rational('92/105')
         output = lcd(arg1, arg2)
         assert output == Value('7455')
+
+    def test_replace_arg(self):
+        f = Function('funk(k) = k**3 + k**2 + 6*k + 9')
+        replaced_f = Function('funk(x) = x**3 + x**2 + 6*x + 9')
+        assert replace_arg(f, Variable('x')) == replaced_f
