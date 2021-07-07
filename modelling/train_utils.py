@@ -170,11 +170,6 @@ def ddqn_step(q1, q2, batch):
     state_batch, action_batch, reward_batch, next_state_batch, done_batch, _ = [b.to(q1.device) for b in batch]
     # compute the target --------------
     with torch.no_grad():
-        # shows that q1 at argmax over q1 equals max over q1:
-        # q1(next_state_batch).\
-        #   gather(1,torch.argmax(q1(next_state_batch), dim=1).view(-1, 1)),
-        # torch.max(q1(next_state_batch), dim=1).values
-
         q1_maximizing_actions = torch.argmax(q1(next_state_batch), dim=1).view(-1,1)
         targets = reward_batch + (1 - done_batch) * hparams.train.gamma * \
                   q2(next_state_batch).gather(1, q1_maximizing_actions).flatten()
@@ -187,8 +182,6 @@ def ddqn_step(q1, q2, batch):
     q1.optimizer.zero_grad()
     batch_loss.backward()
     torch.nn.utils.clip_grad_norm_(q1.parameters(), q1.max_grad_norm)
-    # for param in q1.parameters():
-    #     param.grad.data.clamp_(-1, 1)
     q1.optimizer.step()
     # also fetch td-error for logging --------------
     td_error = torch.abs(targets - batch_output)
@@ -450,18 +443,4 @@ def visualize_replay_priority(envs, replay_priority, replay_buffer):
         print(f"\treward: {replay_buffer[idx][2]}")
         print(f"\tnext state: {envs[0].decode(replay_buffer[idx][3])}")
 
-    # print('\nrandom:')
-    # random_idxs = np.random.choice(np.arange(len(replay_priority)), size=num_samples)
-    # for idx in random_idxs:
-    #     print(f"\npriority: {replay_priority[idx]}, probability: {replay_priority[idx]/norm}")
-    #     print(f"state: {envs[0].decode(replay_buffer[idx][0])}")
-    #     print(f"action: {replay_buffer[idx][1]}")
-    #     print(f"reward: {replay_buffer[idx][2]}")
-
-    # import seaborn as sns
-    # import matplotlib.pyplot as plt
-    # sns.histplot(replay_priority / np.sum(replay_priority))
-    # sns.histplot(replay_priority)
-    # plt.show()
-    # import time; time.sleep(1000)
 

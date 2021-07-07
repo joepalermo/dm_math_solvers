@@ -2,6 +2,8 @@
 
 This repo contains the code used to produce the experimental results for: <insert paper link here>.
 
+To use the math_prog_synth_env RL environment please see: https://github.com/JohnnyYeeee/math_prog_synth_env
+
 ## Setup
 
 - Download data (wget https://storage.cloud.google.com/mathematics-dataset/mathematics_dataset-v1.0.tar.gz)
