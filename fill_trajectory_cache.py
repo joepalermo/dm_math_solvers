@@ -2,14 +2,9 @@ from hparams import HParams
 # hparams = HParams('.', hparams_filename='hparams', name='rl_math')
 hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 from tqdm import tqdm
-import torch
 from modelling.train_utils import init_trajectory_data_structures, init_envs, fill_buffer
 from modelling.cache_utils import visualize_trajectory_cache
-import numpy as np
 from sqlitedict import SqliteDict
-
-# torch.manual_seed(hparams.run.seed)
-# np.random.seed(seed=hparams.run.seed)
 
 assert hparams.train.fill_buffer_mode != 'anything'
 

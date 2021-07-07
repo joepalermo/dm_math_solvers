@@ -2,18 +2,11 @@ from hparams import HParams
 hparams = HParams('.', hparams_filename='hparams', name='rl_math')
 # hparams = HParams('.', hparams_filename='hparams', name='rl_math', ask_before_deletion=False)
 import torch
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from modelling.cache_utils import extract_replay_buffer_from_trajectory_cache, log_batches, \
-    log_to_text_file, add_trajectory_return_to_trajectories
-from modelling.train_utils import init_trajectory_data_structures, init_envs, train, run_eval, get_logdir, StepDataset,\
-    fill_buffer, get_td_error, save_checkpoint, run_test
+from modelling.train_utils import init_trajectory_data_structures, init_envs, get_logdir, run_test
 from modelling.transformer_encoder import TransformerEncoderModel
 import numpy as np
-import random
-from utils import flatten
 import os
-
 
 # basic setup and checks
 torch.manual_seed(hparams.run.seed)
