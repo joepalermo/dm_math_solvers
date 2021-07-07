@@ -2,7 +2,7 @@
 
 This repo contains the code used to produce the experimental results for: <insert paper link here>.
 
-To use the math_prog_synth_env RL environment please see: https://github.com/JohnnyYeeee/math_prog_synth_env
+To use the the RL environment (math_prog_synth_env) for your own research please see the following repo for code and setup instructions: https://github.com/JohnnyYeeee/math_prog_synth_env
 
 ## Setup
 
