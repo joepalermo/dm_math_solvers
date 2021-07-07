@@ -27,5 +27,5 @@ python train.py
 - Evaluate trained model on test problems:
 
 ```python
-evaluate.py
+python evaluate.py
 ```
